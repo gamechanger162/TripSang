@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import ToasterProvider from '@/components/ToasterProvider'
 
 export const metadata: Metadata = {
     title: 'TripSang - Travel Social Network',
@@ -22,7 +23,9 @@ export default function RootLayout({
         <html lang="en">
             <body>
                 {children}
+                <ToasterProvider />
             </body>
         </html>
     )
 }
+
