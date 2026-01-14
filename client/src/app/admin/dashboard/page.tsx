@@ -1,0 +1,565 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { adminAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
+
+type TabType = 'users' | 'guides' | 'settings';
+
+interface User {
+    _id: string;
+    name: string;
+    email: string;
+    role: 'user' | 'admin' | 'guide';
+    isActive: boolean;
+    isMobileVerified: boolean;
+    createdAt: string;
+    profilePicture?: string;
+}
+
+interface GlobalConfig {
+    enableGoogleAds: boolean;
+    googleAdSenseClient: string;
+    enablePaidSignup: boolean;
+    signupFee: number;
+    signupFeeCurrency: string;
+}
+
+export default function AdminDashboardPage() {
+    const { data: session, status } = useSession();
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<TabType>('settings');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    // Users state
+    const [users, setUsers] = useState<User[]>([]);
+    const [usersPage, setUsersPage] = useState(1);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [userFilter, setUserFilter] = useState<'all' | 'user' | 'guide' | 'admin'>('all');
+
+    // Settings state
+    const [config, setConfig] = useState<GlobalConfig>({
+        enableGoogleAds: false,
+        googleAdSenseClient: '',
+        enablePaidSignup: false,
+        signupFee: 99,
+        signupFeeCurrency: 'INR',
+    });
+
+    // Check admin access
+    useEffect(() => {
+        if (status === 'loading') return;
+
+        if (status === 'unauthenticated') {
+            toast.error('Please login');
+            router.push('/auth/signin');
+            return;
+        }
+
+        if (session?.user?.role !== 'admin') {
+            toast.error('Access denied. Admin only.');
+            router.push('/');
+            return;
+        }
+
+        setLoading(false);
+    }, [status, session, router]);
+
+    // Fetch config
+    useEffect(() => {
+        if (session?.user?.role === 'admin') {
+            fetchConfig();
+        }
+    }, [session]);
+
+    // Fetch users when tab changes
+    useEffect(() => {
+        if (activeTab === 'users' && session?.user?.role === 'admin') {
+            fetchUsers();
+        }
+    }, [activeTab, usersPage, userFilter, session]);
+
+    const fetchConfig = async () => {
+        try {
+            const response = await adminAPI.getConfig();
+            if (response.success && response.config) {
+                setConfig(response.config);
+            }
+        } catch (error: any) {
+            console.error('Error fetching config:', error);
+            toast.error('Failed to load settings');
+        }
+    };
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const filters: any = {
+                page: usersPage,
+                limit: 20,
+            };
+
+            if (userFilter !== 'all') {
+                filters.role = userFilter;
+            }
+
+            const response = await adminAPI.getUsers(filters);
+            if (response.success) {
+                setUsers(response.users);
+                setTotalUsers(response.pagination.totalUsers);
+            }
+        } catch (error: any) {
+            console.error('Error fetching users:', error);
+            toast.error('Failed to load users');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        setSaving(true);
+
+        try {
+            const response = await adminAPI.updateConfig({
+                enableGoogleAds: config.enableGoogleAds,
+                googleAdSenseClient: config.googleAdSenseClient,
+                enablePaidSignup: config.enablePaidSignup,
+                signupFee: config.signupFee,
+                signupFeeCurrency: config.signupFeeCurrency,
+            });
+
+            if (response.success) {
+                toast.success('Settings saved successfully!');
+            }
+        } catch (error: any) {
+            console.error('Error saving settings:', error);
+            toast.error(error.message || 'Failed to save settings');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleBlockUser = async (userId: string, block: boolean) => {
+        try {
+            const response = await adminAPI.blockUser(userId, block);
+
+            if (response.success) {
+                toast.success(block ? 'User blocked' : 'User unblocked');
+                // Refresh users
+                fetchUsers();
+            }
+        } catch (error: any) {
+            console.error('Error blocking user:', error);
+            toast.error(error.message || 'Failed to update user');
+        }
+    };
+
+    const handleUpdateRole = async (userId: string, newRole: 'user' | 'admin' | 'guide') => {
+        try {
+            const response = await adminAPI.updateUserRole(userId, newRole);
+
+            if (response.success) {
+                toast.success(`Role updated to ${newRole}`);
+                fetchUsers();
+            }
+        } catch (error: any) {
+            console.error('Error updating role:', error);
+            toast.error(error.message || 'Failed to update role');
+        }
+    };
+
+    if (loading && status === 'loading') {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (session?.user?.role !== 'admin') {
+        return null;
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
+            {/* Header */}
+            <div className="bg-white dark:bg-dark-800 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage TripSang platform</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <div className="badge badge-primary">Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <nav className="flex space-x-8">
+                        {[
+                            { id: 'users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+                            { id: 'guides', label: 'Guides', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                            { id: 'settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as TabType)}
+                                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                                        ? 'border-primary-600 text-primary-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                    }`}
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
+                                </svg>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Users Tab */}
+                {activeTab === 'users' && (
+                    <div className="space-y-6">
+                        {/* Filters */}
+                        <div className="card">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">User Management</h2>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        {totalUsers} total users
+                                    </p>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <select
+                                        value={userFilter}
+                                        onChange={(e) => setUserFilter(e.target.value as any)}
+                                        className="input-field"
+                                    >
+                                        <option value="all">All Users</option>
+                                        <option value="user">Regular Users</option>
+                                        <option value="guide">Guides</option>
+                                        <option value="admin">Admins</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Users List */}
+                        <div className="card overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+                                    <thead className="bg-gray-50 dark:bg-dark-800">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                User
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Role
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Joined
+                                            </th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white dark:bg-dark-900 divide-y divide-gray-200 dark:divide-dark-700">
+                                        {users.map((user) => (
+                                            <tr key={user._id}>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="flex-shrink-0 h-10 w-10">
+                                                            <div className="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                                                                <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                                                                    {user.name[0]}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {user.name}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                {user.email}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <select
+                                                        value={user.role}
+                                                        onChange={(e) => handleUpdateRole(user._id, e.target.value as any)}
+                                                        className="text-sm border border-gray-300 dark:border-dark-600 rounded px-2 py-1 bg-white dark:bg-dark-800 text-gray-900 dark:text-white"
+                                                    >
+                                                        <option value="user">User</option>
+                                                        <option value="guide">Guide</option>
+                                                        <option value="admin">Admin</option>
+                                                    </select>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex flex-col space-y-1">
+                                                        <span
+                                                            className={`inline-flex px-2 text-xs font-semibold rounded-full ${user.isActive
+                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                                                }`}
+                                                        >
+                                                            {user.isActive ? 'Active' : 'Blocked'}
+                                                        </span>
+                                                        {user.isMobileVerified && (
+                                                            <span className="inline-flex px-2 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                Verified
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {new Date(user.createdAt).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button
+                                                        onClick={() => handleBlockUser(user._id, !user.isActive)}
+                                                        className={`${user.isActive
+                                                                ? 'text-red-600 hover:text-red-900'
+                                                                : 'text-green-600 hover:text-green-900'
+                                                            }`}
+                                                    >
+                                                        {user.isActive ? 'Block' : 'Unblock'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Pagination */}
+                        {totalUsers > 20 && (
+                            <div className="flex items-center justify-center space-x-2">
+                                <button
+                                    onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                                    disabled={usersPage === 1}
+                                    className="btn-outline disabled:opacity-50"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-gray-700 dark:text-gray-300 px-4">
+                                    Page {usersPage}
+                                </span>
+                                <button
+                                    onClick={() => setUsersPage((p) => p + 1)}
+                                    disabled={users.length < 20}
+                                    className="btn-outline disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Guides Tab */}
+                {activeTab === 'guides' && (
+                    <div className="card">
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                            Guide Management
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            Guide management features coming soon...
+                        </p>
+                    </div>
+                )}
+
+                {/* Settings Tab */}
+                {activeTab === 'settings' && (
+                    <div className="space-y-6">
+                        {/* Google Ads Settings */}
+                        <div className="card">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                                Google AdSense
+                            </h2>
+
+                            {/* Enable Google Ads Toggle */}
+                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200 dark:border-dark-700">
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                        Enable Google Ads
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Show Google AdSense ads across the platform
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={config.enableGoogleAds}
+                                        onChange={(e) =>
+                                            setConfig({ ...config, enableGoogleAds: e.target.checked })
+                                        }
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600" />
+                                </label>
+                            </div>
+
+                            {/* AdSense Client ID */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    AdSense Client ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={config.googleAdSenseClient}
+                                    onChange={(e) =>
+                                        setConfig({ ...config, googleAdSenseClient: e.target.value })
+                                    }
+                                    placeholder="ca-pub-1234567890123456"
+                                    className="input-field"
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Get this from your Google AdSense account
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Paid Signup Settings */}
+                        <div className="card">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                                Paid Signup
+                            </h2>
+
+                            {/* Enable Paid Signup Toggle */}
+                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200 dark:border-dark-700">
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                        Enable Paid Signup
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Require payment during user registration
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={config.enablePaidSignup}
+                                        onChange={(e) =>
+                                            setConfig({ ...config, enablePaidSignup: e.target.checked })
+                                        }
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600" />
+                                </label>
+                            </div>
+
+                            {/* Signup Fee */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Signup Fee
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={config.signupFee}
+                                        onChange={(e) =>
+                                            setConfig({ ...config, signupFee: parseFloat(e.target.value) || 0 })
+                                        }
+                                        className="input-field"
+                                        min="0"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Currency
+                                    </label>
+                                    <select
+                                        value={config.signupFeeCurrency}
+                                        onChange={(e) =>
+                                            setConfig({ ...config, signupFeeCurrency: e.target.value })
+                                        }
+                                        className="input-field"
+                                    >
+                                        <option value="INR">INR (₹)</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Save Button */}
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleSaveSettings}
+                                disabled={saving}
+                                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            >
+                                {saving ? (
+                                    <>
+                                        <svg
+                                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            />
+                                        </svg>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg
+                                            className="w-5 h-5 mr-2"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M5 13l4 4L19 7"
+                                            />
+                                        </svg>
+                                        Save Settings
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
