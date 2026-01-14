@@ -7,8 +7,4 @@
 
 [build.environment]
   NODE_VERSION = "18"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  NEXT_TELEMETRY_DISABLED = "1"

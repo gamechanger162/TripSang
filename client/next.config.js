@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    // Disable static generation for pages with authentication
+    output: 'standalone',
     images: {
         domains: [
             'localhost',
             'firebasestorage.googleapis.com',
-            'lh3.googleusercontent.com'
+            'lh3.googleusercontent.com',
+            'images.unsplash.com'
         ],
         remotePatterns: [
             {
