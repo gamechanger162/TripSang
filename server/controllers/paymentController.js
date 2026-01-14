@@ -2,11 +2,17 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { Payment, GlobalConfig, User } from '../models/index.js';
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// Initialize Razorpay instance lazily
+const getRazorpay = () => {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        throw new Error('Razorpay keys are missing. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your .env file.');
+    }
+    return new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+};
+
 
 /**
  * Create Razorpay Order for Signup Fee
@@ -56,7 +62,7 @@ export const createSignupOrder = async (req, res) => {
         const amountInPaise = config.signupFee * 100; // Convert to paise
         const currency = config.signupFeeCurrency || 'INR';
 
-        const razorpayOrder = await razorpay.orders.create({
+        const razorpayOrder = await getRazorpay().orders.create({
             amount: amountInPaise,
             currency: currency,
             receipt: `signup_${userId}_${Date.now()}`,
@@ -66,6 +72,7 @@ export const createSignupOrder = async (req, res) => {
                 purpose: 'User registration fee'
             }
         });
+
 
         // Step 6: Save payment record in database
         const payment = await Payment.create({
