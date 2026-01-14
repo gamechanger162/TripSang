@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 type TabType = 'users' | 'guides' | 'settings';
 
 interface User {
@@ -216,8 +219,8 @@ export default function AdminDashboardPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as TabType)}
                                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                                        ? 'border-primary-600 text-primary-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                    ? 'border-primary-600 text-primary-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                                     }`}
                             >
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,8 +322,8 @@ export default function AdminDashboardPage() {
                                                     <div className="flex flex-col space-y-1">
                                                         <span
                                                             className={`inline-flex px-2 text-xs font-semibold rounded-full ${user.isActive
-                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                                                                 }`}
                                                         >
                                                             {user.isActive ? 'Active' : 'Blocked'}
@@ -339,8 +342,8 @@ export default function AdminDashboardPage() {
                                                     <button
                                                         onClick={() => handleBlockUser(user._id, !user.isActive)}
                                                         className={`${user.isActive
-                                                                ? 'text-red-600 hover:text-red-900'
-                                                                : 'text-green-600 hover:text-green-900'
+                                                            ? 'text-red-600 hover:text-red-900'
+                                                            : 'text-green-600 hover:text-green-900'
                                                             }`}
                                                     >
                                                         {user.isActive ? 'Block' : 'Unblock'}

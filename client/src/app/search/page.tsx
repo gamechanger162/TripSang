@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TripCard from '@/components/TripCard';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
@@ -8,7 +8,10 @@ import GoogleAd from '@/components/GoogleAd';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-export default function SearchPage() {
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+function SearchPageContent() {
     const searchParams = useSearchParams();
     const [trips, setTrips] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -255,5 +258,20 @@ export default function SearchPage() {
                 initialFilters={filters}
             />
         </div>
+    );
+}
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+                </div>
+            </div>
+        }>
+            <SearchPageContent />
+        </Suspense>
     );
 }

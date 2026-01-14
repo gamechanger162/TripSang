@@ -7,6 +7,9 @@ import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 const POPULAR_TAGS = [
     '#Trekking',
     '#Foodie',
@@ -452,8 +455,8 @@ export default function CreateTripPage() {
                                     type="button"
                                     onClick={() => toggleTag(tag)}
                                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTags.includes(tag)
-                                            ? 'bg-primary-600 text-white shadow-md scale-105'
-                                            : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600'
+                                        ? 'bg-primary-600 text-white shadow-md scale-105'
+                                        : 'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-600'
                                         }`}
                                 >
                                     {tag}
@@ -507,8 +510,8 @@ export default function CreateTripPage() {
                                 <label
                                     htmlFor="coverPhoto"
                                     className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer ${imagePreview
-                                            ? 'border-primary-300 bg-primary-50 dark:bg-primary-900/10'
-                                            : 'border-gray-300 bg-gray-50 dark:bg-dark-700 dark:border-dark-600 hover:bg-gray-100 dark:hover:bg-dark-600'
+                                        ? 'border-primary-300 bg-primary-50 dark:bg-primary-900/10'
+                                        : 'border-gray-300 bg-gray-50 dark:bg-dark-700 dark:border-dark-600 hover:bg-gray-100 dark:hover:bg-dark-600'
                                         } transition-colors`}
                                 >
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">

@@ -7,6 +7,9 @@ import { ConfirmationResult } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function VerifyPhonePage() {
     const router = useRouter();
     const [phoneNumber, setPhoneNumber] = useState('');

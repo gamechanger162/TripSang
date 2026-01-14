@@ -9,6 +9,9 @@ import ChatRoom from '@/components/ChatRoom';
 import GoogleAd from '@/components/GoogleAd';
 import toast from 'react-hot-toast';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 interface TripDetails {
     _id: string;
     title: string;
