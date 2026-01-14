@@ -13,6 +13,9 @@ const httpServer = createServer(app);
 // CORS Configuration
 const allowedOrigins = [
     process.env.CLIENT_URL,
+    'https://tripsang.com',
+    'https://www.tripsang.com',
+    'https://tripsang.netlify.app',
     'http://localhost:3000',
     'http://localhost:3001'
 ].filter(Boolean); // Remove undefined values
