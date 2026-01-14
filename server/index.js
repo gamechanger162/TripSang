@@ -93,13 +93,15 @@ app.get('/health', (req, res) => {
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import tripRoutes from './routes/trips.js';
+import paymentRoutes from './routes/payments.js';
 
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/trips', tripRoutes);
-// app.use('/api/payments', paymentRoutes); // TODO: Add payment routes
+app.use('/api/payments', paymentRoutes);
 // app.use('/api/users', userRoutes); // TODO: Add user profile routes
+
 
 
 // 404 Handler
