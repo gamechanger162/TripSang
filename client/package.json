@@ -6,7 +6,6 @@
     "scripts": {
         "dev": "next dev",
         "build": "next build",
-        "netlify-build": "node build-netlify.js",
         "start": "next start",
         "lint": "next lint"
     },
