@@ -118,10 +118,7 @@ const paymentSchema = new mongoose.Schema({
         generatedAt: Date
     },
     // Webhook data from Razorpay
-    webhookData: {
-        type: mongoose.Schema.Mixed,
-        default: null
-    },
+    webhookData: mongoose.Schema.Types.Mixed,
     // Payment date tracking
     initiatedAt: {
         type: Date,
