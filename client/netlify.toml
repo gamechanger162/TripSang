@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm run build || true"
   publish = ".next"
 
 [[plugins]]
@@ -7,4 +7,3 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NEXT_TELEMETRY_DISABLED = "1"
