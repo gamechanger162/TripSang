@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 }
 
 import Providers from '@/components/Providers';
+import Navbar from '@/components/Navbar';
 
 export default function RootLayout({
     children,
@@ -25,6 +26,7 @@ export default function RootLayout({
         <html lang="en">
             <body>
                 <Providers>
+                    <Navbar />
                     {children}
                     <ToasterProvider />
                 </Providers>
