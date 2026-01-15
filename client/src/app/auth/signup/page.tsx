@@ -30,16 +30,39 @@ export default function SignUpPage() {
     });
 
     useEffect(() => {
-        // Initialize Recaptcha
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                'size': 'invisible',
-                'callback': (response: any) => {
-                    // reCAPTCHA solved
+        // Cleanup function to reset recaptcha on unmount
+        return () => {
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                } catch (e) {
+                    console.log('Recaptcha cleanup error:', e);
                 }
-            });
-        }
+                window.recaptchaVerifier = null;
+            }
+        };
     }, []);
+
+    const initializeRecaptcha = () => {
+        if (!window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'normal',
+                    'callback': (response: any) => {
+                        console.log('reCAPTCHA solved');
+                    },
+                    'expired-callback': () => {
+                        console.log('reCAPTCHA expired');
+                        toast.error('reCAPTCHA expired. Please try again.');
+                    }
+                });
+                window.recaptchaVerifier.render();
+            } catch (error: any) {
+                console.error('Recaptcha initialization error:', error);
+                toast.error('Failed to initialize verification. Please refresh the page.');
+            }
+        }
+    };
 
     const handleSendOTP = async () => {
         if (!formData.mobileNumber) {
@@ -53,22 +76,46 @@ export default function SignUpPage() {
             return;
         }
 
+        // Initialize recaptcha when user clicks verify
+        initializeRecaptcha();
+
         setVerifyingPhone(true);
-        const appVerifier = window.recaptchaVerifier;
 
         try {
+            if (!window.recaptchaVerifier) {
+                throw new Error('Recaptcha not initialized');
+            }
+
+            const appVerifier = window.recaptchaVerifier;
             const confirmation = await signInWithPhoneNumber(auth, formData.mobileNumber, appVerifier);
             setConfirmationResult(confirmation);
             setOtpSent(true);
             toast.success('OTP sent to your phone');
         } catch (error: any) {
-            console.error(error);
-            toast.error('Error sending OTP: ' + error.message);
-            // Reset recaptcha
+            console.error('OTP sending error:', error);
+            let errorMessage = 'Error sending OTP';
+
+            // Better error messages
+            if (error.code === 'auth/invalid-phone-number') {
+                errorMessage = 'Invalid phone number format';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = 'Too many requests. Please try again later.';
+            } else if (error.code === 'auth/captcha-check-failed') {
+                errorMessage = 'Captcha verification failed. Please try again.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            toast.error(errorMessage);
+
+            // Reset recaptcha on error
             if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.render().then((widgetId: any) => {
-                    window.recaptchaVerifier.reset(widgetId);
-                });
+                try {
+                    window.recaptchaVerifier.clear();
+                    window.recaptchaVerifier = null;
+                } catch (e) {
+                    console.log('Recaptcha reset error:', e);
+                }
             }
         } finally {
             setVerifyingPhone(false);
@@ -76,14 +123,24 @@ export default function SignUpPage() {
     };
 
     const handleVerifyOTP = async () => {
+        if (!otp || otp.length !== 6) {
+            toast.error('Please enter a valid 6-digit OTP');
+            return;
+        }
+
         setVerifyingPhone(true);
         try {
             await confirmationResult.confirm(otp);
             setIsPhoneVerified(true);
-            setOtpSent(false); // Hide OTP field
+            setOtpSent(false);
             toast.success('Phone verified successfully!');
-        } catch (error) {
-            toast.error('Invalid OTP');
+        } catch (error: any) {
+            console.error('OTP verification error:', error);
+            if (error.code === 'auth/invalid-verification-code') {
+                toast.error('Invalid OTP. Please check and try again.');
+            } else {
+                toast.error('Verification failed. Please try again.');
+            }
         } finally {
             setVerifyingPhone(false);
         }
@@ -97,7 +154,7 @@ export default function SignUpPage() {
             return;
         }
 
-        // Ensure user verified phone if they entered one (optional but recommended)
+        // Ensure user verified phone if they entered one
         if (formData.mobileNumber && !isPhoneVerified) {
             toast.error('Please verify your phone number first');
             return;
@@ -229,7 +286,7 @@ export default function SignUpPage() {
                                     required
                                     disabled={isPhoneVerified}
                                     className={`appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm ${isPhoneVerified ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    placeholder="Mobile (+91...)"
+                                    placeholder="Mobile (+919876543210)"
                                     value={formData.mobileNumber}
                                     onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                                 />
@@ -238,7 +295,7 @@ export default function SignUpPage() {
                                         type="button"
                                         onClick={handleSendOTP}
                                         disabled={verifyingPhone || !formData.mobileNumber}
-                                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-sm whitespace-nowrap"
+                                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-sm whitespace-nowrap disabled:opacity-50"
                                     >
                                         {verifyingPhone ? 'Sending...' : 'Verify'}
                                     </button>
@@ -249,26 +306,34 @@ export default function SignUpPage() {
                                     </span>
                                 )}
                             </div>
-                            <div id="recaptcha-container"></div>
+
+                            {/* Recaptcha Container - Only shown when needed */}
+                            {!otpSent && !isPhoneVerified && (
+                                <div id="recaptcha-container" className="flex justify-center"></div>
+                            )}
 
                             {/* OTP Input */}
                             {otpSent && !isPhoneVerified && (
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter OTP"
-                                        className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        value={otp}
-                                        onChange={(e) => setOtp(e.target.value)}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleVerifyOTP}
-                                        disabled={verifyingPhone}
-                                        className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm"
-                                    >
-                                        Confirm
-                                    </button>
+                                <div className="space-y-2">
+                                    <p className="text-sm text-gray-300">Enter the 6-digit OTP sent to your phone:</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Enter OTP"
+                                            maxLength={6}
+                                            className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            value={otp}
+                                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleVerifyOTP}
+                                            disabled={verifyingPhone || otp.length !== 6}
+                                            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm disabled:opacity-50"
+                                        >
+                                            {verifyingPhone ? 'Verifying...' : 'Confirm'}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
@@ -332,11 +397,6 @@ export default function SignUpPage() {
                     </p>
                 </div>
             </div>
-            {/* Declare global type for recaptcha */}
-            <script dangerouslySetInnerHTML={{
-                __html: `
-                window.recaptchaVerifier = window.recaptchaVerifier || null;
-            `}} />
         </div>
     );
 }
