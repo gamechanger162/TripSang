@@ -8,15 +8,6 @@ export const createTrip = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // Check if user's mobile is verified (IMPORTANT REQUIREMENT)
-        if (!req.user.isMobileVerified) {
-            return res.status(403).json({
-                success: false,
-                message: 'Mobile verification required. Please verify your mobile number before creating a trip.',
-                requiresVerification: true
-            });
-        }
-
         const {
             title,
             description,

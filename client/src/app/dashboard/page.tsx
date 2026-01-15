@@ -78,16 +78,39 @@ export default function UserDashboard() {
                                             {session.user.name}
                                         </h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">{session.user.email}</p>
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${session.user.role === 'admin'
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${session.user.role === 'admin'
                                                 ? 'bg-purple-100 text-purple-800'
                                                 : 'bg-green-100 text-green-800'
-                                            }`}>
-                                            {session.user.role}
-                                        </span>
+                                                }`}>
+                                                {session.user.role}
+                                            </span>
+                                            {session.user.isMobileVerified && (
+                                                <span className="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Verified
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
+                            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3 space-y-2">
+                                {!session.user.isMobileVerified && (
+                                    <div>
+                                        <Link
+                                            href="/verify"
+                                            className="font-medium text-blue-600 hover:text-blue-500 flex items-center gap-2"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Verify Phone Number
+                                        </Link>
+                                    </div>
+                                )}
                                 <div className="text-sm">
                                     <Link href="/profile/edit" className="font-medium text-primary-600 hover:text-primary-500">
                                         Edit profile (Coming Soon)
