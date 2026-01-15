@@ -72,14 +72,7 @@ export default function CreateTripPage() {
             router.push('/auth/signin?callbackUrl=/trips/create');
             return;
         }
-
-        // Check if mobile is verified
-        if (session && !session.user.isMobileVerified) {
-            toast.error('Please verify your phone number to create trips');
-            router.push('/verify');
-            return;
-        }
-    }, [status, session, router]);
+    }, [status, router]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -234,8 +227,8 @@ export default function CreateTripPage() {
         );
     }
 
-    // Don't render form if not authenticated or not verified
-    if (status === 'unauthenticated' || (session && !session.user.isMobileVerified)) {
+    // Don't render form if not authenticated
+    if (status === 'unauthenticated') {
         return null;
     }
 

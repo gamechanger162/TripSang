@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { ConfirmationResult } from 'firebase/auth';
 import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
@@ -12,49 +13,64 @@ export const dynamic = 'force-dynamic';
 
 export default function VerifyPhonePage() {
     const router = useRouter();
+    const { data: session, status } = useSession();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [otp, setOtp] = useState('');
     const [step, setStep] = useState<'phone' | 'otp'>('phone');
     const [loading, setLoading] = useState(false);
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-    const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
-    // Initialize reCAPTCHA
+    // Check auth
     useEffect(() => {
-        if (typeof window === 'undefined') return;
+        if (status === 'unauthenticated') {
+            toast.error('Please login first');
+            router.push('/auth/signin');
+        }
+    }, [status, router]);
 
-        // Create invisible reCAPTCHA
-        const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {
-                console.log('reCAPTCHA solved');
-            },
-            'expired-callback': () => {
-                toast.error('reCAPTCHA expired. Please try again.');
-            },
-        });
-
-        setRecaptchaVerifier(verifier);
-
+    // Cleanup
+    useEffect(() => {
         return () => {
-            verifier.clear();
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                } catch (e) {
+                    console.log('Recaptcha cleanup error:', e);
+                }
+                window.recaptchaVerifier = null;
+            }
         };
     }, []);
 
+    const initializeRecaptcha = () => {
+        if (!window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'normal',
+                    'callback': (response: any) => {
+                        console.log('reCAPTCHA solved');
+                    },
+                    'expired-callback': () => {
+                        toast.error('reCAPTCHA expired. Please try again.');
+                    }
+                });
+                window.recaptchaVerifier.render();
+            } catch (error: any) {
+                console.error('Recaptcha initialization error:', error);
+                toast.error('Failed to initialize verification. Please refresh the page.');
+            }
+        }
+    };
+
     // Format phone number with country code
     const formatPhoneNumber = (phone: string): string => {
-        // Remove any non-digit characters
         const cleaned = phone.replace(/\D/g, '');
-
-        // Add +91 if not present (Indian numbers)
         if (!cleaned.startsWith('91') && cleaned.length === 10) {
             return '+91' + cleaned;
         }
-
         if (!cleaned.startsWith('+')) {
             return '+' + cleaned;
         }
-
         return cleaned;
     };
 
@@ -67,21 +83,23 @@ export default function VerifyPhonePage() {
             return;
         }
 
-        if (!recaptchaVerifier) {
-            toast.error('reCAPTCHA not initialized. Please refresh the page.');
-            return;
-        }
+        // Initialize recaptcha when user clicks
+        initializeRecaptcha();
 
         setLoading(true);
 
         try {
+            if (!window.recaptchaVerifier) {
+                throw new Error('Recaptcha not initialized');
+            }
+
             const formattedPhone = formatPhoneNumber(phoneNumber);
             console.log('Sending OTP to:', formattedPhone);
 
             const confirmation = await signInWithPhoneNumber(
                 auth,
                 formattedPhone,
-                recaptchaVerifier
+                window.recaptchaVerifier
             );
 
             setConfirmationResult(confirmation);
@@ -90,22 +108,29 @@ export default function VerifyPhonePage() {
         } catch (error: any) {
             console.error('Error sending OTP:', error);
 
-            let errorMessage = 'Failed to send OTP. Please try again.';
+            let errorMessage = 'Failed to send OTP';
 
             if (error.code === 'auth/invalid-phone-number') {
                 errorMessage = 'Invalid phone number format';
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = 'Too many requests. Please try again later.';
+            } else if (error.code === 'auth/captcha-check-failed') {
+                errorMessage = 'Captcha verification failed. Please try again.';
+            } else if (error.message) {
+                errorMessage = error.message;
             }
 
             toast.error(errorMessage);
 
             // Reset reCAPTCHA
-            recaptchaVerifier?.clear();
-            const newVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                size: 'invisible',
-            });
-            setRecaptchaVerifier(newVerifier);
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                    window.recaptchaVerifier = null;
+                } catch (e) {
+                    console.log('Recaptcha reset error:', e);
+                }
+            }
         } finally {
             setLoading(false);
         }
@@ -138,15 +163,16 @@ export default function VerifyPhonePage() {
             try {
                 const response = await authAPI.verifyMobile({
                     mobileNumber: formatPhoneNumber(phoneNumber),
-                    verificationCode: otp, // Backend might not use this, but sending anyway
+                    verificationCode: otp,
                 });
 
                 if (response.success) {
-                    toast.success('Phone number verified successfully!');
+                    toast.success('Phone number verified successfully! You now have the Verified badge.');
 
-                    // Redirect to dashboard or home
+                    // Redirect to dashboard
                     setTimeout(() => {
                         router.push('/dashboard');
+                        router.refresh();
                     }, 1500);
                 } else {
                     toast.error(response.message || 'Failed to save verification to backend');
@@ -177,11 +203,27 @@ export default function VerifyPhonePage() {
         setStep('phone');
         setOtp('');
         setConfirmationResult(null);
+        if (window.recaptchaVerifier) {
+            try {
+                window.recaptchaVerifier.clear();
+                window.recaptchaVerifier = null;
+            } catch (e) {
+                console.log('Recaptcha clear error:', e);
+            }
+        }
         toast('Ready to resend OTP', { icon: '📱' });
     };
 
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4 pt-20">
             <div className="card max-w-md w-full">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 text-primary-600 rounded-full mb-4">
@@ -195,7 +237,7 @@ export default function VerifyPhonePage() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
                     </div>
@@ -204,7 +246,7 @@ export default function VerifyPhonePage() {
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400">
                         {step === 'phone'
-                            ? 'Enter your phone number to receive an OTP'
+                            ? 'Get a verified badge on your profile'
                             : 'Enter the 6-digit code sent to your phone'}
                     </p>
                 </div>
@@ -229,6 +271,9 @@ export default function VerifyPhonePage() {
                                 Enter 10-digit mobile number (Indian numbers)
                             </p>
                         </div>
+
+                        {/* Recaptcha Container */}
+                        <div id="recaptcha-container" className="flex justify-center"></div>
 
                         <button
                             type="submit"
@@ -288,8 +333,8 @@ export default function VerifyPhonePage() {
 
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="btn-primary w-full"
+                            disabled={loading || otp.length !== 6}
+                            className="btn-primary w-full disabled:opacity-50"
                         >
                             {loading ? 'Verifying...' : 'Verify OTP'}
                         </button>
@@ -305,9 +350,6 @@ export default function VerifyPhonePage() {
                     </form>
                 )}
 
-                {/* Invisible reCAPTCHA container */}
-                <div id="recaptcha-container" />
-
                 <div className="mt-6 text-center">
                     <button
                         onClick={() => router.push('/dashboard')}
@@ -319,4 +361,10 @@ export default function VerifyPhonePage() {
             </div>
         </div>
     );
+}
+
+declare global {
+    interface Window {
+        recaptchaVerifier: any;
+    }
 }
