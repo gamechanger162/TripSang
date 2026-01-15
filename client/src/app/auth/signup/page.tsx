@@ -128,7 +128,7 @@ export default function SignUpPage() {
                     toast.error('Login failed. Please sign in manually.');
                     router.push('/auth/signin');
                 } else {
-                    router.push('/');
+                    router.push('/payment/signup');
                     router.refresh();
                 }
             }

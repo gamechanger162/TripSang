@@ -362,9 +362,49 @@ export const adminAPI = {
     },
 };
 
+// ========================================
+// PAYMENT APIs
+// ========================================
+
+export const paymentAPI = {
+    /**
+     * Create Razorpay Order for Signup Fee
+     * POST /api/payments/create-order
+     */
+    createSignupOrder: async () => {
+        return fetchWithAuth('/api/payments/create-order', {
+            method: 'POST',
+        });
+    },
+
+    /**
+     * Verify Razorpay Payment
+     * POST /api/payments/verify-payment
+     */
+    verifyPayment: async (data: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+    }) => {
+        return fetchWithAuth('/api/payments/verify-payment', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    /**
+     * Get My Payments
+     * GET /api/payments/my-payments
+     */
+    getMyPayments: async () => {
+        return fetchWithAuth('/api/payments/my-payments');
+    }
+};
+
 // Export all APIs
 export default {
     authAPI,
     tripAPI,
     adminAPI,
+    paymentAPI,
 };
