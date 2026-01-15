@@ -3,9 +3,11 @@
  * Ready-to-use functions for calling backend APIs from Next.js frontend
  */
 
+import { getSession } from 'next-auth/react';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// Helper to get token from localStorage
+// Helper to get token from localStorage (fallback for direct API usage)
 const getToken = () => {
     if (typeof window !== 'undefined') {
         return localStorage.getItem('token');
@@ -29,7 +31,18 @@ const removeToken = () => {
 
 // Helper to make authenticated requests
 const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
-    const token = getToken();
+    // Try to get token from NextAuth session first
+    let token = null;
+
+    if (typeof window !== 'undefined') {
+        const session = await getSession();
+        if (session?.user?.accessToken) {
+            token = session.user.accessToken;
+        } else {
+            // Fallback to localStorage (for backward compatibility)
+            token = getToken();
+        }
+    }
 
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
