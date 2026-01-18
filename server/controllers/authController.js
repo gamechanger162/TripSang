@@ -7,7 +7,7 @@ import { generateToken } from '../utils/jwt.js';
  */
 export const register = async (req, res) => {
     try {
-        const { name, email, password, mobileNumber } = req.body;
+        const { name, email, password, mobileNumber, profilePicture, gender, authProvider } = req.body;
 
         // Validation
         if (!name || !email || !password) {
@@ -41,13 +41,25 @@ export const register = async (req, res) => {
         const config = await GlobalConfig.getInstance();
 
         // Create user
-        const user = await User.create({
+        const userData = {
             name,
             email,
             password, // Will be auto-hashed by pre-save hook
             mobileNumber: mobileNumber || undefined,
-            role: 'user'
-        });
+            role: 'user',
+            gender: gender || 'prefer-not-to-say'
+        };
+
+        if (profilePicture) {
+            userData.profilePicture = profilePicture;
+        }
+
+        // If registering via Google, mark email as verified
+        if (authProvider === 'google') {
+            userData.isEmailVerified = true;
+        }
+
+        const user = await User.create(userData);
 
         // Generate token
         const token = generateToken({ userId: user._id });
@@ -74,7 +86,8 @@ export const register = async (req, res) => {
             isMobileVerified: user.isMobileVerified,
             isEmailVerified: user.isEmailVerified,
             badges: user.badges,
-            createdAt: user.createdAt
+            createdAt: user.createdAt,
+            gender: user.gender
         };
 
         res.status(201).json({
@@ -178,7 +191,8 @@ export const login = async (req, res) => {
             profilePicture: user.profilePicture,
             bio: user.bio,
             location: user.location,
-            createdAt: user.createdAt
+            createdAt: user.createdAt,
+            gender: user.gender
         };
 
         res.status(200).json({
@@ -193,6 +207,100 @@ export const login = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Login failed. Please try again.',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Check if email exists (for OAuth)
+ * POST /api/auth/check-email
+ */
+export const checkEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required.'
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        res.status(200).json({
+            success: true,
+            exists: !!user
+        });
+    } catch (error) {
+        console.error('Check email error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to check email.',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Login with Google
+ * POST /api/auth/google-login
+ */
+export const googleLogin = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required.'
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found.'
+            });
+        }
+
+        // Check if account is active
+        if (!user.isActive) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been deactivated. Please contact support.'
+            });
+        }
+
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+
+        // Generate token
+        const token = generateToken({ userId: user._id });
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful.',
+            token,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isMobileVerified: user.isMobileVerified,
+                profilePicture: user.profilePicture,
+                gender: user.gender
+            }
+        });
+    } catch (error) {
+        console.error('Google login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Google login failed.',
             error: error.message
         });
     }
@@ -236,11 +344,6 @@ export const verifyMobile = async (req, res) => {
                 message: 'This mobile number is already registered to another account.'
             });
         }
-
-        // TODO: In production, verify the code with Firebase or SMS service
-        // For now, we'll accept any non-empty verification code
-        // Example Firebase verification:
-        // const isCodeValid = await firebaseAdmin.auth().verifyPhoneNumber(mobileNumber, verificationCode);
 
         if (!verificationCode) {
             return res.status(400).json({

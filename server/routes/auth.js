@@ -2,6 +2,8 @@ import express from 'express';
 import {
     register,
     login,
+    checkEmail,
+    googleLogin,
     verifyMobile,
     getCurrentUser,
     logout
@@ -23,6 +25,20 @@ router.post('/register', register);
  * @access  Public
  */
 router.post('/login', login);
+
+/**
+ * @route   POST /api/auth/check-email
+ * @desc    Check if email exists
+ * @access  Public
+ */
+router.post('/check-email', checkEmail);
+
+/**
+ * @route   POST /api/auth/google-login
+ * @desc    Login with Google
+ * @access  Public
+ */
+router.post('/google-login', googleLogin);
 
 /**
  * @route   POST /api/auth/verify-mobile
