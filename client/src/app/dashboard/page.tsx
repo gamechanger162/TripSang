@@ -98,10 +98,11 @@ export default function UserDashboard() {
                                 </div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3 space-y-2">
+                                {/* Phone Verification - Temporarily disabled due to Firebase billing requirement
                                 {!session.user.isMobileVerified && (
                                     <div>
-                                        <Link
-                                            href="/verify"
+                                        <Link 
+                                            href="/verify" 
                                             className="font-medium text-blue-600 hover:text-blue-500 flex items-center gap-2"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,6 +112,7 @@ export default function UserDashboard() {
                                         </Link>
                                     </div>
                                 )}
+                                */}
                                 <div className="text-sm">
                                     <Link href="/profile/edit" className="font-medium text-primary-600 hover:text-primary-500">
                                         Edit profile (Coming Soon)

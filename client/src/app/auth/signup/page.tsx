@@ -154,11 +154,13 @@ export default function SignUpPage() {
             return;
         }
 
-        // Ensure user verified phone if they entered one
+        // Phone verification temporarily disabled
+        /*
         if (formData.mobileNumber && !isPhoneVerified) {
             toast.error('Please verify your phone number first');
             return;
         }
+        */
 
         setLoading(true);
 
@@ -277,7 +279,7 @@ export default function SignUpPage() {
                                 />
                             </div>
 
-                            {/* Phone Input */}
+                            {/* Phone Verification Field - Temporarily disabled due to Firebase billing
                             <div className="flex gap-2">
                                 <input
                                     id="mobileNumber"
@@ -307,12 +309,8 @@ export default function SignUpPage() {
                                 )}
                             </div>
 
-                            {/* Recaptcha Container - Only shown when needed */}
-                            {!otpSent && !isPhoneVerified && (
-                                <div id="recaptcha-container" className="flex justify-center"></div>
-                            )}
+                            <div id="recaptcha-container" className="flex justify-center"></div>
 
-                            {/* OTP Input */}
                             {otpSent && !isPhoneVerified && (
                                 <div className="space-y-2">
                                     <p className="text-sm text-gray-300">Enter the 6-digit OTP sent to your phone:</p>
@@ -336,6 +334,7 @@ export default function SignUpPage() {
                                     </div>
                                 </div>
                             )}
+                            */}
 
                             <div>
                                 <label htmlFor="email-address" className="sr-only">Email address</label>
