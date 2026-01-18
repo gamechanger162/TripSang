@@ -27,6 +27,7 @@ export default function SignUpPage() {
         password: '',
         confirmPassword: '',
         mobileNumber: '',
+        gender: 'prefer-not-to-say',
     });
 
     useEffect(() => {
@@ -171,6 +172,7 @@ export default function SignUpPage() {
                 email: formData.email,
                 password: formData.password,
                 mobileNumber: formData.mobileNumber,
+                gender: formData.gender,
             });
 
             if (registerResponse.success) {
@@ -374,6 +376,23 @@ export default function SignUpPage() {
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                 />
+                            </div>
+
+                            {/* Gender Selection */}
+                            <div>
+                                <label htmlFor="gender" className="sr-only">Gender</label>
+                                <select
+                                    id="gender"
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                    className="appearance-none relative block w-full px-4 py-3 border border-gray-600 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
+                                >
+                                    <option value="prefer-not-to-say">Prefer not to say</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="transgender">Transgender</option>
+                                </select>
                             </div>
                         </div>
 

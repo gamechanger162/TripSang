@@ -20,6 +20,7 @@ interface TripCardProps {
             name: string;
             profilePicture?: string;
             badges?: string[];
+            gender?: string;
         };
         currentSquadSize?: number;
         maxSquadSize?: number;
@@ -73,6 +74,24 @@ export default function TripCard({ trip }: TripCardProps) {
             default:
                 return 'bg-gray-100 text-gray-800';
         }
+    };
+
+    const getGenderIcon = (gender?: string) => {
+        switch (gender) {
+            case 'male':
+                return '♂';
+            case 'female':
+                return '♀';
+            case 'transgender':
+                return '⚧';
+            default:
+                return null;
+        }
+    };
+
+    const formatGender = (gender?: string) => {
+        if (!gender || gender === 'prefer-not-to-say') return null;
+        return gender.charAt(0).toUpperCase() + gender.slice(1);
     };
 
     return (
@@ -224,7 +243,14 @@ export default function TripCard({ trip }: TripCardProps) {
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">{trip.creator.name}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                                    {trip.creator.name}
+                                    {getGenderIcon(trip.creator.gender) && (
+                                        <span className="text-gray-500 dark:text-gray-400" title={formatGender(trip.creator.gender) || ''}>
+                                            {getGenderIcon(trip.creator.gender)}
+                                        </span>
+                                    )}
+                                </p>
                                 {trip.creator.badges && trip.creator.badges.length > 0 && (
                                     <p className="text-xs text-gray-500">{trip.creator.badges[0]}</p>
                                 )}

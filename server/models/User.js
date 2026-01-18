@@ -65,6 +65,14 @@ const userSchema = new mongoose.Schema({
         maxlength: [500, 'Bio cannot exceed 500 characters'],
         default: ''
     },
+    gender: {
+        type: String,
+        enum: {
+            values: ['male', 'female', 'transgender', 'prefer-not-to-say'],
+            message: 'Gender must be male, female, transgender, or prefer-not-to-say'
+        },
+        default: 'prefer-not-to-say'
+    },
     location: {
         city: String,
         country: String

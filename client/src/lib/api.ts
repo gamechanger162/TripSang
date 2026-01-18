@@ -81,6 +81,7 @@ export const authAPI = {
         email: string;
         password: string;
         mobileNumber?: string;
+        gender?: string;
     }) => {
         const response = await fetchWithAuth('/api/auth/register', {
             method: 'POST',
@@ -409,8 +410,9 @@ export const paymentAPI = {
      * Get My Payments
      * GET /api/payments/my-payments
      */
-    return fetchWithAuth('/api/payments/my-payments');
-}
+    getMyPayments: async () => {
+        return fetchWithAuth('/api/payments/my-payments');
+    }
 };
 
 // ========================================
