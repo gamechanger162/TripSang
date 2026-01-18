@@ -65,8 +65,24 @@ export default function TripDetailsPage() {
     const [liked, setLiked] = useState(false);
 
     const userId = session?.user?.id;
-    const isCreator = trip?.creator?._id?.toString() === userId?.toString();
-    const isSquadMember = isCreator || trip?.squadMembers.some((member) => member._id?.toString() === userId?.toString()) || false;
+
+    // Debug logging
+    useEffect(() => {
+        if (trip && session) {
+            console.log('--- Debug Squad Membership ---');
+            console.log('Current User ID:', userId);
+            console.log('Trip Creator ID:', trip.creator._id);
+            console.log('Squad Members:', trip.squadMembers);
+            console.log('Is Creator:', trip.creator._id.toString() === userId?.toString());
+        }
+    }, [trip, session, userId]);
+
+    const isCreator = Boolean(userId && trip?.creator?._id && trip.creator._id.toString() === userId?.toString());
+
+    const isSquadMember = isCreator || (Boolean(userId && trip?.squadMembers) && trip.squadMembers.some((member) => {
+        const memberId = (member as any)._id || member; // Handle populated or unpopulated
+        return memberId && memberId.toString() === userId?.toString();
+    })) || false;
     const isSquadFull = (trip?.currentSquadSize || 0) >= (trip?.maxSquadSize || 0);
 
     // Fetch trip details
