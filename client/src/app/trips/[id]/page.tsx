@@ -64,8 +64,9 @@ export default function TripDetailsPage() {
     const [joining, setJoining] = useState(false);
     const [liked, setLiked] = useState(false);
 
-    const isCreator = session?.user?.id === trip?.creator._id;
-    const isSquadMember = isCreator || trip?.squadMembers.some((member) => member._id === session?.user?.id) || false;
+    const userId = session?.user?.id;
+    const isCreator = trip?.creator?._id?.toString() === userId?.toString();
+    const isSquadMember = isCreator || trip?.squadMembers.some((member) => member._id?.toString() === userId?.toString()) || false;
     const isSquadFull = (trip?.currentSquadSize || 0) >= (trip?.maxSquadSize || 0);
 
     // Fetch trip details
