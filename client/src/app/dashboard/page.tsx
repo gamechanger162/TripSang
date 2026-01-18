@@ -2,8 +2,11 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { reviewAPI } from '@/lib/api';
+import ReviewModal from '@/components/ReviewModal';
+import toast from 'react-hot-toast';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -11,12 +14,46 @@ export const dynamic = 'force-dynamic';
 export default function UserDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(true);
+    const [reviewModalOpen, setReviewModalOpen] = useState(false);
+    const [selectedReview, setSelectedReview] = useState<any>(null);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.push('/auth/signin');
         }
     }, [status, router]);
+
+    useEffect(() => {
+        if (status === 'authenticated') {
+            fetchPendingReviews();
+        }
+    }, [status]);
+
+    const fetchPendingReviews = async () => {
+        try {
+            setLoadingReviews(true);
+            const response = await reviewAPI.getPending();
+            if (response.success) {
+                setPendingReviews(response.pendingReviews || []);
+            }
+        } catch (error) {
+            console.error('Error fetching pending reviews:', error);
+        } finally {
+            setLoadingReviews(false);
+        }
+    };
+
+    const handleReviewClick = (review: any) => {
+        setSelectedReview(review);
+        setReviewModalOpen(true);
+    };
+
+    const handleReviewSubmitted = () => {
+        fetchPendingReviews(); // Refresh the list
+        toast.success('Thank you for your review!');
+    };
 
     if (status === 'loading') {
         return (
@@ -98,21 +135,6 @@ export default function UserDashboard() {
                                 </div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3 space-y-2">
-                                {/* Phone Verification - Temporarily disabled due to Firebase billing requirement
-                                {!session.user.isMobileVerified && (
-                                    <div>
-                                        <Link 
-                                            href="/verify" 
-                                            className="font-medium text-blue-600 hover:text-blue-500 flex items-center gap-2"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Verify Phone Number
-                                        </Link>
-                                    </div>
-                                )}
-                                */}
                                 <div className="text-sm">
                                     <Link href="/profile/edit" className="font-medium text-primary-600 hover:text-primary-500">
                                         Edit profile (Coming Soon)
@@ -122,8 +144,55 @@ export default function UserDashboard() {
                         </div>
                     </div>
 
-                    {/* Right Column: Trips & Activity */}
+                    {/* Right Column: Pending Reviews & Activity */}
                     <div className="col-span-1 lg:col-span-2 space-y-6">
+                        {/* Pending Reviews */}
+                        {!loadingReviews && pendingReviews.length > 0 && (
+                            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                            Pending Reviews
+                                        </h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Rate your recent travel companions
+                                        </p>
+                                    </div>
+                                    <span className="px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">
+                                        {pendingReviews.length} pending
+                                    </span>
+                                </div>
+                                <div className="p-4 space-y-3">
+                                    {pendingReviews.slice(0, 5).map((review) => (
+                                        <div
+                                            key={`${review.trip._id}-${review.traveler._id}`}
+                                            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center">
+                                                    {review.traveler.profilePicture ? (
+                                                        <img src={review.traveler.profilePicture} alt={review.traveler.name} className="w-full h-full rounded-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-white font-semibold text-lg">{review.traveler.name[0]}</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900 dark:text-white">{review.traveler.name}</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{review.trip.title}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleReviewClick(review)}
+                                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                            >
+                                                Review
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* My Trips */}
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
                             <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
@@ -149,6 +218,20 @@ export default function UserDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Review Modal */}
+            {selectedReview && (
+                <ReviewModal
+                    isOpen={reviewModalOpen}
+                    onClose={() => {
+                        setReviewModalOpen(false);
+                        setSelectedReview(null);
+                    }}
+                    tripId={selectedReview.trip._id}
+                    traveler={selectedReview.traveler}
+                    onReviewSubmitted={handleReviewSubmitted}
+                />
+            )}
         </div>
     );
 }
