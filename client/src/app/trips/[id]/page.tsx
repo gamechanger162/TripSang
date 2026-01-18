@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { tripAPI } from '@/lib/api';
 import ChatRoom from '@/components/ChatRoom';
 import GoogleAd from '@/components/GoogleAd';
@@ -334,7 +335,10 @@ export default function TripDetailsPage() {
                         {/* Host Info */}
                         <div className="card">
                             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Host</h3>
-                            <div className="flex items-start space-x-4">
+                            <Link
+                                href={`/profile/${trip.creator._id}`}
+                                className="flex items-start space-x-4 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 -m-3 rounded-lg transition-colors"
+                            >
                                 <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden flex-shrink-0">
                                     {trip.creator.profilePicture ? (
                                         <Image
@@ -351,7 +355,9 @@ export default function TripDetailsPage() {
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="font-semibold text-gray-900 dark:text-white">{trip.creator.name}</h4>
+                                    <h4 className="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                                        {trip.creator.name}
+                                    </h4>
                                     {trip.creator.badges && trip.creator.badges.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {trip.creator.badges.map((badge, index) => (
@@ -365,7 +371,7 @@ export default function TripDetailsPage() {
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{trip.creator.bio}</p>
                                     )}
                                 </div>
-                            </div>
+                            </Link>
                         </div>
 
                         {/* Squad Info */}
@@ -392,7 +398,11 @@ export default function TripDetailsPage() {
                             {trip.squadMembers.length > 0 && (
                                 <div className="space-y-2 mb-4">
                                     {trip.squadMembers.slice(0, 5).map((member) => (
-                                        <div key={member._id} className="flex items-center space-x-2">
+                                        <Link
+                                            key={member._id}
+                                            href={`/profile/${member._id}`}
+                                            className="flex items-center space-x-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors cursor-pointer"
+                                        >
                                             <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
                                                 {member.profilePicture ? (
                                                     <Image
@@ -408,8 +418,10 @@ export default function TripDetailsPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-sm text-gray-700 dark:text-gray-300">{member.name}</span>
-                                        </div>
+                                            <span className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                                                {member.name}
+                                            </span>
+                                        </Link>
                                     ))}
                                     {trip.squadMembers.length > 5 && (
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
