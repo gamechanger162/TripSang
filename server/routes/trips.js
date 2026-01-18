@@ -15,10 +15,10 @@ const router = express.Router();
 
 /**
  * @route   POST /api/trips/create
- * @desc    Create a new trip (REQUIRES mobile verification)
- * @access  Private (Mobile verified users only)
+ * @desc    Create a new trip
+ * @access  Private
  */
-router.post('/create', authenticate, requireMobileVerification, createTrip);
+router.post('/create', authenticate, createTrip);
 
 /**
  * @route   GET /api/trips/search
