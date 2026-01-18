@@ -5,22 +5,24 @@
 
 import User from './User.js';
 import Trip from './Trip.js';
-import GlobalConfig from './GlobalConfig.js';
 import Payment from './Payment.js';
+import GlobalConfig from './GlobalConfig.js';
 import Review from './Review.js';
+import Message from './Message.js';
+import Announcement from './Announcement.js';
 
 export {
     User,
     Trip,
-    GlobalConfig,
     Payment,
-    Review
+    GlobalConfig,
+    Review,
+    Message,
+    Announcement
 };
 
 export default {
     User,
     Trip,
-    GlobalConfig,
-    Payment,
     Review
 };

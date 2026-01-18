@@ -66,15 +66,96 @@ const connectDB = async () => {
     }
 };
 
+import jwt from 'jsonwebtoken';
+import { Message, User } from './models/index.js';
+
+// Socket.io Middleware for Authentication
+io.use(async (socket, next) => {
+    try {
+        const token = socket.handshake.auth.token;
+
+        if (!token) {
+            return next(new Error('Authentication error: No token provided'));
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId).select('name _id');
+
+        if (!user) {
+            return next(new Error('Authentication error: User not found'));
+        }
+
+        socket.user = user;
+        next();
+    } catch (err) {
+        return next(new Error('Authentication error: Invalid token'));
+    }
+});
+
 // Socket.io Connection Handler
 io.on('connection', (socket) => {
-    console.log('🔌 New client connected:', socket.id);
+    console.log(`🔌 Client connected: ${socket.user.name} (${socket.id})`);
 
-    socket.on('disconnect', () => {
-        console.log('🔌 Client disconnected:', socket.id);
+    // Join Room Event
+    socket.on('join_room', async ({ tripId }) => {
+        try {
+            if (!tripId) return;
+
+            socket.join(tripId);
+            console.log(`👤 ${socket.user.name} joined room: ${tripId}`);
+
+            // Fetch chat history
+            const history = await Message.find({ tripId })
+                .sort({ timestamp: 1 })
+                .limit(50); // Limit to last 50 messages
+
+            // Send history to user
+            socket.emit('message_history', history);
+
+            // Notify others in room
+            socket.to(tripId).emit('user_joined', { userName: socket.user.name });
+
+        } catch (error) {
+            console.error('Join room error:', error);
+        }
     });
 
-    // Add more socket event handlers here
+    // Send Message Event
+    socket.on('send_message', async (data) => {
+        try {
+            const { tripId, message } = data;
+
+            if (!tripId || !message) return;
+
+            // Save message to database
+            const savedMessage = await Message.create({
+                tripId,
+                senderId: socket.user._id,
+                senderName: socket.user.name,
+                message,
+                timestamp: new Date()
+            });
+
+            // Broadcast to everyone in room (including sender)
+            io.to(tripId).emit('receive_message', savedMessage);
+
+        } catch (error) {
+            console.error('Send message error:', error);
+        }
+    });
+
+    // Leave Room Event
+    socket.on('leave_room', ({ tripId }) => {
+        if (tripId) {
+            socket.leave(tripId);
+            socket.to(tripId).emit('user_left', { userName: socket.user.name });
+            console.log(`👋 ${socket.user.name} left room: ${tripId}`);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`🔌 Client disconnected: ${socket.user.name} (${socket.id})`);
+    });
 });
 
 // Make io accessible to routes
