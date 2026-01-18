@@ -9,6 +9,13 @@ import {
     updateUserRole,
     getPlatformStats
 } from '../controllers/adminController.js';
+import {
+    createAnnouncement,
+    getAllAnnouncements,
+    updateAnnouncement,
+    deleteAnnouncement,
+    toggleAnnouncement
+} from '../controllers/announcementController.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -72,5 +79,44 @@ router.put('/users/:id/role', updateUserRole);
  * @access  Private (Admin only)
  */
 router.get('/stats', getPlatformStats);
+
+/**
+ * ANNOUNCEMENT ROUTES
+ */
+
+/**
+ * @route   POST /api/admin/announcements
+ * @desc    Create new announcement
+ * @access  Private (Admin only)
+ */
+router.post('/announcements', createAnnouncement);
+
+/**
+ * @route   GET /api/admin/announcements
+ * @desc    Get all announcements
+ * @access  Private (Admin only)
+ */
+router.get('/announcements', getAllAnnouncements);
+
+/**
+ * @route   PUT /api/admin/announcements/:id
+ * @desc    Update announcement
+ * @access  Private (Admin only)
+ */
+router.put('/announcements/:id', updateAnnouncement);
+
+/**
+ * @route   DELETE /api/admin/announcements/:id
+ * @desc    Delete announcement
+ * @access  Private (Admin only)
+ */
+router.delete('/announcements/:id', deleteAnnouncement);
+
+/**
+ * @route   PATCH /api/admin/announcements/:id/toggle
+ * @desc    Toggle announcement active status
+ * @access  Private (Admin only)
+ */
+router.patch('/announcements/:id/toggle', toggleAnnouncement);
 
 export default router;

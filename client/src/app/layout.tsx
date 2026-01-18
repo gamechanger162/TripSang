@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 
 import Providers from '@/components/Providers';
 import Navbar from '@/components/Navbar';
+import AnnouncementPopup from '@/components/AnnouncementPopup';
 
 export default function RootLayout({
     children,
@@ -29,6 +30,7 @@ export default function RootLayout({
                     <Navbar />
                     {children}
                     <ToasterProvider />
+                    <AnnouncementPopup />
                 </Providers>
             </body>
         </html>

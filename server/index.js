@@ -96,6 +96,7 @@ import adminRoutes from './routes/admin.js';
 import tripRoutes from './routes/trips.js';
 import paymentRoutes from './routes/payments.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import announcementRoutes from './routes/announcements.js';
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -103,6 +104,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/announcements', announcementRoutes);
 // app.use('/api/users', userRoutes); // TODO: Add user profile routes
 
 
