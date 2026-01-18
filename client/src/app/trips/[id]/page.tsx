@@ -79,7 +79,7 @@ export default function TripDetailsPage() {
 
     const isCreator = Boolean(userId && trip?.creator?._id && trip.creator._id.toString() === userId?.toString());
 
-    const isSquadMember = isCreator || (Boolean(userId && trip?.squadMembers) && trip.squadMembers.some((member) => {
+    const isSquadMember = isCreator || (trip?.squadMembers?.some((member) => {
         const memberId = (member as any)._id || member; // Handle populated or unpopulated
         return memberId && memberId.toString() === userId?.toString();
     })) || false;
