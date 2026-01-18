@@ -409,8 +409,62 @@ export const paymentAPI = {
      * Get My Payments
      * GET /api/payments/my-payments
      */
-    getMyPayments: async () => {
-        return fetchWithAuth('/api/payments/my-payments');
+    return fetchWithAuth('/api/payments/my-payments');
+}
+};
+
+// ========================================
+// REVIEW APIs
+// ========================================
+
+export const reviewAPI = {
+    /**
+     * Create a review
+     * POST /api/reviews/create
+     */
+    create: async (data: {
+        tripId: string;
+        revieweeId: string;
+        rating: number;
+        comment?: string;
+        categories?: {
+            punctuality?: number;
+            friendliness?: number;
+            reliability?: number;
+            communication?: number;
+        };
+    }) => {
+        return fetchWithAuth('/api/reviews/create', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    /**
+     * Get reviews for a user
+     * GET /api/reviews/user/:userId
+     */
+    getUserReviews: async (userId: string, page = 1, limit = 10) => {
+        return fetch(`${API_URL}/api/reviews/user/${userId}?page=${page}&limit=${limit}`)
+            .then(res => res.json());
+    },
+
+    /**
+     * Get pending reviews (travelers to review)
+     * GET /api/reviews/pending
+     */
+    getPending: async () => {
+        return fetchWithAuth('/api/reviews/pending');
+    },
+
+    /**
+     * Delete a review
+     * DELETE /api/reviews/:id
+     */
+    delete: async (reviewId: string) => {
+        return fetchWithAuth(`/api/reviews/${reviewId}`, {
+            method: 'DELETE',
+        });
     }
 };
 
@@ -420,4 +474,5 @@ export default {
     tripAPI,
     adminAPI,
     paymentAPI,
+    reviewAPI,
 };
