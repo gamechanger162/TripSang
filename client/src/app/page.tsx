@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import CityAutocomplete from '@/components/CityAutocomplete';
+import { INDIAN_CITIES } from '@/data/cities';
 
 export default function HomePage() {
     const router = useRouter();
@@ -53,24 +55,26 @@ export default function HomePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                                     <div className="relative">
                                         <label htmlFor="from" className="block text-sm font-medium text-white/90 mb-2 text-left">From</label>
-                                        <input
+                                        <CityAutocomplete
                                             id="from"
-                                            type="text"
+                                            name="from"
                                             value={from}
-                                            onChange={(e) => setFrom(e.target.value)}
+                                            onChange={setFrom}
                                             placeholder="Starting point"
                                             className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            cities={INDIAN_CITIES}
                                         />
                                     </div>
                                     <div className="relative">
                                         <label htmlFor="to" className="block text-sm font-medium text-white/90 mb-2 text-left">To</label>
-                                        <input
+                                        <CityAutocomplete
                                             id="to"
-                                            type="text"
+                                            name="to"
                                             value={to}
-                                            onChange={(e) => setTo(e.target.value)}
+                                            onChange={setTo}
                                             placeholder="Dream destination"
                                             className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            cities={INDIAN_CITIES}
                                         />
                                     </div>
                                     <div className="relative">

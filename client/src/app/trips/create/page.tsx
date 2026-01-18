@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import CityAutocomplete from '@/components/CityAutocomplete';
+import { INDIAN_CITIES } from '@/data/cities';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -297,30 +299,30 @@ export default function CreateTripPage() {
                                 <label htmlFor="startPoint" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Starting Point *
                                 </label>
-                                <input
+                                <CityAutocomplete
                                     id="startPoint"
                                     name="startPoint"
-                                    type="text"
                                     value={formData.startPoint}
-                                    onChange={handleInputChange}
+                                    onChange={(value) => setFormData({ ...formData, startPoint: value })}
                                     placeholder="e.g., Delhi"
                                     className="input-field"
                                     required
+                                    cities={INDIAN_CITIES}
                                 />
                             </div>
                             <div>
                                 <label htmlFor="endPoint" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Destination *
                                 </label>
-                                <input
+                                <CityAutocomplete
                                     id="endPoint"
                                     name="endPoint"
-                                    type="text"
                                     value={formData.endPoint}
-                                    onChange={handleInputChange}
+                                    onChange={(value) => setFormData({ ...formData, endPoint: value })}
                                     placeholder="e.g., Manali"
                                     className="input-field"
                                     required
+                                    cities={INDIAN_CITIES}
                                 />
                             </div>
                         </div>
