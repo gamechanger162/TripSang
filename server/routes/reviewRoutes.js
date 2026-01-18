@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 import {
     createReview,
     getUserReviews,
@@ -9,10 +9,10 @@ import {
 
 const router = express.Router();
 
-// Protected routes (require authentication)
-router.post('/create', protect, createReview);
-router.get('/pending', protect, getPendingReviews);
+// Create review (requires authentication)
+router.post('/', authenticate, createReview);
+router.get('/pending', authenticate, getPendingReviews);
 router.get('/user/:userId', getUserReviews); // Public - anyone can see reviews
-router.delete('/:id', protect, deleteReview);
+router.delete('/:id', authenticate, deleteReview);
 
 export default router;
