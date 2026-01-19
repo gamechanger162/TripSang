@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,15 @@ export default function AdminDashboardPage() {
     const [usersPage, setUsersPage] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
     const [userFilter, setUserFilter] = useState<'all' | 'user' | 'guide' | 'admin'>('all');
+
+    // Broadcast modal state
+    const [showBroadcast, setShowBroadcast] = useState(false);
+    const [broadcastData, setBroadcastData] = useState({
+        title: '',
+        message: '',
+        type: 'info' as 'info' | 'warning' | 'success' | 'error',
+    });
+    const [broadcasting, setBroadcasting] = useState(false);
 
     // Settings state
     const [config, setConfig] = useState<GlobalConfig>({
@@ -122,6 +132,37 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleBroadcast = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setBroadcasting(true);
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/announcements`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.user?.accessToken}`
+                },
+                body: JSON.stringify(broadcastData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Announcement broadcasted successfully!');
+                setBroadcastData({ title: '', message: '', type: 'info' });
+                setShowBroadcast(false);
+            } else {
+                toast.error(data.message || 'Failed to broadcast');
+            }
+        } catch (error: any) {
+            console.error('Error broadcasting:', error);
+            toast.error('Failed to broadcast announcement');
+        } finally {
+            setBroadcasting(false);
+        }
+    };
+
     const handleSaveSettings = async () => {
         setSaving(true);
 
@@ -199,7 +240,21 @@ export default function AdminDashboardPage() {
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
                             <p className="text-gray-600 dark:text-gray-400 mt-1">Manage TripSang platform</p>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3">
+                            <button
+                                onClick={() => setShowBroadcast(true)}
+                                className="btn-primary flex items-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                                    />
+                                </svg>
+                                Broadcast
+                            </button>
                             <div className="badge badge-primary">Admin</div>
                         </div>
                     </div>
@@ -563,6 +618,136 @@ export default function AdminDashboardPage() {
                     </div>
                 )}
             </div>
+
+            {/* Broadcast Modal */}
+            {showBroadcast && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-dark-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    Broadcast Announcement
+                                </h2>
+                                <button
+                                    onClick={() => setShowBroadcast(false)}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleBroadcast} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={broadcastData.title}
+                                        onChange={(e) => setBroadcastData({ ...broadcastData, title: e.target.value })}
+                                        maxLength={100}
+                                        required
+                                        className="input-field w-full"
+                                        placeholder="Enter announcement title"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">{broadcastData.title.length}/100</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Message
+                                    </label>
+                                    <textarea
+                                        value={broadcastData.message}
+                                        onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
+                                        maxLength={500}
+                                        required
+                                        rows={5}
+                                        className="input-field w-full resize-none"
+                                        placeholder="Enter announcement message"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">{broadcastData.message.length}/500</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Type
+                                    </label>
+                                    <select
+                                        value={broadcastData.type}
+                                        onChange={(e) => setBroadcastData({ ...broadcastData, type: e.target.value as any })}
+                                        className="input-field w-full"
+                                    >
+                                        <option value="info">Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="success">Success</option>
+                                        <option value="error">Error</option>
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        This determines the visual style of the announcement
+                                    </p>
+                                </div>
+
+                                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-700">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowBroadcast(false)}
+                                        className="btn-outline"
+                                        disabled={broadcasting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={broadcasting}
+                                        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                    >
+                                        {broadcasting ? (
+                                            <>
+                                                <svg
+                                                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <circle
+                                                        className="opacity-25"
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                        stroke="currentColor"
+                                                        strokeWidth="4"
+                                                    />
+                                                    <path
+                                                        className="opacity-75"
+                                                        fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                    />
+                                                </svg>
+                                                Broadcasting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                                                    />
+                                                </svg>
+                                                Broadcast to All Users
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
