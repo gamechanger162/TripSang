@@ -476,57 +476,30 @@ export const reviewAPI = {
 export const messageAPI = {
     // Get all conversations
     getConversations: async () => {
-        const response = await fetchWithAuth('/api/messages/conversations');
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to fetch conversations');
-        }
-        return response.json();
+        return fetchWithAuth('/api/messages/conversations');
     },
 
     // Get or create conversation with a user
     getOrCreateConversation: async (userId: string) => {
-        const response = await fetchWithAuth(`/api/messages/conversation/${userId}`);
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to get conversation');
-        }
-        return response.json();
+        return fetchWithAuth(`/api/messages/conversation/${userId}`);
     },
 
     // Get message history for a conversation
     getMessageHistory: async (conversationId: string, page = 1, limit = 50) => {
-        const response = await fetchWithAuth(
-            `/api/messages/${conversationId}/history?page=${page}&limit=${limit}`
-        );
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to fetch message history');
-        }
-        return response.json();
+        return fetchWithAuth(`/api/messages/${conversationId}/history?page=${page}&limit=${limit}`);
     },
 
     // Mark conversation as read
     markAsRead: async (conversationId: string) => {
-        const response = await fetchWithAuth('/api/messages/mark-read', {
+        return fetchWithAuth('/api/messages/mark-read', {
             method: 'POST',
             body: JSON.stringify({ conversationId })
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to mark as read');
-        }
-        return response.json();
     },
 
     // Get total unread count
     getUnreadCount: async () => {
-        const response = await fetchWithAuth('/api/messages/unread-count');
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to get unread count');
-        }
-        return response.json();
+        return fetchWithAuth('/api/messages/unread-count');
     }
 };
 
