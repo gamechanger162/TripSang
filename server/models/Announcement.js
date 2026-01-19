@@ -20,6 +20,10 @@ const announcementSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    imageUrl: {
+        type: String,
+        default: null
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

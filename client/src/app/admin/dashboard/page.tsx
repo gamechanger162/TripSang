@@ -47,6 +47,7 @@ export default function AdminDashboardPage() {
     // Broadcast modal state
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [bannerMessage, setBannerMessage] = useState('');
+    const [bannerImageUrl, setBannerImageUrl] = useState('');
     const [broadcasting, setBroadcasting] = useState(false);
 
     // Settings state
@@ -142,7 +143,8 @@ export default function AdminDashboardPage() {
                 body: JSON.stringify({
                     title: 'Site Banner',
                     message: bannerMessage,
-                    type: 'info'
+                    type: 'info',
+                    imageUrl: bannerImageUrl || null
                 })
             });
 
@@ -151,6 +153,7 @@ export default function AdminDashboardPage() {
             if (data.success) {
                 toast.success('Banner published successfully!');
                 setBannerMessage('');
+                setBannerImageUrl('');
                 setShowBroadcast(false);
             } else {
                 toast.error(data.message || 'Failed to publish banner');
@@ -654,6 +657,22 @@ export default function AdminDashboardPage() {
                                         placeholder="Enter banner message to display across the site..."
                                     />
                                     <p className="text-xs text-gray-500 mt-1">{bannerMessage.length}/200 characters</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Image URL (Optional)
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={bannerImageUrl}
+                                        onChange={(e) => setBannerImageUrl(e.target.value)}
+                                        className="input-field w-full"
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Add an image to make your banner more eye-catching
+                                    </p>
                                 </div>
 
                                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-700">

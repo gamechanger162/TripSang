@@ -8,6 +8,7 @@ interface Announcement {
     message: string;
     type: 'info' | 'warning' | 'success' | 'error';
     isActive: boolean;
+    imageUrl?: string;
 }
 
 export default function SiteBanner() {
@@ -56,14 +57,22 @@ export default function SiteBanner() {
         <div className="bg-primary-600 text-white px-4 py-3 shadow-md relative z-50">
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                    {announcement.imageUrl ? (
+                        <img
+                            src={announcement.imageUrl}
+                            alt="Banner"
+                            className="w-12 h-12 rounded object-cover flex-shrink-0"
                         />
-                    </svg>
+                    ) : (
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                            />
+                        </svg>
+                    )}
                     <p className="text-sm md:text-base font-medium">{announcement.message}</p>
                 </div>
                 <button
