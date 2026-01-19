@@ -153,6 +153,119 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ========== DIRECT MESSAGING SOCKET EVENTS ==========
+
+    // Join user-specific room for DM notifications
+    socket.join(`user_${socket.user._id}`);
+
+    // Join DM Conversation Event
+    socket.on('join_dm_conversation', async ({ conversationId }) => {
+        try {
+            if (!conversationId) return;
+
+            // Verify user is participant
+            const { Conversation } = await import('./models/index.js');
+            const conversation = await Conversation.findById(conversationId);
+
+            if (!conversation || !conversation.participants.includes(socket.user._id)) {
+                return socket.emit('error', { message: 'Unauthorized access to conversation' });
+            }
+
+            socket.join(`dm_${conversationId}`);
+            console.log(`💬 ${socket.user.name} joined DM conversation: ${conversationId}`);
+        } catch (error) {
+            console.error('Join DM conversation error:', error);
+            socket.emit('error', { message: 'Failed to join conversation' });
+        }
+    });
+
+    // Send Direct Message Event
+    socket.on('send_dm', async (data) => {
+        try {
+            const { conversationId, receiverId, message } = data;
+
+            if (!conversationId || !receiverId || !message) {
+                return socket.emit('error', { message: 'Missing required fields' });
+            }
+
+            const { Conversation, DirectMessage } = await import('./models/index.js');
+
+            // Verify conversation exists and user is participant
+            const conversation = await Conversation.findById(conversationId);
+            if (!conversation || !conversation.participants.includes(socket.user._id)) {
+                return socket.emit('error', { message: 'Unauthorized' });
+            }
+
+            // Save message to database
+            const savedMessage = await DirectMessage.create({
+                conversationId,
+                sender: socket.user._id,
+                receiver: receiverId,
+                message,
+                timestamp: new Date()
+            });
+
+            // Update conversation lastMessage and increment unread for receiver
+            conversation.lastMessage = {
+                text: message,
+                sender: socket.user._id,
+                timestamp: new Date()
+            };
+            conversation.incrementUnread(receiverId);
+            await conversation.save();
+
+            // Prepare message object for emit
+            const messageData = {
+                _id: savedMessage._id,
+                conversationId,
+                sender: socket.user._id.toString(),
+                senderName: socket.user.name,
+                receiver: receiverId,
+                message,
+                timestamp: savedMessage.timestamp,
+                read: false
+            };
+
+            // Broadcast to conversation room (both sender and receiver if online)
+            io.to(`dm_${conversationId}`).emit('receive_dm', messageData);
+
+            // Send notification to receiver's user room (if not already in conversation)
+            io.to(`user_${receiverId}`).emit('new_dm_notification', {
+                conversationId,
+                senderName: socket.user.name,
+                senderId: socket.user._id,
+                preview: message.substring(0, 50),
+                timestamp: new Date()
+            });
+
+            console.log(`📨 DM sent from ${socket.user.name} in conversation ${conversationId}`);
+        } catch (error) {
+            console.error('Send DM error:', error);
+            socket.emit('error', { message: 'Failed to send message' });
+        }
+    });
+
+    // Leave DM Conversation Event
+    socket.on('leave_dm_conversation', ({ conversationId }) => {
+        if (conversationId) {
+            socket.leave(`dm_${conversationId}`);
+            console.log(`💬 ${socket.user.name} left DM conversation: ${conversationId}`);
+        }
+    });
+
+    // Typing Indicator for DM (optional)
+    socket.on('typing_dm', ({ conversationId, isTyping }) => {
+        if (conversationId) {
+            socket.to(`dm_${conversationId}`).emit('user_typing_dm', {
+                userId: socket.user._id,
+                userName: socket.user.name,
+                isTyping
+            });
+        }
+    });
+
+    // ========== END DM SOCKET EVENTS ==========
+
     socket.on('disconnect', () => {
         console.log(`🔌 Client disconnected: ${socket.user.name} (${socket.id})`);
     });
