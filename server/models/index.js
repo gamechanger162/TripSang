@@ -10,6 +10,8 @@ import GlobalConfig from './GlobalConfig.js';
 import Review from './Review.js';
 import Message from './Message.js';
 import Announcement from './Announcement.js';
+import Conversation from './Conversation.js';
+import DirectMessage from './DirectMessage.js';
 
 export {
     User,
@@ -18,7 +20,9 @@ export {
     GlobalConfig,
     Review,
     Message,
-    Announcement
+    Announcement,
+    Conversation,
+    DirectMessage
 };
 
 export default {
