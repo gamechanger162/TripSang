@@ -46,11 +46,7 @@ export default function AdminDashboardPage() {
 
     // Broadcast modal state
     const [showBroadcast, setShowBroadcast] = useState(false);
-    const [broadcastData, setBroadcastData] = useState({
-        title: '',
-        message: '',
-        type: 'info' as 'info' | 'warning' | 'success' | 'error',
-    });
+    const [bannerMessage, setBannerMessage] = useState('');
     const [broadcasting, setBroadcasting] = useState(false);
 
     // Settings state
@@ -143,21 +139,25 @@ export default function AdminDashboardPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.user?.accessToken}`
                 },
-                body: JSON.stringify(broadcastData)
+                body: JSON.stringify({
+                    title: 'Site Banner',
+                    message: bannerMessage,
+                    type: 'info'
+                })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Announcement broadcasted successfully!');
-                setBroadcastData({ title: '', message: '', type: 'info' });
+                toast.success('Banner published successfully!');
+                setBannerMessage('');
                 setShowBroadcast(false);
             } else {
-                toast.error(data.message || 'Failed to broadcast');
+                toast.error(data.message || 'Failed to publish banner');
             }
         } catch (error: any) {
             console.error('Error broadcasting:', error);
-            toast.error('Failed to broadcast announcement');
+            toast.error('Failed to publish banner');
         } finally {
             setBroadcasting(false);
         }
@@ -626,7 +626,7 @@ export default function AdminDashboardPage() {
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    Broadcast Announcement
+                                    Publish Site Banner
                                 </h2>
                                 <button
                                     onClick={() => setShowBroadcast(false)}
@@ -638,56 +638,22 @@ export default function AdminDashboardPage() {
                                 </button>
                             </div>
 
+
                             <form onSubmit={handleBroadcast} className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Title
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={broadcastData.title}
-                                        onChange={(e) => setBroadcastData({ ...broadcastData, title: e.target.value })}
-                                        maxLength={100}
-                                        required
-                                        className="input-field w-full"
-                                        placeholder="Enter announcement title"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">{broadcastData.title.length}/100</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Message
+                                        Banner Message
                                     </label>
                                     <textarea
-                                        value={broadcastData.message}
-                                        onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
-                                        maxLength={500}
+                                        value={bannerMessage}
+                                        onChange={(e) => setBannerMessage(e.target.value)}
+                                        maxLength={200}
                                         required
-                                        rows={5}
+                                        rows={3}
                                         className="input-field w-full resize-none"
-                                        placeholder="Enter announcement message"
+                                        placeholder="Enter banner message to display across the site..."
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">{broadcastData.message.length}/500</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Type
-                                    </label>
-                                    <select
-                                        value={broadcastData.type}
-                                        onChange={(e) => setBroadcastData({ ...broadcastData, type: e.target.value as any })}
-                                        className="input-field w-full"
-                                    >
-                                        <option value="info">Info</option>
-                                        <option value="warning">Warning</option>
-                                        <option value="success">Success</option>
-                                        <option value="error">Error</option>
-                                    </select>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        This determines the visual style of the announcement
-                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">{bannerMessage.length}/200 characters</p>
                                 </div>
 
                                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-700">
@@ -726,7 +692,7 @@ export default function AdminDashboardPage() {
                                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                     />
                                                 </svg>
-                                                Broadcasting...
+                                                Publishing...
                                             </>
                                         ) : (
                                             <>
@@ -738,7 +704,7 @@ export default function AdminDashboardPage() {
                                                         d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
                                                     />
                                                 </svg>
-                                                Broadcast to All Users
+                                                Publish Banner
                                             </>
                                         )}
                                     </button>

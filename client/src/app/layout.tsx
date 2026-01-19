@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 
 import Providers from '@/components/Providers';
 import Navbar from '@/components/Navbar';
+import SiteBanner from '@/components/SiteBanner';
 import AnnouncementPopup from '@/components/AnnouncementPopup';
 
 export default function RootLayout({
@@ -28,6 +29,7 @@ export default function RootLayout({
             <body>
                 <Providers>
                     <Navbar />
+                    <SiteBanner />
                     {children}
                     <ToasterProvider />
                     <AnnouncementPopup />
