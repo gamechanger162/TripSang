@@ -228,30 +228,30 @@ export default function TripCard({ trip }: TripCardProps) {
                         {/* Creator */}
                         <div className="flex items-center space-x-2">
                             <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
-                                {trip.creator.profilePicture ? (
+                                {trip.creator?.profilePicture ? (
                                     <Image
                                         src={trip.creator.profilePicture}
-                                        alt={trip.creator.name}
+                                        alt={trip.creator.name || 'User'}
                                         width={32}
                                         height={32}
                                         className="object-cover"
                                     />
                                 ) : (
                                     <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
-                                        {trip.creator.name[0]}
+                                        {trip.creator?.name?.[0] || '?'}
                                     </span>
                                 )}
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                                    {trip.creator.name}
-                                    {getGenderIcon(trip.creator.gender) && (
-                                        <span className="text-gray-500 dark:text-gray-400" title={formatGender(trip.creator.gender) || ''}>
-                                            {getGenderIcon(trip.creator.gender)}
+                                    {trip.creator?.name || 'Unknown User'}
+                                    {getGenderIcon(trip.creator?.gender) && (
+                                        <span className="text-gray-500 dark:text-gray-400" title={formatGender(trip.creator?.gender) || ''}>
+                                            {getGenderIcon(trip.creator?.gender)}
                                         </span>
                                     )}
                                 </p>
-                                {trip.creator.badges && trip.creator.badges.length > 0 && (
+                                {trip.creator?.badges && trip.creator.badges.length > 0 && (
                                     <p className="text-xs text-gray-500">{trip.creator.badges[0]}</p>
                                 )}
                             </div>

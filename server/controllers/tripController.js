@@ -202,7 +202,7 @@ export const searchTrips = async (req, res) => {
 
         // Execute query
         const trips = await Trip.find(filter)
-            .populate('creator', 'name profilePicture badges')
+            .populate('creator', 'name profilePicture badges gender')
             .populate('squadMembers', 'name profilePicture')
             .sort(sortOptions)
             .skip(skip)
@@ -249,7 +249,7 @@ export const getTripById = async (req, res) => {
         const { id } = req.params;
 
         const trip = await Trip.findById(id)
-            .populate('creator', 'name email profilePicture badges bio location')
+            .populate('creator', 'name email profilePicture badges bio location gender')
             .populate('squadMembers', 'name profilePicture badges');
 
         if (!trip) {

@@ -230,16 +230,17 @@ tripSchema.methods.toggleLike = function (userId) {
 };
 
 // Static method to find active trips
+// Static method to find active trips
 tripSchema.statics.findActiveTrips = function () {
     return this.find({ status: 'active', isPublic: true })
-        .populate('creator', 'name profilePicture')
+        .populate('creator', 'name profilePicture gender')
         .sort({ startDate: 1 });
 };
 
 // Static method to find trips by tag
 tripSchema.statics.findByTag = function (tag) {
     return this.find({ tags: tag, status: 'active', isPublic: true })
-        .populate('creator', 'name profilePicture');
+        .populate('creator', 'name profilePicture gender');
 };
 
 // Static method to find upcoming trips
@@ -249,7 +250,7 @@ tripSchema.statics.findUpcomingTrips = function () {
         isPublic: true,
         startDate: { $gte: new Date() }
     })
-        .populate('creator', 'name profilePicture')
+        .populate('creator', 'name profilePicture gender')
         .sort({ startDate: 1 });
 };
 
