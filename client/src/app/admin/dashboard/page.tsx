@@ -48,6 +48,8 @@ export default function AdminDashboardPage() {
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [bannerMessage, setBannerMessage] = useState('');
     const [bannerImageUrl, setBannerImageUrl] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState('');
     const [broadcasting, setBroadcasting] = useState(false);
 
     // Settings state
@@ -129,6 +131,32 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
+
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error('Image size should be less than 2MB');
+                return;
+            }
+
+            setImageFile(file);
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleBroadcast = async (e: React.FormEvent) => {
         e.preventDefault();
         setBroadcasting(true);
@@ -144,7 +172,7 @@ export default function AdminDashboardPage() {
                     title: 'Site Banner',
                     message: bannerMessage,
                     type: 'info',
-                    imageUrl: bannerImageUrl || null
+                    imageUrl: imagePreview || null
                 })
             });
 
@@ -154,6 +182,8 @@ export default function AdminDashboardPage() {
                 toast.success('Banner published successfully!');
                 setBannerMessage('');
                 setBannerImageUrl('');
+                setImageFile(null);
+                setImagePreview('');
                 setShowBroadcast(false);
             } else {
                 toast.error(data.message || 'Failed to publish banner');
@@ -243,7 +273,7 @@ export default function AdminDashboardPage() {
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
                             <p className="text-gray-600 dark:text-gray-400 mt-1">Manage TripSang platform</p>
                         </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setShowBroadcast(true)}
                                 className="btn-primary flex items-center gap-2"
@@ -258,6 +288,9 @@ export default function AdminDashboardPage() {
                                 </svg>
                                 Broadcast
                             </button>
+                            <Link href="/admin/announcements" className="btn-outline text-sm px-3 py-2">
+                                Manage
+                            </Link>
                             <div className="badge badge-primary">Admin</div>
                         </div>
                     </div>
@@ -661,17 +694,35 @@ export default function AdminDashboardPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Image URL (Optional)
+                                        Banner Image (Optional)
                                     </label>
                                     <input
-                                        type="url"
-                                        value={bannerImageUrl}
-                                        onChange={(e) => setBannerImageUrl(e.target.value)}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageSelect}
                                         className="input-field w-full"
-                                        placeholder="https://example.com/image.jpg"
                                     />
+                                    {imagePreview && (
+                                        <div className="mt-3">
+                                            <img
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                className="w-32 h-32 object-cover rounded border-2 border-gray-300"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setImageFile(null);
+                                                    setImagePreview('');
+                                                }}
+                                                className="text-xs text-red-600 hover:text-red-800 mt-1"
+                                            >
+                                                Remove image
+                                            </button>
+                                        </div>
+                                    )}
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Add an image to make your banner more eye-catching
+                                        Upload an image to make your banner eye-catching (max 2MB)
                                     </p>
                                 </div>
 
