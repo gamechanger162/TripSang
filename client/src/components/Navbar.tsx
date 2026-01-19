@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
+import { messageAPI } from '@/lib/api';
 
 export default function Navbar() {
     const { data: session, status } = useSession();
@@ -13,6 +14,7 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     // Check if we are on the homepage
     const isHomePage = pathname === '/';
@@ -25,6 +27,28 @@ export default function Navbar() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // Fetch unread message count
+    useEffect(() => {
+        if (status === 'authenticated') {
+            fetchUnreadCount();
+            // Poll every 30 seconds for new messages
+            const interval = setInterval(fetchUnreadCount, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [status]);
+
+    const fetchUnreadCount = async () => {
+        try {
+            const response = await messageAPI.getUnreadCount();
+            if (response.success) {
+                setUnreadCount(response.unreadCount);
+            }
+        } catch (error) {
+            // Silently fail - unread count is not critical
+            console.error('Failed to fetch unread count:', error);
+        }
+    };
 
     // Determine nav classes based on route and scroll
     const navBackground = scrolled || !isHomePage
@@ -73,6 +97,31 @@ export default function Navbar() {
                             </Link>
                         ))}
 
+                        {/* Messages Link with Badge (only if authenticated) */}
+                        {status === 'authenticated' && (
+                            <Link
+                                href="/messages"
+                                className={`text-sm font-medium transition-colors ${linkColor} relative`}
+                            >
+                                <div className="flex items-center gap-1">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                        />
+                                    </svg>
+                                    <span>Messages</span>
+                                </div>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
+
                         {status === 'authenticated' ? (
                             <div className="relative ml-4">
                                 <button
@@ -103,6 +152,21 @@ export default function Navbar() {
                                             <p className="text-xs text-gray-500">Signed in as</p>
                                             <p className="text-sm font-medium truncate">{session.user?.name}</p>
                                         </div>
+
+                                        <Link
+                                            href="/messages"
+                                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            onClick={() => setProfileMenuOpen(false)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Messages</span>
+                                                {unreadCount > 0 && (
+                                                    <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </Link>
 
                                         <Link
                                             href={session.user.role === 'admin' ? '/admin/dashboard' : '/dashboard'}
@@ -174,8 +238,22 @@ export default function Navbar() {
                         {status === 'authenticated' ? (
                             <>
                                 <Link
+                                    href="/messages"
+                                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span>Messages</span>
+                                        {unreadCount > 0 && (
+                                            <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                                                {unreadCount > 9 ? '9+' : unreadCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                </Link>
+                                <Link
                                     href={session.user.role === 'admin' ? '/admin/dashboard' : '/dashboard'}
-                                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50"
+                                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     Dashboard
