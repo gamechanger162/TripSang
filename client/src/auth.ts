@@ -109,8 +109,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             return false;
                         }
 
-                        // Store token for later use
+                        // Store token and user data for later use
+                        user.id = registerData.user._id;
                         user.token = registerData.token;
+                        user.role = registerData.user.role;
+                        user.isMobileVerified = registerData.user.isMobileVerified;
                     } else {
                         // User exists, perform login
                         const loginResponse = await fetch(`${apiUrl}/api/auth/google-login`, {
@@ -125,6 +128,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         const loginData = await loginResponse.json();
 
                         if (loginResponse.ok && loginData.success) {
+                            user.id = loginData.user._id;
                             user.token = loginData.token;
                             user.role = loginData.user.role;
                             user.isMobileVerified = loginData.user.isMobileVerified;
