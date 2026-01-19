@@ -476,7 +476,7 @@ export const reviewAPI = {
 export const messageAPI = {
     // Get all conversations
     getConversations: async () => {
-        const response = await fetchWithAuth(`${API_URL}/api/messages/conversations`);
+        const response = await fetchWithAuth('/api/messages/conversations');
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to fetch conversations');
@@ -486,7 +486,7 @@ export const messageAPI = {
 
     // Get or create conversation with a user
     getOrCreateConversation: async (userId: string) => {
-        const response = await fetchWithAuth(`${API_URL}/api/messages/conversation/${userId}`);
+        const response = await fetchWithAuth(`/api/messages/conversation/${userId}`);
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to get conversation');
@@ -497,7 +497,7 @@ export const messageAPI = {
     // Get message history for a conversation
     getMessageHistory: async (conversationId: string, page = 1, limit = 50) => {
         const response = await fetchWithAuth(
-            `${API_URL}/api/messages/${conversationId}/history?page=${page}&limit=${limit}`
+            `/api/messages/${conversationId}/history?page=${page}&limit=${limit}`
         );
         if (!response.ok) {
             const error = await response.json();
@@ -508,7 +508,7 @@ export const messageAPI = {
 
     // Mark conversation as read
     markAsRead: async (conversationId: string) => {
-        const response = await fetchWithAuth(`${API_URL}/api/messages/mark-read`, {
+        const response = await fetchWithAuth('/api/messages/mark-read', {
             method: 'POST',
             body: JSON.stringify({ conversationId })
         });
@@ -521,7 +521,7 @@ export const messageAPI = {
 
     // Get total unread count
     getUnreadCount: async () => {
-        const response = await fetchWithAuth(`${API_URL}/api/messages/unread-count`);
+        const response = await fetchWithAuth('/api/messages/unread-count');
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || 'Failed to get unread count');
