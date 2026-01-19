@@ -190,7 +190,7 @@ export default function TripCard({ trip }: TripCardProps) {
                     </div>
 
                     {/* Budget */}
-                    {trip.budget && (
+                    {trip.budget && trip.budget.min !== undefined && trip.budget.max !== undefined && (
                         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
