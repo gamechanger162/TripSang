@@ -470,6 +470,66 @@ export const reviewAPI = {
     }
 };
 
+// =========================
+// MESSAGE API
+// =========================
+export const messageAPI = {
+    // Get all conversations
+    getConversations: async () => {
+        const response = await fetchWithAuth(`${API_URL}/api/messages/conversations`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch conversations');
+        }
+        return response.json();
+    },
+
+    // Get or create conversation with a user
+    getOrCreateConversation: async (userId: string) => {
+        const response = await fetchWithAuth(`${API_URL}/api/messages/conversation/${userId}`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to get conversation');
+        }
+        return response.json();
+    },
+
+    // Get message history for a conversation
+    getMessageHistory: async (conversationId: string, page = 1, limit = 50) => {
+        const response = await fetchWithAuth(
+            `${API_URL}/api/messages/${conversationId}/history?page=${page}&limit=${limit}`
+        );
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch message history');
+        }
+        return response.json();
+    },
+
+    // Mark conversation as read
+    markAsRead: async (conversationId: string) => {
+        const response = await fetchWithAuth(`${API_URL}/api/messages/mark-read`, {
+            method: 'POST',
+            body: JSON.stringify({ conversationId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to mark as read');
+        }
+        return response.json();
+    },
+
+    // Get total unread count
+    getUnreadCount: async () => {
+        const response = await fetchWithAuth(`${API_URL}/api/messages/unread-count`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to get unread count');
+        }
+        return response.json();
+    }
+};
+
 // Export all APIs
 export default {
     authAPI,
@@ -477,4 +537,5 @@ export default {
     adminAPI,
     paymentAPI,
     reviewAPI,
+    messageAPI,
 };
