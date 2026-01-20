@@ -63,6 +63,7 @@ export default function TripDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [joining, setJoining] = useState(false);
     const [liked, setLiked] = useState(false);
+    const [showAllMembers, setShowAllMembers] = useState(false);
 
     const userId = session?.user?.id;
 
@@ -480,9 +481,12 @@ export default function TripDetailsPage() {
                                         </div>
                                     ))}
                                     {trip.squadMembers.length > 5 && (
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        <button
+                                            onClick={() => setShowAllMembers(true)}
+                                            className="text-sm text-primary-600 hover:text-primary-700 font-medium hover:underline"
+                                        >
                                             +{trip.squadMembers.length - 5} more
-                                        </p>
+                                        </button>
                                     )}
                                 </div>
                             )}
@@ -535,6 +539,85 @@ export default function TripDetailsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* All Members Modal */}
+            {showAllMembers && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-dark-800 rounded-xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+                        <div className="p-4 border-b border-gray-100 dark:border-dark-700 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Squad Members</h3>
+                            <button
+                                onClick={() => setShowAllMembers(false)}
+                                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-4 overflow-y-auto">
+                            <div className="space-y-3">
+                                {trip.squadMembers.map((member) => (
+                                    <div
+                                        key={member._id}
+                                        className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors"
+                                    >
+                                        <Link
+                                            href={`/profile/${member._id}`}
+                                            className="flex items-center space-x-3 flex-1"
+                                            onClick={() => setShowAllMembers(false)}
+                                        >
+                                            <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
+                                                {member.profilePicture ? (
+                                                    <Image
+                                                        src={member.profilePicture}
+                                                        alt={member.name}
+                                                        width={40}
+                                                        height={40}
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                                                        {member.name[0]}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900 dark:text-white hover:text-primary-600">
+                                                    {member.name}
+                                                </p>
+                                                {member._id === trip.creator._id && (
+                                                    <span className="text-xs bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 px-2 py-0.5 rounded-full">
+                                                        Host
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </Link>
+                                        {/* Message button (only if not self) */}
+                                        {session && member._id !== userId && (
+                                            <Link
+                                                href={`/messages/${member._id}`}
+                                                className="p-2 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors text-gray-500 hover:text-primary-600"
+                                                title={`Message ${member.name}`}
+                                                onClick={() => setShowAllMembers(false)}
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                    />
+                                                </svg>
+                                            </Link>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
