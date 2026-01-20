@@ -39,7 +39,7 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
 
     // Auto-scroll to bottom
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
 
     useEffect(() => {
@@ -291,8 +291,8 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
                                     {/* Message Bubble */}
                                     <div
                                         className={`px-4 py-2 shadow-sm relative ${isOwnMessage
-                                                ? 'bg-primary-600 text-white rounded-2xl rounded-tr-sm'
-                                                : 'bg-white dark:bg-dark-700 text-gray-900 dark:text-white rounded-2xl rounded-tl-sm'
+                                            ? 'bg-primary-600 text-white rounded-2xl rounded-tr-sm'
+                                            : 'bg-white dark:bg-dark-700 text-gray-900 dark:text-white rounded-2xl rounded-tl-sm'
                                             }`}
                                     >
                                         {msg.type === 'image' && msg.imageUrl ? (
