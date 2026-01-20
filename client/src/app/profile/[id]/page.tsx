@@ -110,38 +110,31 @@ export default function UserProfilePage() {
             switch (friendStatus) {
                 case 'none':
                     response = await friendAPI.sendRequest(userId);
-                    if (response.success) {
-                        toast.success('Friend request sent!');
-                        setFriendStatus('pending_sent');
-                    }
+                    toast.success(response.message || 'Friend request sent!');
+                    setFriendStatus('pending_sent');
                     break;
                 case 'pending_sent':
                     response = await friendAPI.cancelRequest(userId);
-                    if (response.success) {
-                        toast.success('Friend request cancelled');
-                        setFriendStatus('none');
-                    }
+                    toast.success(response.message || 'Friend request cancelled');
+                    setFriendStatus('none');
                     break;
                 case 'pending_received':
                     response = await friendAPI.acceptRequest(userId);
-                    if (response.success) {
-                        toast.success(`You are now friends with ${profile?.name}!`);
-                        setFriendStatus('friends');
-                        setFriendsCount(prev => prev + 1);
-                    }
+                    toast.success(response.message || `You are now friends with ${profile?.name}!`);
+                    setFriendStatus('friends');
+                    setFriendsCount(prev => prev + 1);
                     break;
                 case 'friends':
                     if (confirm(`Are you sure you want to unfriend ${profile?.name}?`)) {
                         response = await friendAPI.unfriend(userId);
-                        if (response.success) {
-                            toast.success('Friend removed');
-                            setFriendStatus('none');
-                            setFriendsCount(prev => Math.max(0, prev - 1));
-                        }
+                        toast.success(response.message || 'Friend removed');
+                        setFriendStatus('none');
+                        setFriendsCount(prev => Math.max(0, prev - 1));
                     }
                     break;
             }
         } catch (err: any) {
+            console.error('Friend action error:', err);
             toast.error(err.message || 'Something went wrong');
         } finally {
             setFriendLoading(false);

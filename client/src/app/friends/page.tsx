@@ -76,22 +76,21 @@ export default function FriendsPage() {
         setActionLoading(userId);
         try {
             const response = await friendAPI.acceptRequest(userId);
-            if (response.success) {
-                toast.success(`You are now friends with ${userName}!`);
-                // Move from pending to friends
-                const accepted = pendingRequests.find(r => r.user._id === userId);
-                if (accepted) {
-                    setFriends(prev => [...prev, {
-                        _id: accepted.user._id,
-                        name: accepted.user.name,
-                        profilePicture: accepted.user.profilePicture,
-                        badges: accepted.user.badges,
-                        friendsSince: new Date().toISOString()
-                    }]);
-                    setPendingRequests(prev => prev.filter(r => r.user._id !== userId));
-                }
+            toast.success(response.message || `You are now friends with ${userName}!`);
+            // Move from pending to friends
+            const accepted = pendingRequests.find(r => r.user._id === userId);
+            if (accepted) {
+                setFriends(prev => [...prev, {
+                    _id: accepted.user._id,
+                    name: accepted.user.name,
+                    profilePicture: accepted.user.profilePicture,
+                    badges: accepted.user.badges,
+                    friendsSince: new Date().toISOString()
+                }]);
+                setPendingRequests(prev => prev.filter(r => r.user._id !== userId));
             }
         } catch (error: any) {
+            console.error('Accept error:', error);
             toast.error(error.message || 'Failed to accept request');
         } finally {
             setActionLoading(null);
@@ -102,11 +101,10 @@ export default function FriendsPage() {
         setActionLoading(userId);
         try {
             const response = await friendAPI.declineRequest(userId);
-            if (response.success) {
-                toast.success('Request declined');
-                setPendingRequests(prev => prev.filter(r => r.user._id !== userId));
-            }
+            toast.success(response.message || 'Request declined');
+            setPendingRequests(prev => prev.filter(r => r.user._id !== userId));
         } catch (error: any) {
+            console.error('Decline error:', error);
             toast.error(error.message || 'Failed to decline request');
         } finally {
             setActionLoading(null);
@@ -117,11 +115,10 @@ export default function FriendsPage() {
         setActionLoading(userId);
         try {
             const response = await friendAPI.cancelRequest(userId);
-            if (response.success) {
-                toast.success('Request cancelled');
-                setSentRequests(prev => prev.filter(r => r.user._id !== userId));
-            }
+            toast.success(response.message || 'Request cancelled');
+            setSentRequests(prev => prev.filter(r => r.user._id !== userId));
         } catch (error: any) {
+            console.error('Cancel error:', error);
             toast.error(error.message || 'Failed to cancel request');
         } finally {
             setActionLoading(null);
@@ -134,11 +131,10 @@ export default function FriendsPage() {
         setActionLoading(userId);
         try {
             const response = await friendAPI.unfriend(userId);
-            if (response.success) {
-                toast.success('Friend removed');
-                setFriends(prev => prev.filter(f => f._id !== userId));
-            }
+            toast.success(response.message || 'Friend removed');
+            setFriends(prev => prev.filter(f => f._id !== userId));
         } catch (error: any) {
+            console.error('Unfriend error:', error);
             toast.error(error.message || 'Failed to remove friend');
         } finally {
             setActionLoading(null);
@@ -169,8 +165,8 @@ export default function FriendsPage() {
                     <button
                         onClick={() => setActiveTab('friends')}
                         className={`px-4 py-3 font-medium transition-colors relative ${activeTab === 'friends'
-                                ? 'text-primary-600 dark:text-primary-400'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                     >
                         Friends ({friends.length})
@@ -181,8 +177,8 @@ export default function FriendsPage() {
                     <button
                         onClick={() => setActiveTab('pending')}
                         className={`px-4 py-3 font-medium transition-colors relative ${activeTab === 'pending'
-                                ? 'text-primary-600 dark:text-primary-400'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                     >
                         Pending ({pendingRequests.length})
@@ -198,8 +194,8 @@ export default function FriendsPage() {
                     <button
                         onClick={() => setActiveTab('sent')}
                         className={`px-4 py-3 font-medium transition-colors relative ${activeTab === 'sent'
-                                ? 'text-primary-600 dark:text-primary-400'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                     >
                         Sent ({sentRequests.length})
