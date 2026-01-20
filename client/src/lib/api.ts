@@ -685,6 +685,111 @@ export const notificationAPI = {
     }
 };
 
+// ========================================
+// FRIEND APIs
+// ========================================
+
+export const friendAPI = {
+    /**
+     * Get all friends
+     * GET /api/friends
+     */
+    getFriends: async () => {
+        return fetchWithAuth('/api/friends');
+    },
+
+    /**
+     * Get pending friend requests (received)
+     * GET /api/friends/requests/pending
+     */
+    getPendingRequests: async () => {
+        return fetchWithAuth('/api/friends/requests/pending');
+    },
+
+    /**
+     * Get sent friend requests
+     * GET /api/friends/requests/sent
+     */
+    getSentRequests: async () => {
+        return fetchWithAuth('/api/friends/requests/sent');
+    },
+
+    /**
+     * Get pending requests count
+     * GET /api/friends/requests/count
+     */
+    getPendingRequestsCount: async () => {
+        return fetchWithAuth('/api/friends/requests/count');
+    },
+
+    /**
+     * Get friendship status with a user
+     * GET /api/friends/status/:userId
+     */
+    getStatus: async (userId: string) => {
+        return fetchWithAuth(`/api/friends/status/${userId}`);
+    },
+
+    /**
+     * Get friends count for a user
+     * GET /api/friends/count/:userId
+     */
+    getFriendsCount: async (userId: string) => {
+        return fetch(`${API_URL}/api/friends/count/${userId}`)
+            .then(res => res.json());
+    },
+
+    /**
+     * Send a friend request
+     * POST /api/friends/request/:userId
+     */
+    sendRequest: async (userId: string) => {
+        return fetchWithAuth(`/api/friends/request/${userId}`, {
+            method: 'POST'
+        });
+    },
+
+    /**
+     * Accept a friend request
+     * POST /api/friends/accept/:userId
+     */
+    acceptRequest: async (userId: string) => {
+        return fetchWithAuth(`/api/friends/accept/${userId}`, {
+            method: 'POST'
+        });
+    },
+
+    /**
+     * Decline a friend request
+     * POST /api/friends/decline/:userId
+     */
+    declineRequest: async (userId: string) => {
+        return fetchWithAuth(`/api/friends/decline/${userId}`, {
+            method: 'POST'
+        });
+    },
+
+    /**
+     * Cancel a sent friend request
+     * DELETE /api/friends/cancel/:userId
+     */
+    cancelRequest: async (userId: string) => {
+        return fetchWithAuth(`/api/friends/cancel/${userId}`, {
+            method: 'DELETE'
+        });
+    },
+
+    /**
+     * Unfriend a user
+     * DELETE /api/friends/:userId
+     */
+    unfriend: async (userId: string) => {
+        return fetchWithAuth(`/api/friends/${userId}`, {
+            method: 'DELETE'
+        });
+    }
+};
+
 // Export all APIs
 export default {
     authAPI,
@@ -695,5 +800,6 @@ export default {
     messageAPI,
     uploadAPI,
     userAPI,
-    notificationAPI
+    notificationAPI,
+    friendAPI
 };

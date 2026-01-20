@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import UserReviews from '@/components/reviews/UserReviews';
 import Link from 'next/link';
-import { userAPI } from '@/lib/api';
+import { userAPI, friendAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,8 @@ interface UserProfile {
     };
 }
 
+type FriendshipStatus = 'none' | 'friends' | 'pending_sent' | 'pending_received' | 'self';
+
 export default function UserProfilePage() {
     const params = useParams();
     const userId = params.id as string;
@@ -37,12 +40,22 @@ export default function UserProfilePage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [friendStatus, setFriendStatus] = useState<FriendshipStatus>('none');
+    const [friendsCount, setFriendsCount] = useState(0);
+    const [friendLoading, setFriendLoading] = useState(false);
 
     useEffect(() => {
         if (userId) {
             fetchUserProfile();
+            fetchFriendsCount();
         }
     }, [userId]);
+
+    useEffect(() => {
+        if (userId && session) {
+            fetchFriendStatus();
+        }
+    }, [userId, session]);
 
     const fetchUserProfile = async () => {
         try {
@@ -59,6 +72,105 @@ export default function UserProfilePage() {
             setError('Failed to load profile');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchFriendStatus = async () => {
+        try {
+            const response = await friendAPI.getStatus(userId);
+            if (response.success) {
+                setFriendStatus(response.status);
+            }
+        } catch (err) {
+            console.error('Error fetching friend status:', err);
+        }
+    };
+
+    const fetchFriendsCount = async () => {
+        try {
+            const response = await friendAPI.getFriendsCount(userId);
+            if (response.success) {
+                setFriendsCount(response.count);
+            }
+        } catch (err) {
+            console.error('Error fetching friends count:', err);
+        }
+    };
+
+    const handleFriendAction = async () => {
+        if (!session) {
+            toast.error('Please login to add friends');
+            router.push('/auth/signin');
+            return;
+        }
+
+        setFriendLoading(true);
+        try {
+            let response;
+            switch (friendStatus) {
+                case 'none':
+                    response = await friendAPI.sendRequest(userId);
+                    if (response.success) {
+                        toast.success('Friend request sent!');
+                        setFriendStatus('pending_sent');
+                    }
+                    break;
+                case 'pending_sent':
+                    response = await friendAPI.cancelRequest(userId);
+                    if (response.success) {
+                        toast.success('Friend request cancelled');
+                        setFriendStatus('none');
+                    }
+                    break;
+                case 'pending_received':
+                    response = await friendAPI.acceptRequest(userId);
+                    if (response.success) {
+                        toast.success(`You are now friends with ${profile?.name}!`);
+                        setFriendStatus('friends');
+                        setFriendsCount(prev => prev + 1);
+                    }
+                    break;
+                case 'friends':
+                    if (confirm(`Are you sure you want to unfriend ${profile?.name}?`)) {
+                        response = await friendAPI.unfriend(userId);
+                        if (response.success) {
+                            toast.success('Friend removed');
+                            setFriendStatus('none');
+                            setFriendsCount(prev => Math.max(0, prev - 1));
+                        }
+                    }
+                    break;
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Something went wrong');
+        } finally {
+            setFriendLoading(false);
+        }
+    };
+
+    const getFriendButtonText = () => {
+        switch (friendStatus) {
+            case 'friends':
+                return '✓ Friends';
+            case 'pending_sent':
+                return 'Request Sent';
+            case 'pending_received':
+                return 'Accept Request';
+            default:
+                return 'Add Friend';
+        }
+    };
+
+    const getFriendButtonStyle = () => {
+        switch (friendStatus) {
+            case 'friends':
+                return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-400';
+            case 'pending_sent':
+                return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+            case 'pending_received':
+                return 'bg-primary-600 text-white hover:bg-primary-700';
+            default:
+                return 'bg-primary-600 text-white hover:bg-primary-700';
         }
     };
 
@@ -151,15 +263,51 @@ export default function UserProfilePage() {
                                 )}
                             </div>
 
-                            {/* Edit Button (if own profile) */}
-                            {isOwnProfile && (
-                                <Link
-                                    href="/profile/edit"
-                                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
-                                >
-                                    Edit Profile
-                                </Link>
-                            )}
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                                {isOwnProfile ? (
+                                    <>
+                                        <Link
+                                            href="/friends"
+                                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
+                                        >
+                                            Friends ({friendsCount})
+                                        </Link>
+                                        <Link
+                                            href="/profile/edit"
+                                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
+                                        >
+                                            Edit Profile
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={handleFriendAction}
+                                            disabled={friendLoading}
+                                            className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 ${getFriendButtonStyle()}`}
+                                        >
+                                            {friendLoading ? (
+                                                <span className="flex items-center gap-2">
+                                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                    </svg>
+                                                    ...
+                                                </span>
+                                            ) : (
+                                                getFriendButtonText()
+                                            )}
+                                        </button>
+                                        <Link
+                                            href={`/messages/${userId}`}
+                                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
+                                        >
+                                            Message
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
                         {/* Bio */}
@@ -172,7 +320,7 @@ export default function UserProfilePage() {
                         )}
 
                         {/* Stats */}
-                        <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {profile.stats?.tripsCreated || 0}
@@ -184,6 +332,12 @@ export default function UserProfilePage() {
                                     {profile.stats?.tripsJoined || 0}
                                 </div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400">Trips Joined</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {friendsCount}
+                                </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">Friends</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -222,3 +376,4 @@ export default function UserProfilePage() {
         </div>
     );
 }
+

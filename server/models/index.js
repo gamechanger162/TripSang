@@ -13,6 +13,7 @@ import Announcement from './Announcement.js';
 import Conversation from './Conversation.js';
 import DirectMessage from './DirectMessage.js';
 import Notification from './Notification.js';
+import Friendship from './Friendship.js';
 
 export {
     User,
@@ -24,12 +25,14 @@ export {
     Announcement,
     Conversation,
     DirectMessage,
-    Notification
+    Notification,
+    Friendship
 };
 
 export default {
     User,
     Trip,
     Review,
-    Notification
+    Notification,
+    Friendship
 };
