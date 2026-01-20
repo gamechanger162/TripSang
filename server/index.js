@@ -51,6 +51,9 @@ const io = new Server(httpServer, {
     }
 });
 
+// Make io accessible to our router
+app.set('io', io);
+
 // MongoDB Connection
 const connectDB = async () => {
     try {
