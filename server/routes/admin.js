@@ -7,7 +7,9 @@ import {
     getUserById,
     blockUser,
     updateUserRole,
-    getPlatformStats
+    getPlatformStats,
+    getAllTrips,
+    deleteTrip
 } from '../controllers/adminController.js';
 import {
     createAnnouncement,
@@ -79,6 +81,20 @@ router.put('/users/:id/role', updateUserRole);
  * @access  Private (Admin only)
  */
 router.get('/stats', getPlatformStats);
+
+/**
+ * @route   GET /api/admin/trips
+ * @desc    Get all trips with filters
+ * @access  Private (Admin only)
+ */
+router.get('/trips', getAllTrips);
+
+/**
+ * @route   DELETE /api/admin/trips/:id
+ * @desc    Delete a trip (admin override)
+ * @access  Private (Admin only)
+ */
+router.delete('/trips/:id', deleteTrip);
 
 /**
  * ANNOUNCEMENT ROUTES

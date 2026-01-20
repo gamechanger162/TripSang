@@ -374,3 +374,99 @@ export const getPlatformStats = async (req, res) => {
         });
     }
 };
+
+/**
+ * Get all trips with pagination and filtering
+ * GET /api/admin/trips
+ */
+export const getAllTrips = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+
+        const filters = {};
+        if (req.query.status) {
+            filters.status = req.query.status;
+        }
+
+        const trips = await Trip.find(filters)
+            .populate('creator', 'name email')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await Trip.countDocuments(filters);
+
+        res.status(200).json({
+            success: true,
+            trips,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalTrips: total,
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Get all trips error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch trips',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Delete a trip (Admin override)
+ * DELETE /api/admin/trips/:id
+ */
+export const deleteTrip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+
+        const trip = await Trip.findByIdAndDelete(id);
+
+        if (!trip) {
+            return res.status(404).json({
+                success: false,
+                message: 'Trip not found'
+            });
+        }
+
+        // Notify trip creator
+        const io = req.app.get('io');
+        if (io) {
+            const { Notification } = await import('../models/index.js');
+
+            await Notification.create({
+                recipient: trip.creator,
+                title: 'Trip Removed by Admin',
+                message: `Your trip "${trip.title}" was removed by an administrator. Reason: ${reason || 'Violation of terms'}`,
+                type: 'system',
+                link: '/dashboard',
+                sender: req.user._id // Admin ID
+            });
+
+            io.to(`user_${trip.creator}`).emit('new_notification', {
+                title: 'Trip Removed',
+                message: `Your trip "${trip.title}" was removed.`,
+                type: 'system'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Trip deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete trip error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete trip',
+            error: error.message
+        });
+    }
+};

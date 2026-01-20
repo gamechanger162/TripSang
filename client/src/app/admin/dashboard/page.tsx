@@ -10,7 +10,7 @@ import Link from 'next/link';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-type TabType = 'users' | 'guides' | 'settings';
+type TabType = 'users' | 'guides' | 'trips' | 'settings';
 
 interface User {
     _id: string;
@@ -21,6 +21,35 @@ interface User {
     isMobileVerified: boolean;
     createdAt: string;
     profilePicture?: string;
+}
+
+interface Trip {
+    _id: string;
+    title: string;
+    description: string;
+    creator: {
+        _id: string;
+        name: string;
+        email: string;
+    };
+    startDate: string;
+    status: 'active' | 'completed' | 'cancelled';
+    squad: string[];
+}
+
+interface Stats {
+    users: {
+        total: number;
+        byRole: { _id: string; count: number }[];
+    };
+    trips: {
+        total: number;
+        active: number;
+    };
+    payments: {
+        total: number;
+        revenue: number;
+    };
 }
 
 interface GlobalConfig {
@@ -43,6 +72,13 @@ export default function AdminDashboardPage() {
     const [usersPage, setUsersPage] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
     const [userFilter, setUserFilter] = useState<'all' | 'user' | 'guide' | 'admin'>('all');
+
+    // Trips state
+    const [trips, setTrips] = useState<Trip[]>([]);
+    const [tripsPage, setTripsPage] = useState(1);
+    const [totalTrips, setTotalTrips] = useState(0);
+    const [tripStatusFilter, setTripStatusFilter] = useState<string>('');
+    const [stats, setStats] = useState<Stats | null>(null);
 
     // Broadcast modal state
     const [showBroadcast, setShowBroadcast] = useState(false);
@@ -81,19 +117,6 @@ export default function AdminDashboardPage() {
     }, [status, session, router]);
 
     // Fetch config
-    useEffect(() => {
-        if (session?.user?.role === 'admin') {
-            fetchConfig();
-        }
-    }, [session]);
-
-    // Fetch users when tab changes
-    useEffect(() => {
-        if (activeTab === 'users' && session?.user?.role === 'admin') {
-            fetchUsers();
-        }
-    }, [activeTab, usersPage, userFilter, session]);
-
     const fetchConfig = async () => {
         try {
             const response = await adminAPI.getConfig();
@@ -130,6 +153,71 @@ export default function AdminDashboardPage() {
             setLoading(false);
         }
     };
+
+    const fetchStats = async () => {
+        try {
+            const response = await adminAPI.getStats();
+            if (response.success) {
+                setStats(response.stats);
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    };
+
+    const fetchTrips = async () => {
+        setLoading(true);
+        try {
+            const response = await adminAPI.getTrips(tripsPage, 20, tripStatusFilter);
+            if (response.success) {
+                setTrips(response.trips);
+                setTotalTrips(response.pagination.totalTrips);
+            }
+        } catch (error: any) {
+            console.error('Error fetching trips:', error);
+            toast.error('Failed to load trips');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteTrip = async (tripId: string) => {
+        if (!confirm('Are you sure you want to delete this trip? This action cannot be undone.')) return;
+
+        try {
+            const response = await adminAPI.deleteTrip(tripId, 'Removed by admin');
+            if (response.success) {
+                toast.success('Trip deleted successfully');
+                fetchTrips(); // Refresh
+                fetchStats(); // Update stats
+            }
+        } catch (error: any) {
+            console.error('Error deleting trip:', error);
+            toast.error(error.message || 'Failed to delete trip');
+        }
+    };
+
+    // Initial data fetch
+    useEffect(() => {
+        if (session?.user?.role === 'admin') {
+            fetchConfig();
+            fetchStats();
+        }
+    }, [session]);
+
+    // Fetch users when tab changes
+    useEffect(() => {
+        if (activeTab === 'users' && session?.user?.role === 'admin') {
+            fetchUsers();
+        }
+    }, [activeTab, usersPage, userFilter, session]);
+
+    // Fetch trips when tab changes
+    useEffect(() => {
+        if (activeTab === 'trips' && session?.user?.role === 'admin') {
+            fetchTrips();
+        }
+    }, [activeTab, tripsPage, tripStatusFilter, session]);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -334,13 +422,40 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
+            {/* Stats Overview */}
+            {stats && (
+                <div className="bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Users</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.users.total}</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                                <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Trips</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.trips.active}</p>
+                            </div>
+                            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Total Revenue</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">₹{stats.payments.revenue}</p>
+                            </div>
+                            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Trips</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.trips.total}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Tabs */}
             <div className="bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <nav className="flex space-x-8">
                         {[
                             { id: 'users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-                            { id: 'guides', label: 'Guides', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                            { id: 'trips', label: 'Trips', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                            { id: 'guides', label: 'Guides', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
                             { id: 'settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
                         ].map((tab) => (
                             <button

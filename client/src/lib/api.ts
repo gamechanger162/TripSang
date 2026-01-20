@@ -374,6 +374,30 @@ export const adminAPI = {
     getStats: async () => {
         return fetchWithAuth('/api/admin/stats');
     },
+
+    /**
+     * Get all trips (Admin)
+     * GET /api/admin/trips
+     */
+    getTrips: async (page = 1, limit = 20, status?: string) => {
+        const params = new URLSearchParams();
+        params.append('page', String(page));
+        params.append('limit', String(limit));
+        if (status) params.append('status', status);
+
+        return fetchWithAuth(`/api/admin/trips?${params.toString()}`);
+    },
+
+    /**
+     * Delete trip (Admin)
+     * DELETE /api/admin/trips/:id
+     */
+    deleteTrip: async (tripId: string, reason?: string) => {
+        return fetchWithAuth(`/api/admin/trips/${tripId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ reason })
+        });
+    },
 };
 
 // ========================================
