@@ -8,13 +8,15 @@ const nextConfig = {
             'localhost',
             'firebasestorage.googleapis.com',
             'lh3.googleusercontent.com',
-            'images.unsplash.com'
+            'images.unsplash.com',
+            'res.cloudinary.com'
         ],
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: '**.cloudinary.com'
-            }
+                hostname: 'res.cloudinary.com',
+                pathname: '/**',
+            },
         ]
     },
     env: {
