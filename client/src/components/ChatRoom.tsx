@@ -12,6 +12,7 @@ interface Message {
     _id?: string;
     senderId: string;
     senderName: string;
+    senderProfilePicture?: string;
     message: string;
     timestamp: string;
     type?: 'text' | 'image' | 'system';
@@ -158,6 +159,7 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
             tripId,
             message: newMessage.trim(),
             senderName: session.user.name || 'Anonymous',
+            senderProfilePicture: session.user.image,
             type: 'text'
         };
 
@@ -185,6 +187,7 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
                     message: 'Shared an image',
                     imageUrl: response.url,
                     senderName: session.user.name || 'Anonymous',
+                    senderProfilePicture: session.user.image,
                     type: 'image'
                 };
                 socket.emit('send_message', messageData);
@@ -273,12 +276,21 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
 
                         return (
                             <div key={msg._id || index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group`}>
-                                {/* Avatar (only for others) */}
                                 {!isOwnMessage && (
                                     <div className={`mr-2 w-8 h-8 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                                            {msg.senderName[0]}
-                                        </div>
+                                        {msg.senderProfilePicture ? (
+                                            <Image
+                                                src={msg.senderProfilePicture}
+                                                alt={msg.senderName}
+                                                width={32}
+                                                height={32}
+                                                className="w-full h-full rounded-full object-cover shadow-sm"
+                                            />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                {msg.senderName[0]}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
