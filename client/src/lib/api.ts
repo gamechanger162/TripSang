@@ -592,6 +592,40 @@ export const uploadAPI = {
     }
 };
 
+// Notification API
+export const notificationAPI = {
+    // Get all notifications
+    getAll: async (page = 1, limit = 20) => {
+        return fetchWithAuth(`/api/notifications?page=${page}&limit=${limit}`);
+    },
+
+    // Get unread count
+    getUnreadCount: async () => {
+        return fetchWithAuth('/api/notifications/unread-count');
+    },
+
+    // Mark as read
+    markRead: async (id: string) => {
+        return fetchWithAuth(`/api/notifications/${id}/read`, {
+            method: 'PUT'
+        });
+    },
+
+    // Mark all as read
+    markAllRead: async () => {
+        return fetchWithAuth('/api/notifications/read-all', {
+            method: 'PUT'
+        });
+    },
+
+    // Delete notification
+    delete: async (id: string) => {
+        return fetchWithAuth(`/api/notifications/${id}`, {
+            method: 'DELETE'
+        });
+    }
+};
+
 // Export all APIs
 export default {
     authAPI,
@@ -601,5 +635,6 @@ export default {
     reviewAPI,
     messageAPI,
     uploadAPI,
-    userAPI
+    userAPI,
+    notificationAPI
 };

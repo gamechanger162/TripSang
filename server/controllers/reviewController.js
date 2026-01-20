@@ -89,6 +89,33 @@ export const createReview = async (req, res) => {
         await review.populate('reviewee', 'name profilePicture');
         await review.populate('trip', 'title startDate endDate');
 
+        // Create Notification
+        try {
+            const { Notification } = await import('../models/index.js');
+            const io = req.app.get('io');
+
+            const notification = await Notification.create({
+                recipient: revieweeId,
+                sender: reviewerId,
+                type: 'review',
+                title: 'New Review Recieved',
+                message: `${req.user.name} rated you ${rating} stars for ${trip.title}`,
+                link: `/profile/${req.user._id}`, // Redirect to reviewer's profile or own profile
+                metadata: {
+                    tripId,
+                    reviewId: review._id
+                }
+            });
+
+            // Real-time socket notification
+            if (io) {
+                io.to(`user_${revieweeId}`).emit('new_notification', notification);
+            }
+        } catch (notifError) {
+            console.error('Notification creation failed:', notifError);
+            // Don't fail the request just because notification failed
+        }
+
         res.status(201).json({
             success: true,
             message: 'Review submitted successfully',

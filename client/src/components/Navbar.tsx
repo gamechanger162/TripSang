@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { messageAPI } from '@/lib/api';
+import { messageAPI, notificationAPI } from '@/lib/api';
 
 export default function Navbar() {
     const { data: session, status } = useSession();
@@ -15,6 +15,9 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
 
     // Check if we are on the homepage
     const isHomePage = pathname === '/';
@@ -28,15 +31,7 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Fetch unread message count
-    useEffect(() => {
-        if (status === 'authenticated') {
-            fetchUnreadCount();
-            // Poll every 30 seconds for new messages
-            const interval = setInterval(fetchUnreadCount, 30000);
-            return () => clearInterval(interval);
-        }
-    }, [status]);
+
 
     const fetchUnreadCount = async () => {
         try {
@@ -96,6 +91,116 @@ export default function Navbar() {
                                 {link.name}
                             </Link>
                         ))}
+
+
+
+    // ... (Fetch notification unread count)
+    const fetchUnreadNotifCount = async () => {
+        try {
+            const response = await notificationAPI.getUnreadCount();
+                        if (response.success) {
+                            setUnreadNotifCount(response.count);
+            }
+        } catch (error) {
+                            console.error('Failed to fetch notification count:', error);
+        }
+    };
+
+    // Combine fetches
+    useEffect(() => {
+        if (status === 'authenticated') {
+                            fetchUnreadCount(); // Messages
+                        fetchUnreadNotifCount(); // Notifications
+
+            // Poll every 30s
+            const interval = setInterval(() => {
+                            fetchUnreadCount();
+                        fetchUnreadNotifCount();
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [status]);
+
+    const handleNotificationClick = async () => {
+                            setNotificationsOpen(!notificationsOpen);
+                        if (!notificationsOpen) {
+            // Fetch latest notifications when opening
+            try {
+                const response = await notificationAPI.getAll(1, 10);
+                        if (response.success) {
+                            setNotifications(response.notifications);
+                        // Mark all as read visual clearing
+                        setUnreadNotifCount(0);
+                        // Ideally call mark-all-read API here or on close
+                        await notificationAPI.markAllRead();
+                }
+            } catch (error) {
+                            console.error('Failed to load notifications:', error);
+            }
+        }
+    };
+
+                        // ... (inside JSX, before messages link)
+                        {/* Notifications Bell */}
+                        {status === 'authenticated' && (
+                            <div className="relative">
+                                <button
+                                    onClick={handleNotificationClick}
+                                    className={`p-2 rounded-full hover:bg-white/10 transition-colors ${linkColor}`}
+                                >
+                                    <div className="relative">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        {unreadNotifCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center animate-bounce">
+                                                {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                </button>
+
+                                {/* Dropdown */}
+                                {notificationsOpen && (
+                                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 max-h-96 overflow-y-auto">
+                                        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                                        </div>
+                                        {notifications.length === 0 ? (
+                                            <div className="p-6 text-center text-gray-500">
+                                                No notifications
+                                            </div>
+                                        ) : (
+                                            notifications.map((notif: any) => (
+                                                <Link
+                                                    key={notif._id}
+                                                    href={notif.link || '#'}
+                                                    className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                                >
+                                                    <div className="flex gap-3">
+                                                        {notif.sender?.profilePicture ? (
+                                                            <Image src={notif.sender.profilePicture} alt="" width={32} height={32} className="rounded-full flex-shrink-0 object-cover w-8 h-8" />
+                                                        ) : (
+                                                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-600 flex-shrink-0">
+                                                                {notif.sender?.name?.[0] || '!'}
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <p className="text-sm text-gray-900 dark:text-gray-100 leading-tight mb-1">
+                                                                {notif.message}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {new Date(notif.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Messages Link with Badge (only if authenticated) */}
                         {status === 'authenticated' && (
