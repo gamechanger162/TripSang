@@ -310,7 +310,6 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import announcementRoutes from './routes/announcements.js';
 import messageRoutes from './routes/messages.js';
 import uploadRoutes from './routes/upload.js';
-import uploadRoutes from './routes/upload.js';
 import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
 
@@ -322,7 +321,6 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/upload', uploadRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
