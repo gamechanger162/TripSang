@@ -293,6 +293,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import announcementRoutes from './routes/announcements.js';
 import messageRoutes from './routes/messages.js';
 import uploadRoutes from './routes/upload.js';
+import userRoutes from './routes/users.js';
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -303,9 +304,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/upload', uploadRoutes);
-// app.use('/api/users', userRoutes); // TODO: Add user profile routes
-
-
+app.use('/api/users', userRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -342,5 +341,3 @@ const startServer = async () => {
 startServer();
 
 export { io };
-
-

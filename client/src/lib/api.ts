@@ -467,7 +467,7 @@ export const reviewAPI = {
         return fetchWithAuth(`/api/reviews/${reviewId}`, {
             method: 'DELETE',
         });
-    }
+    },
 };
 
 // =========================
@@ -503,14 +503,95 @@ export const messageAPI = {
     }
 };
 
+// ========================================
+// USER APIs
+// ========================================
+
+export const userAPI = {
+    /**
+     * Get current user profile
+     * GET /api/users/me
+     */
+    getProfile: async () => {
+        return fetchWithAuth('/api/users/me');
+    },
+
+    /**
+     * Get user profile by ID
+     * GET /api/users/:id
+     */
+    getUserById: async (id: string) => {
+        return fetch(`${API_URL}/api/users/${id}`)
+            .then(res => res.json());
+    },
+
+    /**
+     * Update user profile
+     * PUT /api/users/profile
+     */
+    updateProfile: async (data: any) => {
+        return fetchWithAuth('/api/users/profile', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    },
+
+    /**
+     * Get user's trips
+     * GET /api/users/trips
+     */
+    getTrips: async () => {
+        return fetchWithAuth('/api/users/trips');
+    }
+};
+
 // Upload API
 export const uploadAPI = {
+    // Old base64 upload (deprecated/compat)
     uploadImage: (base64Image: string, folder?: string) =>
         fetchWithAuth('/api/upload/image', {
             method: 'POST',
             body: JSON.stringify({ image: base64Image, folder }),
         }),
+
+    // New File upload handling
+    uploadFile: async (file: File) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        // We use fetch directly here because fetchWithAuth sets Content-Type to application/json
+        // which breaks FormData (browser needs to set boundary)
+        const token = getToken();
+        // Or get from session if needed, but getToken covers basic auth
+        let headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        } else {
+            // Try to get from session if client-side
+            if (typeof window !== 'undefined') {
+                const session = await getSession();
+                if (session?.user?.accessToken) {
+                    headers['Authorization'] = `Bearer ${session.user.accessToken}`;
+                }
+            }
+        }
+
+        const response = await fetch(`${API_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+            headers
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Upload failed');
+        }
+
+        return data;
+    }
 };
+
 // Export all APIs
 export default {
     authAPI,
@@ -520,5 +601,5 @@ export default {
     reviewAPI,
     messageAPI,
     uploadAPI,
+    userAPI
 };
-

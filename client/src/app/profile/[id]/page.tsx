@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import UserReviews from '@/components/UserReviews';
 import Link from 'next/link';
+import { userAPI } from '@/lib/api';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -15,10 +16,17 @@ interface UserProfile {
     email: string;
     profilePicture?: string;
     bio?: string;
-    location?: string;
+    location?: {
+        city?: string;
+        country?: string;
+    };
     badges: string[];
     createdAt: string;
     isMobileVerified?: boolean;
+    stats?: {
+        tripsCreated: number;
+        tripsJoined: number;
+    };
 }
 
 export default function UserProfilePage() {
@@ -39,20 +47,13 @@ export default function UserProfilePage() {
     const fetchUserProfile = async () => {
         try {
             setLoading(true);
-            // For now, we'll use a mock profile since we don't have a user profile endpoint yet
-            // In production, replace with: const response = await fetch(`/api/users/${userId}`)
+            const response = await userAPI.getUserById(userId);
 
-            // Mock data for demonstration
-            setProfile({
-                _id: userId,
-                name: 'Travel Enthusiast',
-                email: 'user@example.com',
-                bio: 'Love exploring new places and meeting fellow travelers! 🌍',
-                location: 'Mumbai, India',
-                badges: ['Explorer', 'Early Adopter'],
-                createdAt: new Date().toISOString(),
-                isMobileVerified: true
-            });
+            if (response.success) {
+                setProfile(response.user);
+            } else {
+                setError(response.message || 'Failed to load profile');
+            }
         } catch (err: any) {
             console.error('Error fetching profile:', err);
             setError('Failed to load profile');
@@ -125,13 +126,13 @@ export default function UserProfilePage() {
                                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                                     {profile.name}
                                 </h1>
-                                {profile.location && (
+                                {profile.location && (profile.location.city || profile.location.country) && (
                                     <p className="text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        {profile.location}
+                                        {[profile.location.city, profile.location.country].filter(Boolean).join(', ')}
                                     </p>
                                 )}
 
@@ -173,11 +174,15 @@ export default function UserProfilePage() {
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">0</div>
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {profile.stats?.tripsCreated || 0}
+                                </div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400">Trips Created</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">0</div>
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {profile.stats?.tripsJoined || 0}
+                                </div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400">Trips Joined</div>
                             </div>
                             <div className="text-center">
