@@ -123,16 +123,18 @@ io.on('connection', (socket) => {
     // Send Message Event
     socket.on('send_message', async (data) => {
         try {
-            const { tripId, message } = data;
+            const { tripId, message, type = 'text', imageUrl } = data;
 
-            if (!tripId || !message) return;
+            if (!tripId || (!message && type === 'text')) return;
 
             // Save message to database
             const savedMessage = await Message.create({
                 tripId,
                 senderId: socket.user._id,
                 senderName: socket.user.name,
-                message,
+                message: message || '', // Text might be empty for images
+                type,
+                imageUrl,
                 timestamp: new Date()
             });
 
@@ -141,6 +143,17 @@ io.on('connection', (socket) => {
 
         } catch (error) {
             console.error('Send message error:', error);
+        }
+    });
+
+    // Typing Indicator for Squad
+    socket.on('typing_squad', ({ tripId, isTyping }) => {
+        if (tripId) {
+            socket.to(tripId).emit('user_typing_squad', {
+                userId: socket.user._id,
+                userName: socket.user.name,
+                isTyping
+            });
         }
     });
 
