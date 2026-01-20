@@ -51,41 +51,77 @@ export default function SiteBanner() {
     }
 
     return (
-        <div className="bg-primary-600 text-white px-4 py-3 shadow-md relative z-50">
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 flex-1">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+            <div className="relative w-full max-w-4xl h-[80vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-scaleIn">
+
+                {/* Close Button */}
+                <button
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-all"
+                    aria-label="Close"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                {/* Left Side: Image (or Icon if no image) */}
+                <div className={`relative h-1/2 md:h-full w-full md:w-1/2 ${announcement.imageUrl ? 'bg-gray-100' : 'bg-primary-600 flex items-center justify-center'}`}>
                     {announcement.imageUrl ? (
                         <img
                             src={announcement.imageUrl}
-                            alt="Banner"
-                            className="w-12 h-12 rounded object-cover flex-shrink-0"
+                            alt="Announcement"
+                            className="w-full h-full object-cover"
                             onError={(e) => {
-                                // Hide image if it fails to load
+                                // Fallback to icon if image fails
                                 e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center', 'bg-primary-600');
+                                e.currentTarget.parentElement?.classList.remove('bg-gray-100');
                             }}
                         />
                     ) : (
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-32 h-32 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                strokeWidth={2}
+                                strokeWidth={1.5}
                                 d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
                             />
                         </svg>
                     )}
-                    <p className="text-sm md:text-base font-medium">{announcement.message}</p>
                 </div>
-                <button
-                    onClick={handleClose}
-                    className="flex-shrink-0 hover:bg-primary-700 rounded-full p-1 transition-colors"
-                    aria-label="Close banner"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+
+                {/* Right Side: Content */}
+                <div className="flex-1 p-8 md:p-12 flex flex-col justify-center items-center text-center bg-white dark:bg-gray-800">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+                        {announcement.title || 'Announcement'}
+                    </h2>
+
+                    <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-lg">
+                        {announcement.message}
+                    </p>
+
+                    <button
+                        onClick={handleClose}
+                        className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white text-lg font-semibold rounded-full transform transition hover:scale-105 shadow-lg shadow-primary-600/30"
+                    >
+                        Got it, thanks!
+                    </button>
+                </div>
             </div>
+
+            <style jsx>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes scaleIn {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+                .animate-scaleIn { animation: scaleIn 0.3s ease-out; }
+            `}</style>
         </div>
     );
 }
