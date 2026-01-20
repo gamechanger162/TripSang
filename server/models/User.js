@@ -105,7 +105,12 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
-    }
+    },
+    // Users blocked by this user
+    blockedUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 }, {
     timestamps: true, // Adds createdAt and updatedAt
     toJSON: { virtuals: true },
@@ -163,6 +168,27 @@ userSchema.methods.addBadge = function (badgeName) {
 userSchema.methods.removeBadge = function (badgeName) {
     this.badges = this.badges.filter(badge => badge !== badgeName);
     return this.save();
+};
+
+// Method to block a user
+userSchema.methods.blockUser = function (userIdToBlock) {
+    if (!this.blockedUsers.includes(userIdToBlock)) {
+        this.blockedUsers.push(userIdToBlock);
+    }
+    return this.save();
+};
+
+// Method to unblock a user
+userSchema.methods.unblockUser = function (userIdToUnblock) {
+    this.blockedUsers = this.blockedUsers.filter(
+        id => id.toString() !== userIdToUnblock.toString()
+    );
+    return this.save();
+};
+
+// Method to check if a user is blocked
+userSchema.methods.hasBlocked = function (userId) {
+    return this.blockedUsers.some(id => id.toString() === userId.toString());
 };
 
 // Static method to find by email

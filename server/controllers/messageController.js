@@ -258,3 +258,129 @@ export const getUnreadCount = async (req, res) => {
         });
     }
 };
+
+/**
+ * Block a user
+ * POST /api/messages/block/:userId
+ */
+export const blockUser = async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const { userId } = req.params;
+
+        if (currentUser._id.toString() === userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot block yourself.'
+            });
+        }
+
+        const userToBlock = await User.findById(userId);
+        if (!userToBlock) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found.'
+            });
+        }
+
+        await currentUser.blockUser(userId);
+
+        res.status(200).json({
+            success: true,
+            message: `${userToBlock.name} has been blocked.`
+        });
+    } catch (error) {
+        console.error('Block user error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to block user.',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Unblock a user
+ * POST /api/messages/unblock/:userId
+ */
+export const unblockUser = async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const { userId } = req.params;
+
+        await currentUser.unblockUser(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'User unblocked successfully.'
+        });
+    } catch (error) {
+        console.error('Unblock user error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to unblock user.',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Check blocked status between two users
+ * GET /api/messages/block-status/:userId
+ */
+export const getBlockStatus = async (req, res) => {
+    try {
+        const currentUser = req.user;
+        const { userId } = req.params;
+
+        const otherUser = await User.findById(userId);
+        if (!otherUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found.'
+            });
+        }
+
+        const iBlockedThem = currentUser.hasBlocked(userId);
+        const theyBlockedMe = otherUser.blockedUsers?.some(
+            id => id.toString() === currentUser._id.toString()
+        ) || false;
+
+        res.status(200).json({
+            success: true,
+            iBlockedThem,
+            theyBlockedMe,
+            canMessage: !iBlockedThem && !theyBlockedMe
+        });
+    } catch (error) {
+        console.error('Get block status error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get block status.',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get list of blocked users
+ * GET /api/messages/blocked-users
+ */
+export const getBlockedUsers = async (req, res) => {
+    try {
+        const currentUser = await User.findById(req.user._id)
+            .populate('blockedUsers', 'name profilePicture');
+
+        res.status(200).json({
+            success: true,
+            blockedUsers: currentUser.blockedUsers || []
+        });
+    } catch (error) {
+        console.error('Get blocked users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get blocked users.',
+            error: error.message
+        });
+    }
+};

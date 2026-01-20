@@ -5,7 +5,11 @@ import {
     getOrCreateConversation,
     getMessageHistory,
     markConversationAsRead,
-    getUnreadCount
+    getUnreadCount,
+    blockUser,
+    unblockUser,
+    getBlockStatus,
+    getBlockedUsers
 } from '../controllers/messageController.js';
 
 const router = express.Router();
@@ -16,6 +20,20 @@ const router = express.Router();
  * @access  Private
  */
 router.get('/conversations', authenticate, getConversations);
+
+/**
+ * @route   GET /api/messages/blocked-users
+ * @desc    Get list of blocked users
+ * @access  Private
+ */
+router.get('/blocked-users', authenticate, getBlockedUsers);
+
+/**
+ * @route   GET /api/messages/block-status/:userId
+ * @desc    Check block status with a user
+ * @access  Private
+ */
+router.get('/block-status/:userId', authenticate, getBlockStatus);
 
 /**
  * @route   GET /api/messages/conversation/:userId
@@ -44,5 +62,19 @@ router.post('/mark-read', authenticate, markConversationAsRead);
  * @access  Private
  */
 router.get('/unread-count', authenticate, getUnreadCount);
+
+/**
+ * @route   POST /api/messages/block/:userId
+ * @desc    Block a user
+ * @access  Private
+ */
+router.post('/block/:userId', authenticate, blockUser);
+
+/**
+ * @route   POST /api/messages/unblock/:userId
+ * @desc    Unblock a user
+ * @access  Private
+ */
+router.post('/unblock/:userId', authenticate, unblockUser);
 
 export default router;

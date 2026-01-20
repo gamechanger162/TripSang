@@ -12,13 +12,15 @@ interface DirectMessageBoxProps {
     receiverId: string;
     receiverName: string;
     initialMessages?: DirectMessage[];
+    isBlocked?: boolean;
 }
 
 export default function DirectMessageBox({
     conversationId,
     receiverId,
     receiverName,
-    initialMessages = []
+    initialMessages = [],
+    isBlocked = false
 }: DirectMessageBoxProps) {
     const { messages, setMessages, sendMessage, isTyping, setIsTyping, connected } = useDMSocket(conversationId);
     const [messageInput, setMessageInput] = useState('');
@@ -154,63 +156,71 @@ export default function DirectMessageBox({
             </div>
 
             {/* Input area */}
-            <div className="border-t border-gray-200 dark:border-dark-700 p-4 bg-white dark:bg-dark-800">
-                <div className="flex items-end space-x-2">
-                    {/* Image Upload Button */}
-                    <div className="relative pb-1">
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileUpload}
-                            accept="image/*"
-                            className="hidden"
+            {isBlocked ? (
+                <div className="border-t border-gray-200 dark:border-dark-700 p-4 bg-gray-100 dark:bg-dark-900">
+                    <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
+                        You cannot send messages to this user.
+                    </p>
+                </div>
+            ) : (
+                <div className="border-t border-gray-200 dark:border-dark-700 p-4 bg-white dark:bg-dark-800">
+                    <div className="flex items-end space-x-2">
+                        {/* Image Upload Button */}
+                        <div className="relative pb-1">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                accept="image/*"
+                                className="hidden"
+                                disabled={!connected || isUploading}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={!connected || isUploading}
+                                className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors disabled:opacity-50"
+                                title="Send image"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <textarea
+                            value={messageInput}
+                            onChange={handleInputChange}
+                            onKeyPress={handleKeyPress}
+                            placeholder={isUploading ? "Uploading image..." : `Message ${receiverName}...`}
+                            className="flex-1 resize-none rounded-2xl border border-gray-300 dark:border-dark-600 bg-gray-50 dark:bg-dark-700 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 max-h-32 transition-colors disabled:opacity-50"
+                            rows={1}
                             disabled={!connected || isUploading}
                         />
                         <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={!connected || isUploading}
-                            className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors disabled:opacity-50"
-                            title="Send image"
+                            onClick={handleSendMessage}
+                            disabled={(!messageInput.trim() && !isUploading) || loading || !connected}
+                            className="btn-primary flex-shrink-0 h-11 w-11 rounded-full p-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                            {isUploading ? (
+                                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                                    />
+                                </svg>
+                            )}
                         </button>
                     </div>
-
-                    <textarea
-                        value={messageInput}
-                        onChange={handleInputChange}
-                        onKeyPress={handleKeyPress}
-                        placeholder={isUploading ? "Uploading image..." : `Message ${receiverName}...`}
-                        className="flex-1 resize-none rounded-2xl border border-gray-300 dark:border-dark-600 bg-gray-50 dark:bg-dark-700 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 max-h-32 transition-colors disabled:opacity-50"
-                        rows={1}
-                        disabled={!connected || isUploading}
-                    />
-                    <button
-                        onClick={handleSendMessage}
-                        disabled={(!messageInput.trim() && !isUploading) || loading || !connected}
-                        className="btn-primary flex-shrink-0 h-11 w-11 rounded-full p-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
-                    >
-                        {isUploading ? (
-                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        ) : (
-                            <svg className="w-5 h-5 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                                />
-                            </svg>
-                        )}
-                    </button>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

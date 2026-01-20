@@ -535,6 +535,30 @@ export const messageAPI = {
     // Get total unread count
     getUnreadCount: async () => {
         return fetchWithAuth('/api/messages/unread-count');
+    },
+
+    // Block a user
+    blockUser: async (userId: string) => {
+        return fetchWithAuth(`/api/messages/block/${userId}`, {
+            method: 'POST'
+        });
+    },
+
+    // Unblock a user
+    unblockUser: async (userId: string) => {
+        return fetchWithAuth(`/api/messages/unblock/${userId}`, {
+            method: 'POST'
+        });
+    },
+
+    // Get block status with a user
+    getBlockStatus: async (userId: string) => {
+        return fetchWithAuth(`/api/messages/block-status/${userId}`);
+    },
+
+    // Get list of blocked users
+    getBlockedUsers: async () => {
+        return fetchWithAuth('/api/messages/blocked-users');
     }
 };
 
