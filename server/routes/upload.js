@@ -9,8 +9,8 @@ const upload = multer(); // Memory storage by default
 
 // @route   POST /api/upload
 // @desc    Upload image to Cloudinary
-// @access  Admin (for now, can be expanded)
-router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res) => {
+// @access  Private
+router.post('/', authenticate, upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -20,7 +20,7 @@ router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res)
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
                     {
-                        folder: 'tripsang_broadcasts', // Organize in a folder
+                        folder: 'tripsang_uploads', // General upload folder
                     },
                     (error, result) => {
                         if (result) {
@@ -38,7 +38,8 @@ router.post('/', authenticate, isAdmin, upload.single('image'), async (req, res)
 
         res.json({
             success: true,
-            imageUrl: result.secure_url,
+            url: result.secure_url, // Changed to 'url' to match frontend expectation
+            imageUrl: result.secure_url, // kept for backward compatibility
             publicId: result.public_id
         });
 
