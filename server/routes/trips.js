@@ -7,6 +7,7 @@ import {
     deleteTrip,
     joinTrip,
     leaveTrip,
+    removeMember,
     toggleLike
 } from '../controllers/tripController.js';
 import { authenticate, optionalAuth, requireMobileVerification } from '../middleware/auth.js';
@@ -61,6 +62,13 @@ router.post('/:id/join', authenticate, joinTrip);
  * @access  Private
  */
 router.post('/:id/leave', authenticate, leaveTrip);
+
+/**
+ * @route   POST /api/trips/:id/remove-member
+ * @desc    Remove a member from the squad
+ * @access  Private
+ */
+router.post('/:id/remove-member', authenticate, removeMember);
 
 /**
  * @route   POST /api/trips/:id/like

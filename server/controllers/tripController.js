@@ -485,6 +485,68 @@ export const leaveTrip = async (req, res) => {
 };
 
 /**
+ * Remove a member from the squad (Creator only)
+ * POST /api/trips/:id/remove-member
+ */
+export const removeMember = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId: memberIdToRemove } = req.body;
+        const requesterId = req.user._id;
+
+        if (!memberIdToRemove) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID to remove is required.'
+            });
+        }
+
+        const trip = await Trip.findById(id);
+
+        if (!trip) {
+            return res.status(404).json({
+                success: false,
+                message: 'Trip not found.'
+            });
+        }
+
+        // Check if requester is the creator
+        if (trip.creator.toString() !== requesterId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the trip creator can remove members.'
+            });
+        }
+
+        // Cannot remove self (creator)
+        if (memberIdToRemove === trip.creator.toString()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Creator cannot be removed from the trip.'
+            });
+        }
+
+        await trip.removeSquadMember(memberIdToRemove);
+
+        // Populate to return updated list
+        await trip.populate('squadMembers', 'name profilePicture');
+
+        res.status(200).json({
+            success: true,
+            message: 'Member removed successfully.',
+            trip
+        });
+    } catch (error) {
+        console.error('Remove member error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to remove member.',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Like/Unlike a trip
  * POST /api/trips/:id/like
  */

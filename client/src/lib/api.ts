@@ -268,6 +268,17 @@ export const tripAPI = {
             method: 'POST',
         });
     },
+
+    /**
+     * Remove a member from the squad
+     * POST /api/trips/:id/remove-member
+     */
+    removeMember: async (id: string, userId: string) => {
+        return fetchWithAuth(`/api/trips/${id}/remove-member`, {
+            method: 'POST',
+            body: JSON.stringify({ userId }),
+        });
+    },
 };
 
 // ========================================

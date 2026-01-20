@@ -156,6 +156,28 @@ export default function TripDetailsPage() {
         }
     };
 
+    const handleRemoveMember = async (memberId: string, memberName: string) => {
+        if (!confirm(`Are you sure you want to remove ${memberName} from the squad?`)) {
+            return;
+        }
+
+        try {
+            const response = await tripAPI.removeMember(tripId, memberId);
+
+            if (response.success) {
+                toast.success(`${memberName} removed from squad`);
+                // Refresh trip data
+                const updatedTrip = await tripAPI.getById(tripId);
+                if (updatedTrip.success) {
+                    setTrip(updatedTrip.trip);
+                }
+            }
+        } catch (error: any) {
+            console.error('Error removing member:', error);
+            toast.error(error.message || 'Failed to remove member');
+        }
+    };
+
     const handleLike = async () => {
         if (!session) {
             toast.error('Please login to like');
@@ -461,23 +483,39 @@ export default function TripDetailsPage() {
                                                     {member.name}
                                                 </span>
                                             </Link>
-                                            {/* Message button (only if not self) */}
-                                            {session && member._id !== userId && (
-                                                <Link
-                                                    href={`/messages/${member._id}`}
-                                                    className="p-1.5 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors"
-                                                    title={`Message ${member.name}`}
-                                                >
-                                                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                                                        />
-                                                    </svg>
-                                                </Link>
-                                            )}
+                                            {/* Actions */}
+                                            <div className="flex items-center space-x-1">
+                                                {/* Message button (only if not self) */}
+                                                {session && member._id !== userId && (
+                                                    <Link
+                                                        href={`/messages/${member._id}`}
+                                                        className="p-1.5 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors"
+                                                        title={`Message ${member.name}`}
+                                                    >
+                                                        <svg className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                            />
+                                                        </svg>
+                                                    </Link>
+                                                )}
+
+                                                {/* Remove button (only for creator, cannot remove self) */}
+                                                {isCreator && member._id !== userId && (
+                                                    <button
+                                                        onClick={() => handleRemoveMember(member._id, member.name)}
+                                                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full transition-colors group"
+                                                        title="Remove from squad"
+                                                    >
+                                                        <svg className="w-4 h-4 text-gray-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                     {trip.squadMembers.length > 5 && (
@@ -593,24 +631,43 @@ export default function TripDetailsPage() {
                                                 )}
                                             </div>
                                         </Link>
-                                        {/* Message button (only if not self) */}
-                                        {session && member._id !== userId && (
-                                            <Link
-                                                href={`/messages/${member._id}`}
-                                                className="p-2 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors text-gray-500 hover:text-primary-600"
-                                                title={`Message ${member.name}`}
-                                                onClick={() => setShowAllMembers(false)}
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                                                    />
-                                                </svg>
-                                            </Link>
-                                        )}
+                                        {/* Actions */}
+                                        <div className="flex items-center space-x-1">
+                                            {/* Message button (only if not self) */}
+                                            {session && member._id !== userId && (
+                                                <Link
+                                                    href={`/messages/${member._id}`}
+                                                    className="p-2 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors text-gray-500 hover:text-primary-600"
+                                                    title={`Message ${member.name}`}
+                                                    onClick={() => setShowAllMembers(false)}
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                                        />
+                                                    </svg>
+                                                </Link>
+                                            )}
+
+                                            {/* Remove button (only for creator, cannot remove self) */}
+                                            {isCreator && member._id !== userId && (
+                                                <button
+                                                    onClick={() => {
+                                                        setShowAllMembers(false);
+                                                        handleRemoveMember(member._id, member.name);
+                                                    }}
+                                                    className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full transition-colors group"
+                                                    title="Remove from squad"
+                                                >
+                                                    <svg className="w-5 h-5 text-gray-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
