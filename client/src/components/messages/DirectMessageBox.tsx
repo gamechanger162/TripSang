@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useDMSocket } from '@/hooks/useDMSocket';
 import MessageBubble from './MessageBubble';
 import { DirectMessage } from '@/types/messages';
-import { messageAPI } from '@/lib/api';
+import { messageAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface DirectMessageBoxProps {
@@ -23,7 +23,10 @@ export default function DirectMessageBox({
     const { messages, setMessages, sendMessage, isTyping, setIsTyping, connected } = useDMSocket(conversationId);
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load initial messages
@@ -41,13 +44,38 @@ export default function DirectMessageBox({
     // Auto-scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isTyping]);
 
     const handleSendMessage = () => {
         if (messageInput.trim() && !loading) {
-            sendMessage(receiverId, messageInput);
+            sendMessage(receiverId, messageInput, 'text');
             setMessageInput('');
             setIsTyping(false); // Stop typing indicator
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size should be less than 5MB');
+            return;
+        }
+
+        try {
+            setIsUploading(true);
+            const response = await uploadAPI.uploadFile(file);
+
+            if (response.success) {
+                sendMessage(receiverId, 'Shared an image', 'image', response.url);
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            toast.error('Failed to send image');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -87,7 +115,7 @@ export default function DirectMessageBox({
             )}
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50 dark:bg-dark-900/50">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center px-4">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center mb-4">
@@ -110,9 +138,9 @@ export default function DirectMessageBox({
                             <MessageBubble key={message._id} message={message} />
                         ))}
                         {isTyping && (
-                            <div className="flex justify-start mb-4">
-                                <div className="bg-gray-100 dark:bg-dark-700 rounded-2xl px-4 py-2 rounded-bl-sm">
-                                    <div className="flex space-x-2">
+                            <div className="flex justify-start mb-4 px-4">
+                                <div className="bg-gray-200 dark:bg-dark-700 rounded-2xl px-4 py-2 rounded-bl-none">
+                                    <div className="flex space-x-1">
                                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -126,35 +154,62 @@ export default function DirectMessageBox({
             </div>
 
             {/* Input area */}
-            <div className="border-t border-gray-200 dark:border-dark-700 p-4">
+            <div className="border-t border-gray-200 dark:border-dark-700 p-4 bg-white dark:bg-dark-800">
                 <div className="flex items-end space-x-2">
+                    {/* Image Upload Button */}
+                    <div className="relative pb-1">
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            accept="image/*"
+                            className="hidden"
+                            disabled={!connected || isUploading}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={!connected || isUploading}
+                            className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors disabled:opacity-50"
+                            title="Send image"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                    </div>
+
                     <textarea
                         value={messageInput}
                         onChange={handleInputChange}
                         onKeyPress={handleKeyPress}
-                        placeholder={`Message ${receiverName}...`}
-                        className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-700 px-4 py-2 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 max-h-32"
+                        placeholder={isUploading ? "Uploading image..." : `Message ${receiverName}...`}
+                        className="flex-1 resize-none rounded-2xl border border-gray-300 dark:border-dark-600 bg-gray-50 dark:bg-dark-700 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 max-h-32 transition-colors disabled:opacity-50"
                         rows={1}
-                        disabled={!connected}
+                        disabled={!connected || isUploading}
                     />
                     <button
                         onClick={handleSendMessage}
-                        disabled={!messageInput.trim() || loading || !connected}
-                        className="btn-primary flex-shrink-0 h-10 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={(!messageInput.trim() && !isUploading) || loading || !connected}
+                        className="btn-primary flex-shrink-0 h-11 w-11 rounded-full p-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                            />
-                        </svg>
+                        {isUploading ? (
+                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5 translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                                />
+                            </svg>
+                        )}
                     </button>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Press Enter to send, Shift+Enter for new line
-                </p>
             </div>
         </div>
     );

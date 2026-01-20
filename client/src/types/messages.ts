@@ -24,12 +24,16 @@ export interface DirectMessage {
     message: string;
     read: boolean;
     timestamp: string;
+    type?: 'text' | 'image';
+    imageUrl?: string;
 }
 
 export interface SendMessageData {
     conversationId: string;
     receiverId: string;
     message: string;
+    type?: 'text' | 'image';
+    imageUrl?: string;
 }
 
 export interface DMNotification {

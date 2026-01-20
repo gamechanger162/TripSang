@@ -2,6 +2,7 @@
 
 import { DirectMessage } from '@/types/messages';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 
 interface MessageBubbleProps {
     message: DirectMessage;
@@ -21,30 +22,42 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
     };
 
     return (
-        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
+        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
             <div className={`flex flex-col max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
-                {/* Sender name (only for received messages) */}
-                {!isOwnMessage && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 px-2">
-                        {message.senderName}
-                    </span>
-                )}
-
                 {/* Message bubble */}
                 <div
-                    className={`rounded-2xl px-4 py-2 ${isOwnMessage
-                            ? 'bg-primary-600 text-white rounded-br-sm'
-                            : 'bg-gray-100 dark:bg-dark-700 text-gray-900 dark:text-white rounded-bl-sm'
+                    className={`rounded-2xl px-4 py-3 shadow-sm ${isOwnMessage
+                        ? 'bg-primary-600 text-white rounded-br-none'
+                        : 'bg-white dark:bg-dark-700 text-gray-900 dark:text-white rounded-bl-none'
                         }`}
                 >
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.message}</p>
-                </div>
+                    {message.type === 'image' && message.imageUrl ? (
+                        <div className="mb-1 rounded-lg overflow-hidden">
+                            <Image
+                                src={message.imageUrl}
+                                alt="Shared image"
+                                width={300}
+                                height={225}
+                                className="w-full h-auto object-cover"
+                            />
+                        </div>
+                    ) : (
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{message.message}</p>
+                    )}
 
-                {/* Timestamp */}
-                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1 px-2">
-                    {formatTime(message.timestamp)}
-                    {isOwnMessage && message.read && <span className="ml-1">✓✓</span>}
-                </span>
+                    <div className={`text-[10px] mt-1 flex justify-end opacity-70 ${isOwnMessage ? 'text-blue-100' : 'text-gray-400'}`}>
+                        {formatTime(message.timestamp)}
+                        {isOwnMessage && (
+                            <span className="ml-1">
+                                {message.read ? (
+                                    <span className="text-blue-200 font-bold">✓✓</span>
+                                ) : (
+                                    <span>✓</span>
+                                )}
+                            </span>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

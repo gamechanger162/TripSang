@@ -11,7 +11,7 @@ interface UseDMSocketReturn {
     socket: Socket | null;
     messages: DirectMessage[];
     setMessages: React.Dispatch<React.SetStateAction<DirectMessage[]>>;
-    sendMessage: (receiverId: string, message: string) => void;
+    sendMessage: (receiverId: string, message: string, type?: 'text' | 'image', imageUrl?: string) => void;
     isTyping: boolean;
     setIsTyping: (typing: boolean) => void;
     connected: boolean;
@@ -90,12 +90,14 @@ export const useDMSocket = (conversationId?: string): UseDMSocketReturn => {
         };
     }, [session?.user?.accessToken, conversationId]);
 
-    const sendMessage = (receiverId: string, message: string) => {
-        if (socket && conversationId && message.trim()) {
+    const sendMessage = (receiverId: string, message: string, type: 'text' | 'image' = 'text', imageUrl?: string) => {
+        if (socket && conversationId) {
             socket.emit('send_dm', {
                 conversationId,
                 receiverId,
-                message: message.trim()
+                message: message.trim(),
+                type,
+                imageUrl
             });
         }
     };

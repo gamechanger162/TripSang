@@ -195,9 +195,9 @@ io.on('connection', (socket) => {
     // Send Direct Message Event
     socket.on('send_dm', async (data) => {
         try {
-            const { conversationId, receiverId, message } = data;
+            const { conversationId, receiverId, message, type = 'text', imageUrl } = data;
 
-            if (!conversationId || !receiverId || !message) {
+            if (!conversationId || !receiverId || (!message && type === 'text')) {
                 return socket.emit('error', { message: 'Missing required fields' });
             }
 
@@ -214,13 +214,15 @@ io.on('connection', (socket) => {
                 conversationId,
                 sender: socket.user._id,
                 receiver: receiverId,
-                message,
+                message: message || (type === 'image' ? 'Sent an image' : ''),
+                type,
+                imageUrl,
                 timestamp: new Date()
             });
 
             // Update conversation lastMessage and increment unread for receiver
             conversation.lastMessage = {
-                text: message,
+                text: type === 'image' ? '📷 Sent an image' : message,
                 sender: socket.user._id,
                 timestamp: new Date()
             };
@@ -234,7 +236,9 @@ io.on('connection', (socket) => {
                 sender: socket.user._id.toString(),
                 senderName: socket.user.name,
                 receiver: receiverId,
-                message,
+                message: savedMessage.message,
+                type: savedMessage.type,
+                imageUrl: savedMessage.imageUrl,
                 timestamp: savedMessage.timestamp,
                 read: false
             };
@@ -247,7 +251,7 @@ io.on('connection', (socket) => {
                 conversationId,
                 senderName: socket.user.name,
                 senderId: socket.user._id,
-                preview: message.substring(0, 50),
+                preview: type === 'image' ? '📷 Sent an image' : message.substring(0, 50),
                 timestamp: new Date()
             });
 

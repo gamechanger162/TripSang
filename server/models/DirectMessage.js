@@ -23,6 +23,14 @@ const directMessageSchema = new mongoose.Schema({
         trim: true,
         maxlength: [2000, 'Message cannot exceed 2000 characters']
     },
+    type: {
+        type: String,
+        enum: ['text', 'image'],
+        default: 'text'
+    },
+    imageUrl: {
+        type: String
+    },
     read: {
         type: Boolean,
         default: false
