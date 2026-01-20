@@ -93,11 +93,7 @@ export default function SiteBanner() {
 
                 {/* Right Side: Content */}
                 <div className="flex-1 p-8 md:p-12 flex flex-col justify-center items-center text-center bg-white dark:bg-gray-800">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                        {announcement.title || 'Announcement'}
-                    </h2>
-
-                    <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed max-w-lg">
+                    <p className="text-xl md:text-2xl font-medium text-gray-800 dark:text-gray-200 mb-8 leading-relaxed max-w-lg">
                         {announcement.message}
                     </p>
 
