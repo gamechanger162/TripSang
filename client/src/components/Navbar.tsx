@@ -5,7 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { messageAPI, notificationAPI } from '@/lib/api';
+import { messageAPI, notificationAPI, friendAPI } from '@/lib/api';
 import { io } from 'socket.io-client';
 
 export default function Navbar() {
@@ -17,6 +17,7 @@ export default function Navbar() {
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+    const [pendingFriendsCount, setPendingFriendsCount] = useState(0);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
 
@@ -78,6 +79,18 @@ export default function Navbar() {
         }
     };
 
+    // Fetch pending friend requests count
+    const fetchPendingFriendsCount = async () => {
+        try {
+            const response = await friendAPI.getPendingRequestsCount();
+            if (response.success) {
+                setPendingFriendsCount(response.count);
+            }
+        } catch (error) {
+            console.error('Failed to fetch pending friends count:', error);
+        }
+    };
+
     // Real-time Notification listener
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.accessToken) {
@@ -109,11 +122,13 @@ export default function Navbar() {
         if (status === 'authenticated') {
             fetchUnreadCount(); // Messages
             fetchUnreadNotifCount(); // Notifications
+            fetchPendingFriendsCount(); // Friend requests
 
             // Poll every 30s
             const interval = setInterval(() => {
                 fetchUnreadCount();
                 fetchUnreadNotifCount();
+                fetchPendingFriendsCount();
             }, 30000);
             return () => clearInterval(interval);
         }
@@ -229,6 +244,26 @@ export default function Navbar() {
                             </div>
                         )}
 
+                        {/* Friends Link with Badge (only if authenticated) */}
+                        {status === 'authenticated' && (
+                            <Link
+                                href="/friends"
+                                className={`text-sm font-medium transition-colors ${linkColor} relative`}
+                            >
+                                <div className="flex items-center gap-1">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span>Friends</span>
+                                </div>
+                                {pendingFriendsCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                                        {pendingFriendsCount > 9 ? '9+' : pendingFriendsCount}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
+
                         {/* Messages Link with Badge (only if authenticated) */}
                         {status === 'authenticated' && (
                             <Link
@@ -284,6 +319,21 @@ export default function Navbar() {
                                             <p className="text-xs text-gray-500">Signed in as</p>
                                             <p className="text-sm font-medium truncate">{session.user?.name}</p>
                                         </div>
+
+                                        <Link
+                                            href="/friends"
+                                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                            onClick={() => setProfileMenuOpen(false)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>Friends</span>
+                                                {pendingFriendsCount > 0 && (
+                                                    <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                                                        {pendingFriendsCount > 9 ? '9+' : pendingFriendsCount}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </Link>
 
                                         <Link
                                             href="/messages"
@@ -369,6 +419,20 @@ export default function Navbar() {
                         ))}
                         {status === 'authenticated' ? (
                             <>
+                                <Link
+                                    href="/friends"
+                                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span>Friends</span>
+                                        {pendingFriendsCount > 0 && (
+                                            <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                                                {pendingFriendsCount > 9 ? '9+' : pendingFriendsCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                </Link>
                                 <Link
                                     href="/messages"
                                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
