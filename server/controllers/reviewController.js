@@ -35,11 +35,19 @@ export const createReview = async (req, res) => {
             });
         }
 
-        if (trip.status !== 'completed') {
+        const isTripCompleted = trip.status === 'completed' || new Date(trip.endDate) < new Date();
+
+        if (!isTripCompleted) {
             return res.status(400).json({
                 success: false,
                 message: 'You can only review travelers after the trip is completed'
             });
+        }
+
+        // Auto-update status if needed
+        if (trip.status !== 'completed' && new Date(trip.endDate) < new Date()) {
+            trip.status = 'completed';
+            await trip.save();
         }
 
         // Check if both users were part of the trip
@@ -156,10 +164,13 @@ export const getPendingReviews = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // Find completed trips user was part of
+        // Find completed trips user was part of (either status='completed' or endDate passed)
         const completedTrips = await Trip.find({
-            status: 'completed',
-            squadMembers: userId
+            squadMembers: userId,
+            $or: [
+                { status: 'completed' },
+                { status: 'active', endDate: { $lt: new Date() } }
+            ]
         }).populate('squadMembers', 'name profilePicture');
 
         // For each trip, find squad members not yet reviewed

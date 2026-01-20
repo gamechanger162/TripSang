@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { reviewAPI, userAPI } from '@/lib/api';
-import ReviewModal from '@/components/ReviewModal';
+import ReviewModal from '@/components/reviews/ReviewModal';
 import toast from 'react-hot-toast';
 
 // Force dynamic rendering
@@ -257,8 +257,8 @@ export default function UserDashboard() {
                                                         </div>
                                                     </div>
                                                     <span className={`px-2 py-1 text-xs rounded-full ${trip.creator._id === session.user.id
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-blue-100 text-blue-800'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-blue-100 text-blue-800'
                                                         }`}>
                                                         {trip.creator._id === session.user.id ? 'Creator' : 'Joined'}
                                                     </span>
@@ -297,7 +297,9 @@ export default function UserDashboard() {
                         setSelectedReview(null);
                     }}
                     tripId={selectedReview.trip._id}
-                    traveler={selectedReview.traveler}
+                    tripTitle={selectedReview.trip.title}
+                    revieweeId={selectedReview.traveler._id}
+                    revieweeName={selectedReview.traveler.name}
                     onReviewSubmitted={handleReviewSubmitted}
                 />
             )}

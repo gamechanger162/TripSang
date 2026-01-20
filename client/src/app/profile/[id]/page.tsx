@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import UserReviews from '@/components/UserReviews';
+import UserReviews from '@/components/reviews/UserReviews';
 import Link from 'next/link';
 import { userAPI } from '@/lib/api';
 
