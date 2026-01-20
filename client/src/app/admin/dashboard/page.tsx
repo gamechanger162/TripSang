@@ -636,6 +636,109 @@ export default function AdminDashboardPage() {
                     </div>
                 )}
 
+                {/* Trips Tab */}
+                {activeTab === 'trips' && (
+                    <div className="space-y-6">
+                        <div className="card">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Trip Management</h2>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        {totalTrips} total trips
+                                    </p>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <select
+                                        value={tripStatusFilter}
+                                        onChange={(e) => setTripStatusFilter(e.target.value)}
+                                        className="input-field"
+                                    >
+                                        <option value="">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+                                    <thead className="bg-gray-50 dark:bg-dark-800">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Trip
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Creator
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Squad
+                                            </th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white dark:bg-dark-900 divide-y divide-gray-200 dark:divide-dark-700">
+                                        {trips.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                                    No trips found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            trips.map((trip) => (
+                                                <tr key={trip._id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {trip.title}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {new Date(trip.startDate).toLocaleDateString()}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-gray-900 dark:text-white">
+                                                            {trip.creator?.name || 'Unknown'}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {trip.creator?.email || 'N/A'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex px-2 text-xs font-semibold rounded-full ${trip.status === 'active' ? 'bg-green-100 text-green-800' :
+                                                                trip.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                                                    'bg-red-100 text-red-800'
+                                                            }`}>
+                                                            {trip.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {trip.squad?.length || 0} members
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button
+                                                            onClick={() => handleDeleteTrip(trip._id)}
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Settings Tab */}
                 {activeTab === 'settings' && (
                     <div className="space-y-6">
