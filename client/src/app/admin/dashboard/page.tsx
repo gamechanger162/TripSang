@@ -34,7 +34,7 @@ interface Trip {
     };
     startDate: string;
     status: 'active' | 'completed' | 'cancelled';
-    squad: string[];
+    squadMembers: string[];
 }
 
 interface Stats {
@@ -712,14 +712,14 @@ export default function AdminDashboardPage() {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span className={`inline-flex px-2 text-xs font-semibold rounded-full ${trip.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                                trip.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                                                                    'bg-red-100 text-red-800'
+                                                            trip.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                                                'bg-red-100 text-red-800'
                                                             }`}>
                                                             {trip.status}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {trip.squad?.length || 0} members
+                                                        {trip.squadMembers?.length || 0} members
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                         <button
