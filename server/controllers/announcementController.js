@@ -6,13 +6,14 @@ import Announcement from '../models/Announcement.js';
  */
 export const createAnnouncement = async (req, res) => {
     try {
-        const { title, message, type, expiresAt } = req.body;
+        const { title, message, type, expiresAt, imageUrl } = req.body;
 
         const announcement = await Announcement.create({
             title,
             message,
             type,
             expiresAt,
+            imageUrl,
             createdBy: req.user._id,
             isActive: true
         });
@@ -91,11 +92,11 @@ export const getActiveAnnouncement = async (req, res) => {
 export const updateAnnouncement = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, message, type, isActive, expiresAt } = req.body;
+        const { title, message, type, isActive, expiresAt, imageUrl } = req.body;
 
         const announcement = await Announcement.findByIdAndUpdate(
             id,
-            { title, message, type, isActive, expiresAt },
+            { title, message, type, isActive, expiresAt, imageUrl },
             { new: true, runValidators: true }
         );
 

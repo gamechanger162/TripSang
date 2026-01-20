@@ -21,20 +21,17 @@ export default function SiteBanner() {
 
     const fetchActiveAnnouncement = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/announcements`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/announcements/active`);
             const data = await response.json();
 
-            if (data.success && data.announcements.length > 0) {
-                // Get the first active announcement
-                const activeAnnouncement = data.announcements.find((a: Announcement) => a.isActive);
+            if (data.success && data.announcement) {
+                const activeAnnouncement = data.announcement;
 
-                if (activeAnnouncement) {
-                    // Check if user has dismissed this specific announcement
-                    const dismissedId = localStorage.getItem('dismissedBanner');
-                    if (dismissedId !== activeAnnouncement._id) {
-                        setAnnouncement(activeAnnouncement);
-                        setIsVisible(true);
-                    }
+                // Check if user has dismissed this specific announcement
+                const dismissedId = localStorage.getItem('dismissedBanner');
+                if (dismissedId !== activeAnnouncement._id) {
+                    setAnnouncement(activeAnnouncement);
+                    setIsVisible(true);
                 }
             }
         } catch (error) {
