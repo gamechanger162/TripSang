@@ -134,6 +134,23 @@ export default function Navbar() {
         }
     }, [status]);
 
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            // Check if click is outside notification dropdown
+            if (!target.closest('[data-notification-dropdown]')) {
+                setNotificationsOpen(false);
+            }
+            if (!target.closest('[data-profile-dropdown]')) {
+                setProfileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
     const handleNotificationClick = async () => {
         setNotificationsOpen(!notificationsOpen);
         if (!notificationsOpen) {
@@ -185,7 +202,7 @@ export default function Navbar() {
 
                         {/* Notifications Bell */}
                         {status === 'authenticated' && (
-                            <div className="relative">
+                            <div className="relative" data-notification-dropdown>
                                 <button
                                     onClick={handleNotificationClick}
                                     className={`p-2 rounded-full hover:bg-white/10 transition-colors ${linkColor}`}
@@ -250,6 +267,7 @@ export default function Navbar() {
                                 href="/friends"
                                 className={`p-2 rounded-full hover:bg-white/10 transition-colors ${linkColor} relative`}
                                 title="Friends"
+                                onClick={() => setNotificationsOpen(false)}
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -268,6 +286,7 @@ export default function Navbar() {
                                 href="/messages"
                                 className={`p-2 rounded-full hover:bg-white/10 transition-colors ${linkColor} relative`}
                                 title="Messages"
+                                onClick={() => setNotificationsOpen(false)}
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -387,7 +406,7 @@ export default function Navbar() {
                         {status === 'authenticated' && (
                             <>
                                 {/* Notifications Bell - Mobile */}
-                                <div className="relative">
+                                <div className="relative" data-notification-dropdown>
                                     <button
                                         onClick={handleNotificationClick}
                                         className={`p-2 rounded-full hover:bg-white/10 transition-colors ${menuIconColor}`}
@@ -404,9 +423,9 @@ export default function Navbar() {
                                         </div>
                                     </button>
 
-                                    {/* Mobile Notifications Dropdown */}
+                                    {/* Mobile Notifications Dropdown - Fixed position for mobile */}
                                     {notificationsOpen && (
-                                        <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 max-h-80 overflow-y-auto z-50">
+                                        <div className="fixed top-16 left-4 right-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 max-h-80 overflow-y-auto z-50">
                                             <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                                                 <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Notifications</h3>
                                             </div>
@@ -439,6 +458,7 @@ export default function Navbar() {
                                 <Link
                                     href="/friends"
                                     className={`p-2 rounded-full hover:bg-white/10 transition-colors ${menuIconColor} relative`}
+                                    onClick={() => setNotificationsOpen(false)}
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -454,6 +474,7 @@ export default function Navbar() {
                                 <Link
                                     href="/messages"
                                     className={`p-2 rounded-full hover:bg-white/10 transition-colors ${menuIconColor} relative`}
+                                    onClick={() => setNotificationsOpen(false)}
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
