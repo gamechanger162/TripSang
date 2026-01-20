@@ -65,6 +65,52 @@ export default function Navbar() {
         { name: 'Create Trip', href: '/trips/create' },
     ];
 
+    // Fetch notification unread count
+    const fetchUnreadNotifCount = async () => {
+        try {
+            const response = await notificationAPI.getUnreadCount();
+            if (response.success) {
+                setUnreadNotifCount(response.count);
+            }
+        } catch (error) {
+            console.error('Failed to fetch notification count:', error);
+        }
+    };
+
+    // Combine fetches
+    useEffect(() => {
+        if (status === 'authenticated') {
+            fetchUnreadCount(); // Messages
+            fetchUnreadNotifCount(); // Notifications
+
+            // Poll every 30s
+            const interval = setInterval(() => {
+                fetchUnreadCount();
+                fetchUnreadNotifCount();
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [status]);
+
+    const handleNotificationClick = async () => {
+        setNotificationsOpen(!notificationsOpen);
+        if (!notificationsOpen) {
+            // Fetch latest notifications when opening
+            try {
+                const response = await notificationAPI.getAll(1, 10);
+                if (response.success) {
+                    setNotifications(response.notifications);
+                    // Mark all as read visual clearing
+                    setUnreadNotifCount(0);
+                    // Ideally call mark-all-read API here or on close
+                    await notificationAPI.markAllRead();
+                }
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+            }
+        }
+    };
+
     return (
         <nav
             className={`fixed top-0 w-full z-50 transition-all duration-300 ${navBackground}`}
@@ -94,53 +140,7 @@ export default function Navbar() {
 
 
 
-    // ... (Fetch notification unread count)
-    const fetchUnreadNotifCount = async () => {
-        try {
-            const response = await notificationAPI.getUnreadCount();
-                        if (response.success) {
-                            setUnreadNotifCount(response.count);
-            }
-        } catch (error) {
-                            console.error('Failed to fetch notification count:', error);
-        }
-    };
 
-    // Combine fetches
-    useEffect(() => {
-        if (status === 'authenticated') {
-                            fetchUnreadCount(); // Messages
-                        fetchUnreadNotifCount(); // Notifications
-
-            // Poll every 30s
-            const interval = setInterval(() => {
-                            fetchUnreadCount();
-                        fetchUnreadNotifCount();
-            }, 30000);
-            return () => clearInterval(interval);
-        }
-    }, [status]);
-
-    const handleNotificationClick = async () => {
-                            setNotificationsOpen(!notificationsOpen);
-                        if (!notificationsOpen) {
-            // Fetch latest notifications when opening
-            try {
-                const response = await notificationAPI.getAll(1, 10);
-                        if (response.success) {
-                            setNotifications(response.notifications);
-                        // Mark all as read visual clearing
-                        setUnreadNotifCount(0);
-                        // Ideally call mark-all-read API here or on close
-                        await notificationAPI.markAllRead();
-                }
-            } catch (error) {
-                            console.error('Failed to load notifications:', error);
-            }
-        }
-    };
-
-                        // ... (inside JSX, before messages link)
                         {/* Notifications Bell */}
                         {status === 'authenticated' && (
                             <div className="relative">
