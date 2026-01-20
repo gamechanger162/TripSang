@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { messageAPI, notificationAPI } from '@/lib/api';
+import { io } from 'socket.io-client';
 
 export default function Navbar() {
     const { data: session, status } = useSession();
@@ -76,6 +77,32 @@ export default function Navbar() {
             console.error('Failed to fetch notification count:', error);
         }
     };
+
+    // Real-time Notification listener
+    useEffect(() => {
+        if (status === 'authenticated' && session?.user?.accessToken) {
+            const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const newSocket = io(socketUrl, {
+                auth: { token: session.user.accessToken },
+                transports: ['websocket', 'polling']
+            });
+
+            newSocket.on('connect', () => {
+                console.log('🔔 Notification Socket connected');
+            });
+
+            newSocket.on('new_notification', (data: any) => {
+                console.log('🔔 New Notification received:', data);
+                setUnreadNotifCount(prev => prev + 1);
+                // Prepend to list if loaded
+                setNotifications(prev => [data, ...prev]);
+            });
+
+            return () => {
+                newSocket.disconnect();
+            };
+        }
+    }, [status, session]);
 
     // Combine fetches
     useEffect(() => {
