@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { adminAPI } from '@/lib/api';
+import { adminAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -162,6 +162,43 @@ export default function AdminDashboardPage() {
         setBroadcasting(true);
 
         try {
+            let finalImageUrl = null;
+
+            // Upload image if a new file is selected
+            if (imageFile) {
+                const formData = new FormData();
+                formData.append('image', imageFile);
+
+                // Toast for upload progress
+                const uploadToast = toast.loading('Uploading image...');
+
+                try {
+                    const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${session?.user?.accessToken}`
+                        },
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+
+                    if (!uploadData.success) {
+                        throw new Error(uploadData.message || 'Image upload failed');
+                    }
+
+                    finalImageUrl = uploadData.imageUrl;
+                    toast.success('Image uploaded!', { id: uploadToast });
+                } catch (err) {
+                    toast.error('Image upload failed', { id: uploadToast });
+                    throw err;
+                }
+            } else if (imagePreview && !imagePreview.startsWith('data:')) {
+                // If imagePreview is a URL (not base64), keep it (could happen if we support editing later or URL input)
+                finalImageUrl = imagePreview;
+            }
+
+            // Create Announcement
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/announcements`, {
                 method: 'POST',
                 headers: {
@@ -172,7 +209,7 @@ export default function AdminDashboardPage() {
                     title: 'Site Banner',
                     message: bannerMessage,
                     type: 'info',
-                    imageUrl: imagePreview || null
+                    imageUrl: finalImageUrl
                 })
             });
 
@@ -190,7 +227,7 @@ export default function AdminDashboardPage() {
             }
         } catch (error: any) {
             console.error('Error broadcasting:', error);
-            toast.error('Failed to publish banner');
+            toast.error(error.message || 'Failed to publish banner');
         } finally {
             setBroadcasting(false);
         }
@@ -787,3 +824,4 @@ export default function AdminDashboardPage() {
         </div>
     );
 }
+

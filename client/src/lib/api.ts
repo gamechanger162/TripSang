@@ -503,6 +503,14 @@ export const messageAPI = {
     }
 };
 
+// Upload API
+export const uploadAPI = {
+    uploadImage: (base64Image: string, folder?: string) =>
+        fetchWithAuth('/api/upload/image', {
+            method: 'POST',
+            body: JSON.stringify({ image: base64Image, folder }),
+        }),
+};
 // Export all APIs
 export default {
     authAPI,
@@ -511,4 +519,6 @@ export default {
     paymentAPI,
     reviewAPI,
     messageAPI,
+    uploadAPI,
 };
+
