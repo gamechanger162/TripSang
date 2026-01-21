@@ -204,7 +204,33 @@ io.on('connection', (socket) => {
                 return socket.emit('error', { message: 'Missing required fields' });
             }
 
-            const { Conversation, DirectMessage } = await import('./models/index.js');
+            const { Conversation, DirectMessage, User } = await import('./models/index.js');
+
+            // Check if either user has blocked the other
+            const sender = await User.findById(socket.user._id);
+            const receiver = await User.findById(receiverId);
+
+            if (!receiver) {
+                return socket.emit('error', { message: 'Recipient not found' });
+            }
+
+            // Check if sender has blocked receiver
+            const senderBlockedReceiver = sender.blockedUsers?.some(
+                id => id.toString() === receiverId.toString()
+            ) || false;
+
+            // Check if receiver has blocked sender
+            const receiverBlockedSender = receiver.blockedUsers?.some(
+                id => id.toString() === socket.user._id.toString()
+            ) || false;
+
+            if (senderBlockedReceiver) {
+                return socket.emit('error', { message: 'You have blocked this user. Unblock to send messages.' });
+            }
+
+            if (receiverBlockedSender) {
+                return socket.emit('error', { message: 'You cannot send messages to this user.' });
+            }
 
             // Verify conversation exists and user is participant
             const conversation = await Conversation.findById(conversationId);
