@@ -48,7 +48,7 @@ export default function HomePage() {
     return (
         <div className="min-h-screen -mt-16">
             {/* Hero Section */}
-            <section className="relative h-screen flex items-center justify-center overflow-hidden">
+            <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-20">
                 <div className="absolute inset-0 z-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-800/70 to-secondary-900/80 z-10" />
                     <Image
@@ -60,104 +60,104 @@ export default function HomePage() {
                     />
                 </div>
 
-                <div className="relative z-20 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-20">
-                    <div className="mb-8 animate-fade-in">
-                        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-4 font-display">
+                <div className="relative z-20 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-16">
+                    <div className="mb-4 md:mb-6 animate-fade-in">
+                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-2 font-display">
                             TripSang
                         </h1>
-                        <p className="text-xl md:text-2xl text-white/90 font-light max-w-2xl mx-auto">
-                            Connect. Explore. Create Memories. <br />
-                            <span className="text-lg opacity-80 mt-2 block">
-                                The ultimate social network for travelers. Find your squad, share costs, and experience the world together.
-                            </span>
+                        <p className="text-lg md:text-xl text-white/90 font-light max-w-xl mx-auto">
+                            Connect. Explore. Create Memories.
+                        </p>
+                        <p className="text-sm md:text-base text-white/70 mt-1 max-w-lg mx-auto">
+                            Find your squad, share costs, and experience the world together.
                         </p>
                     </div>
 
-                    <div className="mt-10 animate-slide-up">
-                        <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-2xl bg-white/10 backdrop-blur-lg border border-white/20">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    {/* Trip Code & Explore Section - NOW ABOVE THE FORM */}
+                    <div className="mb-4 flex flex-row items-center justify-center gap-2 md:gap-4 animate-slide-up">
+                        {/* Trip Code Search */}
+                        <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-lg p-1.5 border border-white/20">
+                            <input
+                                type="text"
+                                value={tripCode}
+                                onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
+                                placeholder="CODE"
+                                maxLength={6}
+                                className="w-20 md:w-24 px-2 py-1.5 text-xs md:text-sm font-mono uppercase tracking-wider bg-white/20 border border-white/30 rounded-md text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-center"
+                                onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
+                            />
+                            <button
+                                onClick={searchByCode}
+                                disabled={searchingCode || tripCode.length !== 6}
+                                className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white rounded-md text-xs md:text-sm font-medium transition-colors"
+                            >
+                                {searchingCode ? '...' : 'Go'}
+                            </button>
+                        </div>
+
+                        <span className="text-white/40 text-sm">or</span>
+
+                        {/* Explore All Button */}
+                        <Link
+                            href="/search"
+                            className="flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg border border-white/20 text-white text-sm font-medium transition-all hover:scale-105"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <span className="hidden sm:inline">Explore</span> Trips
+                        </Link>
+                    </div>
+
+                    {/* Search Form - MORE COMPACT */}
+                    <div className="animate-slide-up">
+                        <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
+                            <div className="glass rounded-xl p-4 md:p-6 shadow-2xl bg-white/10 backdrop-blur-lg border border-white/20">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                                     <div className="relative">
-                                        <label htmlFor="from" className="block text-sm font-medium text-white/90 mb-2 text-left">From</label>
+                                        <label htmlFor="from" className="block text-xs font-medium text-white/90 mb-1 text-left">From</label>
                                         <CityAutocomplete
                                             id="from"
                                             name="from"
                                             value={from}
                                             onChange={setFrom}
                                             placeholder="Starting point"
-                                            className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            className="w-full px-3 py-2 text-sm bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
                                             cities={INDIAN_CITIES}
                                         />
                                     </div>
                                     <div className="relative">
-                                        <label htmlFor="to" className="block text-sm font-medium text-white/90 mb-2 text-left">To</label>
+                                        <label htmlFor="to" className="block text-xs font-medium text-white/90 mb-1 text-left">To</label>
                                         <CityAutocomplete
                                             id="to"
                                             name="to"
                                             value={to}
                                             onChange={setTo}
                                             placeholder="Dream destination"
-                                            className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            className="w-full px-3 py-2 text-sm bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
                                             cities={INDIAN_CITIES}
                                         />
                                     </div>
                                     <div className="relative">
-                                        <label htmlFor="date" className="block text-sm font-medium text-white/90 mb-2 text-left">Start Date</label>
+                                        <label htmlFor="date" className="block text-xs font-medium text-white/90 mb-1 text-left">Start Date</label>
                                         <input
                                             id="date"
                                             type="date"
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
                                             min={new Date().toISOString().split('T')[0]}
-                                            className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            className="w-full px-3 py-2 text-sm bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-primary-400"
                                         />
                                     </div>
                                 </div>
                                 <button
                                     type="submit"
-                                    className="mt-6 w-full bg-gradient-to-r from-secondary-500 to-primary-600 hover:from-secondary-600 hover:to-primary-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg transform hover:scale-[1.01]"
+                                    className="mt-4 w-full bg-gradient-to-r from-secondary-500 to-primary-600 hover:from-secondary-600 hover:to-primary-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg transform hover:scale-[1.01] text-sm md:text-base"
                                 >
                                     Find Your Adventure
                                 </button>
                             </div>
                         </form>
-
-                        {/* Trip Code & Explore Section */}
-                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-                            {/* Trip Code Search */}
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-                                <span className="text-white/70 text-sm px-2 hidden sm:block">Have a code?</span>
-                                <input
-                                    type="text"
-                                    value={tripCode}
-                                    onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
-                                    placeholder="TRIP CODE"
-                                    maxLength={6}
-                                    className="w-28 px-3 py-2 text-sm font-mono uppercase tracking-wider bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-center"
-                                    onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
-                                />
-                                <button
-                                    onClick={searchByCode}
-                                    disabled={searchingCode || tripCode.length !== 6}
-                                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    {searchingCode ? '...' : 'Go'}
-                                </button>
-                            </div>
-
-                            <span className="text-white/50 hidden sm:block">or</span>
-
-                            {/* Explore All Button */}
-                            <Link
-                                href="/search"
-                                className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white font-medium transition-all hover:scale-105"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                Explore All Trips
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </section>
