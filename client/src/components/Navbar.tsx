@@ -305,7 +305,7 @@ export default function Navbar() {
                         )}
 
                         {status === 'authenticated' ? (
-                            <div className="relative ml-4">
+                            <div className="relative ml-4" data-profile-dropdown>
                                 <button
                                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                                     className="flex items-center gap-2 focus:outline-none"
