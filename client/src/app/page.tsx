@@ -3,14 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import CityAutocomplete from '@/components/CityAutocomplete';
 import { INDIAN_CITIES } from '@/data/cities';
+import { tripAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function HomePage() {
     const router = useRouter();
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
     const [date, setDate] = useState('');
+    const [tripCode, setTripCode] = useState('');
+    const [searchingCode, setSearchingCode] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,6 +24,25 @@ export default function HomePage() {
         if (to) params.append('endPoint', to);
         if (date) params.append('startDate', date);
         router.push(`/search?${params.toString()}`);
+    };
+
+    const searchByCode = async () => {
+        if (!tripCode || tripCode.length !== 6) {
+            toast.error('Please enter a valid 6-character trip code');
+            return;
+        }
+
+        setSearchingCode(true);
+        try {
+            const response = await tripAPI.getByCode(tripCode);
+            if (response.success && response.trip) {
+                router.push(`/trips/${response.trip._id}`);
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'No trip found with this code');
+        } finally {
+            setSearchingCode(false);
+        }
     };
 
     return (
@@ -97,6 +121,43 @@ export default function HomePage() {
                                 </button>
                             </div>
                         </form>
+
+                        {/* Trip Code & Explore Section */}
+                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                            {/* Trip Code Search */}
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
+                                <span className="text-white/70 text-sm px-2 hidden sm:block">Have a code?</span>
+                                <input
+                                    type="text"
+                                    value={tripCode}
+                                    onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
+                                    placeholder="TRIP CODE"
+                                    maxLength={6}
+                                    className="w-28 px-3 py-2 text-sm font-mono uppercase tracking-wider bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-center"
+                                    onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
+                                />
+                                <button
+                                    onClick={searchByCode}
+                                    disabled={searchingCode || tripCode.length !== 6}
+                                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    {searchingCode ? '...' : 'Go'}
+                                </button>
+                            </div>
+
+                            <span className="text-white/50 hidden sm:block">or</span>
+
+                            {/* Explore All Button */}
+                            <Link
+                                href="/search"
+                                className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white font-medium transition-all hover:scale-105"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                Explore All Trips
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </section>
