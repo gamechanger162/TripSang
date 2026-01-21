@@ -27,10 +27,12 @@ const POPULAR_TAGS = [
     '#Family',
     '#Weekend',
     '#Camping',
-    '#Road Trip',
+    '#RoadTrip',
     '#Spiritual',
     '#History',
     '#Nature',
+    '#Budget',
+    '#Nightlife',
 ];
 
 const DIFFICULTY_LEVELS = [
@@ -62,6 +64,7 @@ export default function CreateTripPage() {
     });
 
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [customTagInput, setCustomTagInput] = useState('');
     const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
 
     // Auth checks
@@ -97,6 +100,43 @@ export default function CreateTripPage() {
         setSelectedTags((prev) =>
             prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
         );
+    };
+
+    const addCustomTag = () => {
+        if (!customTagInput.trim()) return;
+
+        // Format the tag: remove spaces, add # if not present
+        let tag = customTagInput.trim();
+        // Remove all spaces
+        tag = tag.replace(/\s+/g, '');
+        // Add # if not present
+        if (!tag.startsWith('#')) {
+            tag = '#' + tag;
+        }
+        // Capitalize first letter after #
+        tag = '#' + tag.slice(1).charAt(0).toUpperCase() + tag.slice(2);
+
+        // Check if tag already exists
+        if (selectedTags.includes(tag)) {
+            toast.error('This tag is already added');
+            return;
+        }
+
+        // Validate tag format (alphanumeric only after #)
+        if (!/^#[a-zA-Z0-9_]+$/.test(tag)) {
+            toast.error('Tags can only contain letters, numbers, and underscores');
+            return;
+        }
+
+        setSelectedTags((prev) => [...prev, tag]);
+        setCustomTagInput('');
+    };
+
+    const handleCustomTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomTag();
+        }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -440,9 +480,37 @@ export default function CreateTripPage() {
                     <div className="card">
                         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Vibe Tags *</h2>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                            Select tags that best describe your trip (Select at least 1)
+                            Select tags or add your own custom tags (Select at least 1)
                         </p>
 
+                        {/* Custom Tag Input */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Add Custom Tag
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={customTagInput}
+                                    onChange={(e) => setCustomTagInput(e.target.value)}
+                                    onKeyDown={handleCustomTagKeyDown}
+                                    placeholder="e.g., Hiking or #Hiking"
+                                    className="input-field flex-1"
+                                    maxLength={30}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={addCustomTag}
+                                    className="btn-primary px-4"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">Press Enter or click Add. Spaces will be removed automatically.</p>
+                        </div>
+
+                        {/* Popular Tags */}
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Popular Tags:</p>
                         <div className="flex flex-wrap gap-2">
                             {POPULAR_TAGS.map((tag) => (
                                 <button
@@ -461,9 +529,28 @@ export default function CreateTripPage() {
 
                         {selectedTags.length > 0 && (
                             <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                                <p className="text-sm text-primary-700 dark:text-primary-300">
-                                    Selected: {selectedTags.join(', ')}
+                                <p className="text-sm text-primary-700 dark:text-primary-300 mb-2">
+                                    Selected Tags ({selectedTags.length}):
                                 </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedTags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-200 rounded-full text-sm"
+                                        >
+                                            {tag}
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleTag(tag)}
+                                                className="ml-1 text-primary-500 hover:text-primary-700"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
