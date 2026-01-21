@@ -583,3 +583,43 @@ export const toggleLike = async (req, res) => {
         });
     }
 };
+
+// Get trip by code
+// GET /api/trips/code/:code
+export const getTripByCode = async (req, res) => {
+    try {
+        const { code } = req.params;
+
+        if (!code || code.length !== 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid trip code. Code must be 6 characters.'
+            });
+        }
+
+        const trip = await Trip.findByCode(code);
+
+        if (!trip) {
+            return res.status(404).json({
+                success: false,
+                message: 'No trip found with this code.'
+            });
+        }
+
+        // Increment view count
+        trip.stats.views += 1;
+        await trip.save();
+
+        res.json({
+            success: true,
+            trip
+        });
+    } catch (error) {
+        console.error('Get trip by code error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to find trip.',
+            error: error.message
+        });
+    }
+};

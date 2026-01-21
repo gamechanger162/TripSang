@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 
 interface TripDetails {
     _id: string;
+    tripCode?: string;
     title: string;
     description?: string;
     startPoint: { name: string; coordinates?: any };
@@ -203,7 +204,8 @@ export function TripDetailsClient() {
     // Share trip handler
     const handleShare = async () => {
         const shareUrl = `${window.location.origin}/trips/${tripId}`;
-        const shareText = `Check out this trip: ${trip?.title} - ${trip?.startPoint.name} to ${trip?.endPoint.name}`;
+        const codeText = trip?.tripCode ? ` | Code: ${trip.tripCode}` : '';
+        const shareText = `Check out this trip: ${trip?.title}${codeText} - ${trip?.startPoint.name} to ${trip?.endPoint.name}`;
 
         // Try native Web Share API first (works great on mobile)
         if (navigator.share) {
@@ -234,9 +236,21 @@ export function TripDetailsClient() {
         }
     };
 
+    const copyTripCode = async () => {
+        if (trip?.tripCode) {
+            try {
+                await navigator.clipboard.writeText(trip.tripCode);
+                toast.success(`Trip code "${trip.tripCode}" copied!`);
+            } catch (err) {
+                toast.error('Failed to copy code');
+            }
+        }
+    };
+
     const shareToSocial = (platform: string) => {
         const shareUrl = encodeURIComponent(`${window.location.origin}/trips/${tripId}`);
-        const shareText = encodeURIComponent(`Check out this trip: ${trip?.title}`);
+        const codeText = trip?.tripCode ? ` | Code: ${trip.tripCode}` : '';
+        const shareText = encodeURIComponent(`Check out this trip: ${trip?.title}${codeText}`);
 
         const urls: Record<string, string> = {
             whatsapp: `https://wa.me/?text=${shareText}%20${shareUrl}`,
@@ -632,6 +646,32 @@ export function TripDetailsClient() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Trip Code */}
+                        {trip.tripCode && (
+                            <div className="card">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Trip Code</h3>
+                                <div className="flex items-center justify-between bg-gray-100 dark:bg-dark-700 rounded-xl p-4">
+                                    <div>
+                                        <p className="text-2xl font-mono font-bold text-primary-600 tracking-wider">
+                                            {trip.tripCode}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            Share this code to invite others
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={copyTripCode}
+                                        className="p-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors"
+                                        title="Copy code"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Stats */}
                         <div className="card">

@@ -7,6 +7,12 @@ const tripSchema = new mongoose.Schema({
         required: [true, 'Trip must have a creator'],
         index: true
     },
+    tripCode: {
+        type: String,
+        unique: true,
+        uppercase: true,
+        index: true
+    },
     title: {
         type: String,
         required: [true, 'Trip title is required'],
@@ -160,6 +166,33 @@ const tripSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
+// Generate unique trip code before saving
+tripSchema.pre('save', async function (next) {
+    if (!this.tripCode) {
+        // Generate a unique 6-character code
+        // Using uppercase letters and numbers (excluding confusing ones like 0, O, I, L, 1)
+        const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        let code;
+        let isUnique = false;
+
+        while (!isUnique) {
+            code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            // Check if code already exists
+            const existing = await mongoose.model('Trip').findOne({ tripCode: code });
+            if (!existing) {
+                isUnique = true;
+            }
+        }
+
+        this.tripCode = code;
+    }
+    next();
+});
+
 // Indexes for performance
 tripSchema.index({ creator: 1, status: 1 });
 tripSchema.index({ startDate: 1, endDate: 1 });
@@ -252,6 +285,13 @@ tripSchema.statics.findUpcomingTrips = function () {
     })
         .populate('creator', 'name profilePicture gender')
         .sort({ startDate: 1 });
+};
+
+// Static method to find trip by code
+tripSchema.statics.findByCode = function (code) {
+    return this.findOne({ tripCode: code.toUpperCase() })
+        .populate('creator', 'name profilePicture gender badges bio')
+        .populate('squadMembers', 'name profilePicture');
 };
 
 const Trip = mongoose.model('Trip', tripSchema);

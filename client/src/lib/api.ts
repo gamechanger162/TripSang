@@ -279,6 +279,14 @@ export const tripAPI = {
             body: JSON.stringify({ userId }),
         });
     },
+
+    /**
+     * Get trip by unique code
+     * GET /api/trips/code/:code
+     */
+    getByCode: async (code: string) => {
+        return fetchWithAuth(`/api/trips/code/${code.toUpperCase()}`);
+    },
 };
 
 // ========================================

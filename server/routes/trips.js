@@ -3,6 +3,7 @@ import {
     createTrip,
     searchTrips,
     getTripById,
+    getTripByCode,
     updateTrip,
     deleteTrip,
     joinTrip,
@@ -27,6 +28,13 @@ router.post('/create', authenticate, createTrip);
  * @access  Public (optional auth for personalization)
  */
 router.get('/search', optionalAuth, searchTrips);
+
+/**
+ * @route   GET /api/trips/code/:code
+ * @desc    Get trip by unique code
+ * @access  Public
+ */
+router.get('/code/:code', optionalAuth, getTripByCode);
 
 /**
  * @route   GET /api/trips/:id

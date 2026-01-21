@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import TripCard from '@/components/TripCard';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
 import GoogleAd from '@/components/GoogleAd';
@@ -16,6 +16,8 @@ function SearchPageContent() {
     const [trips, setTrips] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
+    const [tripCode, setTripCode] = useState('');
+    const [searchingCode, setSearchingCode] = useState(false);
     const [filters, setFilters] = useState<FilterOptions>({
         tags: [],
         sortBy: 'recent',
@@ -74,8 +76,29 @@ function SearchPageContent() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
 
+    const router = useRouter();
+
     const handleApplyFilters = (newFilters: FilterOptions) => {
         setFilters(newFilters);
+    };
+
+    const searchByCode = async () => {
+        if (!tripCode || tripCode.length !== 6) {
+            toast.error('Please enter a valid 6-character trip code');
+            return;
+        }
+
+        setSearchingCode(true);
+        try {
+            const response = await tripAPI.getByCode(tripCode);
+            if (response.success && response.trip) {
+                router.push(`/trips/${response.trip._id}`);
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'No trip found with this code');
+        } finally {
+            setSearchingCode(false);
+        }
     };
 
     return (
@@ -83,9 +106,9 @@ function SearchPageContent() {
             {/* Header */}
             <div className="bg-white dark:bg-dark-800 shadow-sm sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
                         {/* Search Summary */}
-                        <div>
+                        <div className="flex-1">
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                                 {startPoint || endPoint
                                     ? `${startPoint || 'Any'} → ${endPoint || 'Any'}`
@@ -94,6 +117,28 @@ function SearchPageContent() {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 {loading ? 'Loading...' : `${pagination.totalTrips} trips found`}
                             </p>
+                        </div>
+
+                        {/* Search by Code */}
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={tripCode}
+                                    onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
+                                    placeholder="Trip Code"
+                                    maxLength={6}
+                                    className="w-28 px-3 py-2 text-sm font-mono uppercase tracking-wider border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
+                                />
+                            </div>
+                            <button
+                                onClick={searchByCode}
+                                disabled={searchingCode || tripCode.length !== 6}
+                                className="px-3 py-2 bg-secondary-600 hover:bg-secondary-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                                {searchingCode ? '...' : 'Go'}
+                            </button>
                         </div>
 
                         {/* Filter Button */}

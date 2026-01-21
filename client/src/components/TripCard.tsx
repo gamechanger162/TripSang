@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 interface TripCardProps {
     trip: {
         _id: string;
+        tripCode?: string;
         title: string;
         startPoint: { name: string };
         endPoint: { name: string };
@@ -51,6 +52,36 @@ export default function TripCard({ trip }: TripCardProps) {
             setLikes(liked ? likes - 1 : likes + 1);
         } catch (error: any) {
             toast.error(error.message || 'Failed to like trip');
+        }
+    };
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const shareUrl = `${window.location.origin}/trips/${trip._id}`;
+        const codeText = trip.tripCode ? ` | Code: ${trip.tripCode}` : '';
+        const shareText = `Check out this trip: ${trip.title}${codeText}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: trip.title,
+                    text: shareText,
+                    url: shareUrl,
+                });
+                return;
+            } catch (err) {
+                // User cancelled or error
+            }
+        }
+
+        // Fallback: copy link
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Link copied to clipboard!');
+        } catch (err) {
+            toast.error('Failed to copy link');
         }
     };
 
@@ -124,26 +155,50 @@ export default function TripCard({ trip }: TripCardProps) {
                         </div>
                     )}
 
-                    {/* Like Button */}
-                    <button
-                        onClick={handleLike}
-                        className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all group/like"
-                    >
-                        <svg
-                            className={`w-5 h-5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                                } group-hover/like:text-red-500`}
-                            fill={liked ? 'currentColor' : 'none'}
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    {/* Action Buttons */}
+                    <div className="absolute top-3 right-3 flex items-center gap-2">
+                        {/* Share Button */}
+                        <button
+                            onClick={handleShare}
+                            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all group/share"
+                            title="Share trip"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                            />
-                        </svg>
-                    </button>
+                            <svg
+                                className="w-5 h-5 text-gray-600 group-hover/share:text-primary-600 transition-colors"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                                />
+                            </svg>
+                        </button>
+
+                        {/* Like Button */}
+                        <button
+                            onClick={handleLike}
+                            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all group/like"
+                        >
+                            <svg
+                                className={`w-5 h-5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                                    } group-hover/like:text-red-500`}
+                                fill={liked ? 'currentColor' : 'none'}
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                />
+                            </svg>
+                        </button>
+                    </div>
 
                     {/* Difficulty Badge */}
                     {trip.difficulty && (
