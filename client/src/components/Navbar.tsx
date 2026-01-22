@@ -179,6 +179,13 @@ export default function Navbar() {
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
                         <Link href="/" className="flex items-center gap-2">
+                            <Image
+                                src="/logo.png"
+                                alt="TripSang Logo"
+                                width={40}
+                                height={40}
+                                className="object-contain"
+                            />
                             <span className={`text-2xl font-bold bg-clip-text ${logoClass}`}>
                                 TripSang
                             </span>
