@@ -93,7 +93,7 @@ export default function RootLayout({
                                     "url": "https://tripsang.com",
                                     "logo": "https://tripsang.com/logo.png",
                                     "sameAs": [
-                                        "https://instagram.com/tripsang",
+                                        "https://instagram.com/_tripsang",
                                         "https://twitter.com/tripsang",
                                         "https://facebook.com/tripsang"
                                     ],
