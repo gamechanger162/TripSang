@@ -125,6 +125,23 @@ export default function TripCard({ trip }: TripCardProps) {
         return gender.charAt(0).toUpperCase() + gender.slice(1);
     };
 
+    // Calculate trip duration and categorize
+    const getTripDuration = () => {
+        const start = new Date(trip.startDate);
+        const end = new Date(trip.endDate);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+
+        return {
+            days: diffDays,
+            isShort: diffDays <= 2,
+            label: diffDays <= 2 ? 'Short Trip' : 'Long Trip',
+            icon: diffDays <= 2 ? '⚡' : '🗺️'
+        };
+    };
+
+    const tripDuration = getTripDuration();
+
     return (
         <Link href={`/trips/${trip._id}`}>
             <div className="card hover:shadow-trip-hover transition-all duration-300 overflow-hidden group cursor-pointer">
@@ -200,12 +217,21 @@ export default function TripCard({ trip }: TripCardProps) {
                         </button>
                     </div>
 
-                    {/* Difficulty Badge */}
-                    {trip.difficulty && (
-                        <div className={`absolute bottom-3 left-3 badge ${getDifficultyColor(trip.difficulty)} capitalize`}>
-                            {trip.difficulty}
+                    {/* Bottom Badges */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                        {/* Trip Duration Badge */}
+                        <div className={`badge ${tripDuration.isShort ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'} text-xs`}>
+                            <span className="mr-1">{tripDuration.icon}</span>
+                            {tripDuration.label}
                         </div>
-                    )}
+
+                        {/* Difficulty Badge */}
+                        {trip.difficulty && (
+                            <div className={`badge ${getDifficultyColor(trip.difficulty)} capitalize text-xs`}>
+                                {trip.difficulty}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Content */}
