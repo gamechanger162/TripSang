@@ -182,8 +182,8 @@ export default function Navbar() {
                             <Image
                                 src="/logo.png"
                                 alt="TripSang Logo"
-                                width={40}
-                                height={40}
+                                width={55}
+                                height={55}
                                 className="object-contain"
                             />
                             <span className={`text-2xl font-bold bg-clip-text ${logoClass}`}>
