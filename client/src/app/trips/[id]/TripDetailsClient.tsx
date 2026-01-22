@@ -453,7 +453,7 @@ export function TripDetailsClient() {
                         <GoogleAd className="min-h-[250px]" />
 
                         {/* Chat Room */}
-                        <ChatRoom tripId={tripId} isSquadMember={isSquadMember} />
+                        <ChatRoom tripId={tripId} isSquadMember={isSquadMember} squadMembers={trip.squadMembers} />
                     </div>
 
                     {/* Sidebar */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { io, Socket } from 'socket.io-client';
 import { useEnv } from '@/hooks/useEnv';
@@ -19,12 +19,19 @@ interface Message {
     imageUrl?: string;
 }
 
+interface SquadMember {
+    _id: string;
+    name: string;
+    profilePicture?: string;
+}
+
 interface ChatRoomProps {
     tripId: string;
     isSquadMember: boolean;
+    squadMembers?: SquadMember[];
 }
 
-export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
+export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: ChatRoomProps) {
     const { data: session } = useSession();
     const { socketUrl } = useEnv();
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -34,9 +41,16 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
     const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
     const [isUploading, setIsUploading] = useState(false);
 
+    // Mention state
+    const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState('');
+    const [mentionIndex, setMentionIndex] = useState(0);
+    const [cursorPosition, setCursorPosition] = useState(0);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout>();
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // Auto-scroll to bottom
     const scrollToBottom = () => {
@@ -146,6 +160,105 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
         typingTimeoutRef.current = setTimeout(() => {
             socket.emit('typing_squad', { tripId, isTyping: false });
         }, 2000);
+    };
+
+    // Filter squad members for mentions (exclude current user)
+    const filteredMembers = squadMembers.filter(member =>
+        member._id !== session?.user?.id &&
+        member.name.toLowerCase().includes(mentionQuery.toLowerCase())
+    );
+
+    // Handle mention selection
+    const handleMentionSelect = useCallback((member: SquadMember) => {
+        const beforeMention = newMessage.slice(0, cursorPosition - mentionQuery.length - 1);
+        const afterMention = newMessage.slice(cursorPosition);
+        const newText = `${beforeMention}@${member.name} ${afterMention}`;
+        setNewMessage(newText);
+        setShowMentionDropdown(false);
+        setMentionQuery('');
+        setMentionIndex(0);
+        inputRef.current?.focus();
+    }, [newMessage, cursorPosition, mentionQuery]);
+
+    // Handle input change with mention detection
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const selectionStart = e.target.selectionStart || 0;
+        setNewMessage(value);
+        setCursorPosition(selectionStart);
+        handleTyping();
+
+        // Check for @ mention trigger
+        const textBeforeCursor = value.slice(0, selectionStart);
+        const atIndex = textBeforeCursor.lastIndexOf('@');
+
+        if (atIndex !== -1) {
+            const charBeforeAt = textBeforeCursor[atIndex - 1];
+            // Only trigger if @ is at start or after a space
+            if (atIndex === 0 || charBeforeAt === ' ') {
+                const query = textBeforeCursor.slice(atIndex + 1);
+                // Show dropdown if query doesn't contain space (still typing name)
+                if (!query.includes(' ') && squadMembers.length > 0) {
+                    setMentionQuery(query);
+                    setShowMentionDropdown(true);
+                    setMentionIndex(0);
+                    return;
+                }
+            }
+        }
+        setShowMentionDropdown(false);
+    };
+
+    // Handle keyboard navigation in mention dropdown
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!showMentionDropdown || filteredMembers.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setMentionIndex(prev => (prev + 1) % filteredMembers.length);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                setMentionIndex(prev => (prev - 1 + filteredMembers.length) % filteredMembers.length);
+                break;
+            case 'Enter':
+                if (showMentionDropdown) {
+                    e.preventDefault();
+                    handleMentionSelect(filteredMembers[mentionIndex]);
+                }
+                break;
+            case 'Escape':
+                e.preventDefault();
+                setShowMentionDropdown(false);
+                break;
+        }
+    };
+
+    // Render message with highlighted mentions
+    const renderMessageWithMentions = (text: string) => {
+        const mentionRegex = /@(\w+(?:\s\w+)?)/g;
+        const parts = text.split(mentionRegex);
+
+        return parts.map((part, index) => {
+            // Check if this part is a mentioned name
+            const isMention = squadMembers.some(m =>
+                m.name.toLowerCase() === part.toLowerCase()
+            );
+
+            if (isMention) {
+                const isSelfMention = part.toLowerCase() === session?.user?.name?.toLowerCase();
+                return (
+                    <span
+                        key={index}
+                        className={`font-medium ${isSelfMention ? 'bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-100' : 'text-primary-600 dark:text-primary-400'} px-0.5 rounded`}
+                    >
+                        @{part}
+                    </span>
+                );
+            }
+            return part;
+        });
     };
 
     const sendMessage = (e: React.FormEvent) => {
@@ -318,7 +431,7 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
                                                 />
                                             </div>
                                         ) : (
-                                            <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                                            <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">{renderMessageWithMentions(msg.message)}</p>
                                         )}
 
                                         <div className={`text-[10px] mt-1 flex justify-end opacity-70 ${isOwnMessage ? 'text-blue-100' : 'text-gray-400'}`}>
@@ -375,23 +488,58 @@ export default function ChatRoom({ tripId, isSquadMember }: ChatRoomProps) {
                     </div>
 
                     <div className="flex-1 relative">
+                        {/* Mention Dropdown */}
+                        {showMentionDropdown && filteredMembers.length > 0 && (
+                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-dark-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 max-h-48 overflow-y-auto z-50">
+                                <div className="p-2 text-xs text-gray-500 border-b border-gray-100 dark:border-gray-600">
+                                    Mention a squad member
+                                </div>
+                                {filteredMembers.map((member, index) => (
+                                    <button
+                                        key={member._id}
+                                        type="button"
+                                        onClick={() => handleMentionSelect(member)}
+                                        className={`w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${index === mentionIndex ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+                                            }`}
+                                    >
+                                        {member.profilePicture ? (
+                                            <Image
+                                                src={member.profilePicture}
+                                                alt={member.name}
+                                                width={28}
+                                                height={28}
+                                                className="w-7 h-7 rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                                {member.name[0]}
+                                            </div>
+                                        )}
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                            {member.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         <input
+                            ref={inputRef}
                             type="text"
                             value={newMessage}
-                            onChange={(e) => {
-                                setNewMessage(e.target.value);
-                                handleTyping();
-                            }}
-                            placeholder={isUploading ? "Uploading image..." : "Type your message..."}
+                            onChange={handleInputChange}
+                            onKeyDown={handleKeyDown}
+                            placeholder={isUploading ? "Uploading image..." : "Type @ to mention..."}
                             className="w-full pl-4 pr-10 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-full focus:ring-2 focus:ring-primary-500 dark:text-white transition-all"
                             disabled={!connected || isUploading}
                         />
                         <button
                             type="button"
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            title="Type @ to mention someone"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                             </svg>
                         </button>
                     </div>
