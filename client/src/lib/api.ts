@@ -798,6 +798,62 @@ export const friendAPI = {
     }
 };
 
+/**
+ * Memory API
+ */
+export const memoryAPI = {
+    /**
+     * Get all memories for a trip
+     * GET /api/trips/:tripId/memories
+     */
+    getTripMemories: async (tripId: string) => {
+        return fetch(`${API_URL}/api/trips/${tripId}/memories`)
+            .then(res => res.json());
+    },
+
+    /**
+     * Create a new memory
+     * POST /api/trips/:tripId/memories
+     */
+    createMemory: async (tripId: string, data: { content?: string, photos?: Array<{ url: string, caption?: string }> }) => {
+        return fetchWithAuth(`/api/trips/${tripId}/memories`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+
+    /**
+     * Like/unlike a memory
+     * POST /api/memories/:memoryId/like
+     */
+    toggleLike: async (memoryId: string) => {
+        return fetchWithAuth(`/api/memories/${memoryId}/like`, {
+            method: 'POST'
+        });
+    },
+
+    /**
+     * Add a comment to a memory
+     * POST /api/memories/:memoryId/comments
+     */
+    addComment: async (memoryId: string, text: string) => {
+        return fetchWithAuth(`/api/memories/${memoryId}/comments`, {
+            method: 'POST',
+            body: JSON.stringify({ text })
+        });
+    },
+
+    /**
+     * Delete a memory
+     * DELETE /api/memories/:memoryId
+     */
+    deleteMemory: async (memoryId: string) => {
+        return fetchWithAuth(`/api/memories/${memoryId}`, {
+            method: 'DELETE'
+        });
+    }
+};
+
 // Export all APIs
 export default {
     authAPI,
@@ -809,5 +865,6 @@ export default {
     uploadAPI,
     userAPI,
     notificationAPI,
-    friendAPI
+    friendAPI,
+    memoryAPI
 };

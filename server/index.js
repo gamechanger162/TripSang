@@ -342,6 +342,7 @@ import uploadRoutes from './routes/upload.js';
 import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
 import friendRoutes from './routes/friends.js';
+import memoryRoutes from './routes/memories.js';
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -355,6 +356,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/friends', friendRoutes);
+app.use('/api', memoryRoutes);
 
 // 404 Handler
 app.use((req, res) => {

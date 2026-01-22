@@ -14,6 +14,7 @@ import Conversation from './Conversation.js';
 import DirectMessage from './DirectMessage.js';
 import Notification from './Notification.js';
 import Friendship from './Friendship.js';
+import Memory from './Memory.js';
 
 export {
     User,
@@ -26,7 +27,8 @@ export {
     Conversation,
     DirectMessage,
     Notification,
-    Friendship
+    Friendship,
+    Memory
 };
 
 export default {
@@ -34,5 +36,6 @@ export default {
     Trip,
     Review,
     Notification,
-    Friendship
+    Friendship,
+    Memory
 };
