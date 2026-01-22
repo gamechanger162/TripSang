@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { tripAPI } from '@/lib/api';
+import { tripAPI, friendAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import CityAutocomplete from '@/components/CityAutocomplete';
@@ -11,6 +11,12 @@ import { INDIAN_CITIES } from '@/data/cities';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+interface Friend {
+    _id: string;
+    name: string;
+    profilePicture?: string;
+}
 
 const POPULAR_TAGS = [
     '#Trekking',
@@ -67,6 +73,12 @@ export default function CreateTripPage() {
     const [customTagInput, setCustomTagInput] = useState('');
     const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
 
+    // Friend invitation state
+    const [friends, setFriends] = useState<Friend[]>([]);
+    const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+    const [friendSearchQuery, setFriendSearchQuery] = useState('');
+    const [loadingFriends, setLoadingFriends] = useState(false);
+
     // Auth checks
     useEffect(() => {
         if (status === 'loading') return;
@@ -78,6 +90,41 @@ export default function CreateTripPage() {
             return;
         }
     }, [status, router]);
+
+    // Fetch friends list
+    useEffect(() => {
+        const fetchFriends = async () => {
+            if (status !== 'authenticated') return;
+
+            setLoadingFriends(true);
+            try {
+                const response = await friendAPI.getFriends();
+                if (response.success && response.friends) {
+                    setFriends(response.friends);
+                }
+            } catch (error) {
+                console.error('Failed to fetch friends:', error);
+            } finally {
+                setLoadingFriends(false);
+            }
+        };
+
+        fetchFriends();
+    }, [status]);
+
+    // Toggle friend selection
+    const toggleFriendSelection = (friendId: string) => {
+        setSelectedFriends((prev) =>
+            prev.includes(friendId)
+                ? prev.filter((id) => id !== friendId)
+                : [...prev, friendId]
+        );
+    };
+
+    // Filter friends by search query
+    const filteredFriends = friends.filter((friend) =>
+        friend.name.toLowerCase().includes(friendSearchQuery.toLowerCase())
+    );
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -239,13 +286,19 @@ export default function CreateTripPage() {
                 } : undefined,
                 difficulty: formData.difficulty as 'easy' | 'moderate' | 'difficult' | 'extreme',
                 isPublic: formData.isPublic,
+                inviteFriends: selectedFriends.length > 0 ? selectedFriends : undefined,
             };
 
             // Create trip via API
             const response = await tripAPI.create(tripData);
 
             if (response.success) {
-                toast.success('Trip created successfully!');
+                const friendCount = selectedFriends.length;
+                if (friendCount > 0) {
+                    toast.success(`Trip created! ${friendCount} friend${friendCount > 1 ? 's' : ''} added to squad.`);
+                } else {
+                    toast.success('Trip created successfully!');
+                }
                 // Redirect to the new trip page
                 router.push(`/trips/${response.trip._id}`);
             }
@@ -628,6 +681,89 @@ export default function CreateTripPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Invite Friends Card */}
+                    {friends.length > 0 && (
+                        <div className="card">
+                            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Invite Friends to Squad</h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                Add friends directly to your trip squad (optional)
+                            </p>
+
+                            {/* Search Friends */}
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    value={friendSearchQuery}
+                                    onChange={(e) => setFriendSearchQuery(e.target.value)}
+                                    placeholder="Search friends..."
+                                    className="input-field"
+                                />
+                            </div>
+
+                            {/* Friends List */}
+                            {loadingFriends ? (
+                                <div className="text-center py-4 text-gray-500">Loading friends...</div>
+                            ) : filteredFriends.length === 0 ? (
+                                <div className="text-center py-4 text-gray-500">
+                                    {friendSearchQuery ? 'No friends match your search' : 'No friends to invite'}
+                                </div>
+                            ) : (
+                                <div className="max-h-60 overflow-y-auto space-y-2">
+                                    {filteredFriends.map((friend) => (
+                                        <label
+                                            key={friend._id}
+                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${selectedFriends.includes(friend._id)
+                                                    ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
+                                                    : 'bg-gray-50 dark:bg-dark-700 hover:bg-gray-100 dark:hover:bg-dark-600 border border-transparent'
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedFriends.includes(friend._id)}
+                                                onChange={() => toggleFriendSelection(friend._id)}
+                                                className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
+                                            />
+                                            {friend.profilePicture ? (
+                                                <Image
+                                                    src={friend.profilePicture}
+                                                    alt={friend.name}
+                                                    width={40}
+                                                    height={40}
+                                                    className="w-10 h-10 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                                    {friend.name[0]}
+                                                </div>
+                                            )}
+                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                {friend.name}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Selected Friends Summary */}
+                            {selectedFriends.length > 0 && (
+                                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm text-green-700 dark:text-green-300">
+                                            <span className="font-medium">{selectedFriends.length}</span> friend{selectedFriends.length > 1 ? 's' : ''} will be added to your squad
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedFriends([])}
+                                            className="text-xs text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
+                                        >
+                                            Clear all
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Visibility Toggle */}
                     <div className="card">

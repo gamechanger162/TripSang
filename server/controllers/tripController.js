@@ -20,7 +20,8 @@ export const createTrip = async (req, res) => {
             maxSquadSize,
             budget,
             difficulty,
-            isPublic
+            isPublic,
+            inviteFriends // Array of friend user IDs to add to squad
         } = req.body;
 
         // Validation
@@ -53,6 +54,34 @@ export const createTrip = async (req, res) => {
             }
         }
 
+        // Build squad members list: creator + invited friends
+        const squadMembers = [userId];
+
+        if (inviteFriends && Array.isArray(inviteFriends) && inviteFriends.length > 0) {
+            // Verify all invited users exist and are friends
+            const user = await User.findById(userId);
+            const validFriendIds = inviteFriends.filter(friendId => {
+                // Check if friendId is in user's friends list
+                return user.friends && user.friends.some(f => f.toString() === friendId.toString());
+            });
+
+            // Add valid friends to squad (avoid duplicates)
+            validFriendIds.forEach(friendId => {
+                if (!squadMembers.some(id => id.toString() === friendId.toString())) {
+                    squadMembers.push(friendId);
+                }
+            });
+        }
+
+        // Check if squad size exceeds max
+        const effectiveMaxSize = maxSquadSize || 10;
+        if (squadMembers.length > effectiveMaxSize) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot add ${squadMembers.length - 1} friends. Max squad size is ${effectiveMaxSize}.`
+            });
+        }
+
         // Create trip
         const trip = await Trip.create({
             creator: userId,
@@ -64,15 +93,16 @@ export const createTrip = async (req, res) => {
             endDate: end,
             tags: tags || [],
             coverPhoto,
-            maxSquadSize,
+            maxSquadSize: effectiveMaxSize,
             budget,
             difficulty,
             isPublic: isPublic !== undefined ? isPublic : true,
-            squadMembers: [userId] // Creator is automatically a squad member
+            squadMembers // Creator + invited friends
         });
 
-        // Populate creator details
+        // Populate creator and squad member details
         await trip.populate('creator', 'name email profilePicture');
+        await trip.populate('squadMembers', 'name profilePicture');
 
         // Award badge for first trip
         const userTripCount = await Trip.countDocuments({ creator: userId });
@@ -80,10 +110,16 @@ export const createTrip = async (req, res) => {
             await req.user.addBadge('Explorer');
         }
 
+        // Return how many friends were added
+        const friendsAdded = squadMembers.length - 1;
+
         res.status(201).json({
             success: true,
-            message: 'Trip created successfully.',
-            trip
+            message: friendsAdded > 0
+                ? `Trip created successfully! ${friendsAdded} friend${friendsAdded > 1 ? 's' : ''} added to squad.`
+                : 'Trip created successfully.',
+            trip,
+            friendsAdded
         });
     } catch (error) {
         console.error('Create trip error:', error);
