@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 import {
     getTripMemories,
     createMemory,
@@ -12,11 +12,11 @@ const router = express.Router();
 
 // Trip memories routes
 router.get('/trips/:tripId/memories', getTripMemories);
-router.post('/trips/:tripId/memories', protect, createMemory);
+router.post('/trips/:tripId/memories', authenticate, createMemory);
 
 // Memory interaction routes
-router.post('/memories/:memoryId/like', protect, toggleMemoryLike);
-router.post('/memories/:memoryId/comments', protect, addComment);
-router.delete('/memories/:memoryId', protect, deleteMemory);
+router.post('/memories/:memoryId/like', authenticate, toggleMemoryLike);
+router.post('/memories/:memoryId/comments', authenticate, addComment);
+router.delete('/memories/:memoryId', authenticate, deleteMemory);
 
 export default router;
