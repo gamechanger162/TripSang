@@ -80,6 +80,39 @@ export default function RootLayout({
                 <meta name="theme-color" content="#6366f1" />
             </head>
             <body className="pt-16">
+                {/* JSON-LD Schema for Brand Identity */}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@graph": [
+                                {
+                                    "@type": "Organization",
+                                    "name": "TripSang",
+                                    "url": "https://tripsang.com",
+                                    "logo": "https://tripsang.com/logo.png",
+                                    "sameAs": [
+                                        "https://instagram.com/tripsang",
+                                        "https://twitter.com/tripsang",
+                                        "https://facebook.com/tripsang"
+                                    ],
+                                    "description": "The ultimate social network for travelers. Find your travel squad, share costs, and experience the world together."
+                                },
+                                {
+                                    "@type": "WebSite",
+                                    "name": "TripSang",
+                                    "url": "https://tripsang.com",
+                                    "potentialAction": {
+                                        "@type": "SearchAction",
+                                        "target": "https://tripsang.com/search?q={search_term_string}",
+                                        "query-input": "required name=search_term_string"
+                                    }
+                                }
+                            ]
+                        })
+                    }}
+                />
                 <Providers>
                     <Navbar />
                     <SiteBanner />
