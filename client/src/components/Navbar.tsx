@@ -370,7 +370,7 @@ export default function Navbar() {
                                             className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                                             onClick={() => setProfileMenuOpen(false)}
                                         >
-                                            Dashboard
+                                            {session.user.role === 'admin' ? 'Admin Dashboard' : 'My Profile'}
                                         </Link>
 
                                         <button
@@ -554,7 +554,7 @@ export default function Navbar() {
                                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Dashboard
+                                    {session.user.role === 'admin' ? 'Admin Dashboard' : 'My Profile'}
                                 </Link>
                                 <button
                                     onClick={() => signOut()}
