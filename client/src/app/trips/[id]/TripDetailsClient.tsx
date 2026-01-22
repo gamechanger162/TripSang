@@ -439,11 +439,11 @@ export function TripDetailsClient() {
                         </div>
 
                         {/* Budget */}
-                        {trip.budget && (
+                        {trip.budget && trip.budget.min !== undefined && trip.budget.max !== undefined && (
                             <div className="card">
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Budget</h3>
                                 <p className="text-2xl font-bold text-primary-600">
-                                    {trip.budget.currency} {trip.budget.min.toLocaleString()} - {trip.budget.max.toLocaleString()}
+                                    {trip.budget.currency || 'INR'} {trip.budget.min.toLocaleString()} - {trip.budget.max.toLocaleString()}
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Per person (estimated)</p>
                             </div>
