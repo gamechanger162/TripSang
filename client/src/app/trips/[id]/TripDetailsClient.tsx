@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { tripAPI } from '@/lib/api';
 import ChatRoom from '@/components/ChatRoom';
+import TripMemories from '@/components/TripMemories';
 import GoogleAd from '@/components/GoogleAd';
 import toast from 'react-hot-toast';
 
@@ -454,6 +455,13 @@ export function TripDetailsClient() {
 
                         {/* Chat Room */}
                         <ChatRoom tripId={tripId} isSquadMember={isSquadMember} squadMembers={trip.squadMembers} />
+
+                        {/* Trip Memories */}
+                        <TripMemories
+                            tripId={tripId}
+                            isSquadMember={isSquadMember}
+                            tripEnded={new Date(trip.endDate) < new Date()}
+                        />
                     </div>
 
                     {/* Sidebar */}
