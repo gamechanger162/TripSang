@@ -64,6 +64,7 @@ export const metadata: Metadata = {
 
 import Providers from '@/components/Providers';
 import Navbar from '@/components/Navbar';
+import MobileNav from '@/components/MobileNav';
 import SiteBanner from '@/components/SiteBanner';
 
 export default function RootLayout({
@@ -79,7 +80,7 @@ export default function RootLayout({
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="theme-color" content="#6366f1" />
             </head>
-            <body className="pt-16">
+            <body className="pt-16 pb-16 md:pb-0">
                 {/* JSON-LD Schema for Brand Identity */}
                 <script
                     type="application/ld+json"
@@ -117,6 +118,7 @@ export default function RootLayout({
                     <Navbar />
                     <SiteBanner />
                     {children}
+                    <MobileNav />
                     <ToasterProvider />
                 </Providers>
             </body>
