@@ -178,13 +178,27 @@ export const searchTrips = async (req, res) => {
         }
 
         // Filter by date range
+        // Default: Only show future/ongoing trips (endDate >= today)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        filter.endDate = { $gte: today };
+
         if (startDate || endDate) {
-            filter.startDate = {};
+            // If user supplied specific dates, apply them within the future constraint
+            // OR if specific logic requires overriding, we can adjust here.
+            // For now, let's respect user filters BUT ensure we don't show old trips unless they ask (which isn't implemented in UI yet)
+
+            filter.startDate = {}; // Reset/Init
             if (startDate) {
                 filter.startDate.$gte = new Date(startDate);
             }
             if (endDate) {
-                filter.startDate.$lte = new Date(endDate);
+                // If user wants trips ending by X date
+                filter.endDate = {
+                    $gte: today,
+                    $lte: new Date(endDate)
+                };
             }
         }
 
