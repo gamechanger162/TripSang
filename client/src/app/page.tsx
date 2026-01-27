@@ -203,7 +203,7 @@ export default function HomePage() {
             {/* Trending Vibes Marquee - NEW & EXCITING */}
             <section className="py-12 bg-black border-y border-white/5 relative z-10 overflow-hidden">
                 <div className="mb-8 text-center">
-                    <h3 className="text-sm font-bold text-primary-500 tracking-[0.2em] uppercase">Trending Now</h3>
+                    <h3 className="text-sm font-bold text-primary-500 tracking-[0.2em] uppercase">Trending Locations</h3>
                 </div>
 
                 <div className="flex w-full whitespace-nowrap overflow-hidden pause-on-hover py-4">

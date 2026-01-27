@@ -687,46 +687,46 @@ export const getTrendingDestinations = async (req, res) => {
         // This is "Real World" data because it reflects what travel magazines are writing about RIGHT NOW.
         let rssData = [];
         try {
-            // Fix for ESM: Use createRequire to load CommonJS module 'rss-parser'
-            const { createRequire } = await import('module');
-            const require = createRequire(import.meta.url);
-            const Parser = require('rss-parser');
-
-            const parser = new Parser({
-                timeout: 3000, // Fast timeout
-            });
-
-            // "Travel + Leisure" or "Lonely Planet" type feeds
+            // Simplify: Use native fetch (Node 18+) or fallback gently
             const FEED_URL = 'https://feeds.feedburner.com/BreakingTravelNews';
 
-            const feed = await parser.parseURL(FEED_URL);
+            // Note: IF node version < 18, fetch might be undefined. The catch block handles this.
+            const response = await fetch(FEED_URL);
 
-            // Extract location names from titles
-            // Heuristic: Look for known city names in the titles
-            const KNOWN_CITIES = [
-                // International
-                'Paris', 'London', 'Dubai', 'Bali', 'Thailand', 'Vietnam', 'Singapore', 'Japan', 'Tokyo', 'Maldives', 'New York', 'Switzerland',
-                // India
-                'Goa', 'Ladakh', 'Manali', 'Kerala', 'Jaipur', 'Udaipur', 'Varanasi', 'Rishikesh', 'Mumbai', 'Bangalore', 'Kashmir', 'Ayodhya'
-            ];
+            if (response.ok) {
+                const xmlText = await response.text();
 
-            const foundDestinations = new Set();
+                // Extract location names from titles using RegEx (Lightweight, no deps)
+                // Heuristic: Look for known city names in the titles
+                const KNOWN_CITIES = [
+                    // International
+                    'Paris', 'London', 'Dubai', 'Bali', 'Thailand', 'Vietnam', 'Singapore', 'Japan', 'Tokyo', 'Maldives', 'New York', 'Switzerland',
+                    // India
+                    'Goa', 'Ladakh', 'Manali', 'Kerala', 'Jaipur', 'Udaipur', 'Varanasi', 'Rishikesh', 'Mumbai', 'Bangalore', 'Kashmir', 'Ayodhya'
+                ];
 
-            feed.items.forEach(item => {
-                KNOWN_CITIES.forEach(city => {
-                    if (item.title && item.title.includes(city)) {
-                        foundDestinations.add(city);
-                    }
+                const foundDestinations = new Set();
+
+                // regex to match <title>...</title> content
+                const titleRegex = /<title>(.*?)<\/title>/g;
+                let match;
+
+                while ((match = titleRegex.exec(xmlText)) !== null) {
+                    const title = match[1];
+                    KNOWN_CITIES.forEach(city => {
+                        if (title && title.includes(city)) {
+                            foundDestinations.add(city);
+                        }
+                    });
+                }
+
+                rssData = Array.from(foundDestinations).map(name => {
+                    return { name };
                 });
-            });
-
-            rssData = Array.from(foundDestinations).map(name => {
-                // Return basic object, image will be matched from fallback map
-                return { name };
-            });
+            }
 
         } catch (rssError) {
-            console.warn('RSS Fetch failed, using fallback:', rssError.message);
+            console.warn('RSS Fetch failed (using seasonal fallback):', rssError.message);
             // Non-fatal, fallback to seasonal
         }
 
