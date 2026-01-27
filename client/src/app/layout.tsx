@@ -76,7 +76,7 @@ export default function RootLayout({
         <html lang="en">
             <head>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-                <link rel="apple-touch-icon" href="/icon-192.svg" />
+                <link rel="apple-touch-icon" href="/icon-192.png" />
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="theme-color" content="#6366f1" />
             </head>
