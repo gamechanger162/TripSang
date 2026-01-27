@@ -17,6 +17,22 @@ export default function HomePage() {
     const [tripCode, setTripCode] = useState('');
     const [searchingCode, setSearchingCode] = useState(false);
     const [stats, setStats] = useState({ trips: 0, travelers: 0 });
+    const [trendingDestinations, setTrendingDestinations] = useState<any[]>([]);
+
+    // Fetch trending destinations
+    useEffect(() => {
+        const fetchTrending = async () => {
+            try {
+                const response = await tripAPI.getTrendingDestinations();
+                if (response.success && response.destinations && response.destinations.length > 0) {
+                    setTrendingDestinations(response.destinations);
+                }
+            } catch (error) {
+                console.error('Failed to fetch trending trips:', error);
+            }
+        };
+        fetchTrending();
+    }, []);
 
     // Simulate counting up stats
     useEffect(() => {
@@ -58,17 +74,20 @@ export default function HomePage() {
     };
 
     // Marquee content
-    const trendingVibes = [
-        { name: "Manali Trek", img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=500&q=80" },
-        { name: "Goa Beach Party", img: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&q=80" },
-        { name: "Rishikesh Rafting", img: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=500&q=80" },
-        { name: "Kerala Backwaters", img: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=500&q=80" },
-        { name: "Ladakh Bike Trip", img: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=500&q=80" },
-        { name: "Jaipur Culture", img: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=500&q=80" },
+    const staticTrending = [
+        { name: "Manali Trek", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=500&q=80" },
+        { name: "Goa Beach Party", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&q=80" },
+        { name: "Rishikesh Rafting", image: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=500&q=80" },
+        { name: "Kerala Backwaters", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=500&q=80" },
+        { name: "Ladakh Bike Trip", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=500&q=80" },
+        { name: "Jaipur Culture", image: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=500&q=80" },
     ];
 
+    // Use fetched data if available, otherwise static
+    const displayItems = trendingDestinations.length > 0 ? trendingDestinations : staticTrending;
+
     // Duplicate for infinite scroll
-    const marqueeItems = [...trendingVibes, ...trendingVibes, ...trendingVibes];
+    const marqueeItems = [...displayItems, ...displayItems, ...displayItems];
 
     return (
         <div className="min-h-screen -mt-16 bg-black text-white overflow-x-hidden">
@@ -192,7 +211,7 @@ export default function HomePage() {
                         {marqueeItems.map((item, idx) => (
                             <div key={`${item.name}-${idx}`} className="inline-block mx-4 w-64 h-80 relative group cursor-pointer overflow-hidden rounded-2xl border border-white/10">
                                 <Image
-                                    src={item.img}
+                                    src={item.image || item.img || '/placeholder.jpg'} // Fallback
                                     alt={item.name}
                                     fill
                                     className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"

@@ -287,6 +287,17 @@ export const tripAPI = {
     getByCode: async (code: string) => {
         return fetchWithAuth(`/api/trips/code/${code.toUpperCase()}`);
     },
+
+    /**
+     * Get trending destinations
+     * GET /api/trips/trending
+     */
+    getTrendingDestinations: async () => {
+        // No auth needed for this one, but fetchWithAuth handles it fine (and public endpoints ignore token if not needed)
+        // Actually, let's use simple fetch if we want to avoid overhead/weirdness, BUT fetchWithAuth is standard wrapper here.
+        // Given it's public, it should be fine.
+        return fetchWithAuth('/api/trips/trending');
+    },
 };
 
 // ========================================

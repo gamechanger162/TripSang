@@ -673,3 +673,63 @@ export const getTripByCode = async (req, res) => {
         });
     }
 };
+
+/**
+ * Get trending destinations
+ * GET /api/trips/trending
+ */
+export const getTrendingDestinations = async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const trending = await Trip.aggregate([
+            {
+                // Filter: Active, Public trips in the future
+                $match: {
+                    status: 'active',
+                    isPublic: true,
+                    endDate: { $gte: today }
+                }
+            },
+            {
+                // Group by destination
+                $group: {
+                    _id: '$endPoint.name',
+                    count: { $sum: 1 },
+                    // Get the first cover photo found
+                    coverPhoto: { $first: '$coverPhoto' }
+                }
+            },
+            {
+                // Sort by most popular
+                $sort: { count: -1 }
+            },
+            {
+                // Limit to top 10
+                $limit: 10
+            },
+            {
+                // Format output
+                $project: {
+                    _id: 0,
+                    name: '$_id',
+                    count: 1,
+                    image: { $ifNull: ['$coverPhoto', null] }
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            destinations: trending
+        });
+    } catch (error) {
+        console.error('Get trending destinations error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch trending destinations.',
+            error: error.message
+        });
+    }
+};

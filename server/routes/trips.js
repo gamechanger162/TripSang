@@ -9,11 +9,19 @@ import {
     joinTrip,
     leaveTrip,
     removeMember,
-    toggleLike
+    toggleLike,
+    getTrendingDestinations
 } from '../controllers/tripController.js';
 import { authenticate, optionalAuth, requireMobileVerification } from '../middleware/auth.js';
 
 const router = express.Router();
+
+/**
+ * @route   GET /api/trips/trending
+ * @desc    Get trending destinations
+ * @access  Public
+ */
+router.get('/trending', getTrendingDestinations);
 
 /**
  * @route   POST /api/trips/create
