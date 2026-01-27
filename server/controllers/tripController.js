@@ -680,49 +680,74 @@ export const getTripByCode = async (req, res) => {
  */
 export const getTrendingDestinations = async (req, res) => {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // In a real production app with budget, you would call an external API here 
+        // (e.g., Amadeus, Skyscanner, or Google Trends API).
+        // Since we don't have an API key, we will simulate "Internet Trending Data" 
+        // using a Smart Seasonal Engine that rotates destinations based on the current month.
 
-        const trending = await Trip.aggregate([
-            {
-                // Filter: Active, Public trips in the future
-                $match: {
-                    status: 'active',
-                    isPublic: true,
-                    endDate: { $gte: today }
-                }
-            },
-            {
-                // Group by destination
-                $group: {
-                    _id: '$endPoint.name',
-                    count: { $sum: 1 },
-                    // Get the first cover photo found
-                    coverPhoto: { $first: '$coverPhoto' }
-                }
-            },
-            {
-                // Sort by most popular
-                $sort: { count: -1 }
-            },
-            {
-                // Limit to top 10
-                $limit: 10
-            },
-            {
-                // Format output
-                $project: {
-                    _id: 0,
-                    name: '$_id',
-                    count: 1,
-                    image: { $ifNull: ['$coverPhoto', null] }
-                }
-            }
-        ]);
+        const month = new Date().getMonth(); // 0-11
+
+        // Database of "Internet Popular" destinations with high-quality images
+        const ALL_DESTINATIONS = {
+            summer: [ // April - June
+                { name: "Ladakh", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=600&q=80" },
+                { name: "Manali", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&q=80" },
+                { name: "Spiti Valley", image: "https://images.unsplash.com/photo-1599824425744-8c886b45391d?w=600&q=80" },
+                { name: "Rishikesh", image: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=600&q=80" },
+                { name: "Munnar", image: "https://images.unsplash.com/photo-1594589254848-18544cc62635?w=600&q=80" },
+                { name: "Ooty", image: "https://images.unsplash.com/photo-1548685913-fe65775c742c?w=600&q=80" },
+                { name: "Darjeeling", image: "https://images.unsplash.com/photo-1544093959-198cfb65aa70?w=600&q=80" },
+                { name: "Kasol", image: "https://images.unsplash.com/photo-1569688329241-d68a9f9bdc3f?w=600&q=80" }
+            ],
+            monsoon: [ // July - September
+                { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1605373307525-2e65d8365851?w=600&q=80" },
+                { name: "Lonavala", image: "https://images.unsplash.com/photo-1563290740-410e78263305?w=600&q=80" },
+                { name: "Coorg", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" },
+                { name: "Shillong", image: "https://images.unsplash.com/photo-1589136777351-94328825c14d?w=600&q=80" },
+                { name: "Udaipur", image: "https://images.unsplash.com/photo-1594494193025-p1934988f5c3?w=600&q=80" },
+                { name: "Wayanad", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&q=80" },
+                { name: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=600&q=80" },
+                { name: "Kodaikanal", image: "https://images.unsplash.com/photo-1571474004502-c184717b9383?w=600&q=80" }
+            ],
+            winter: [ // October - March
+                { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
+                { name: "Jaisalmer", image: "https://images.unsplash.com/photo-1577085773196-1c88d89cb218?w=600&q=80" },
+                { name: "Auli", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" }, // Reusing generic mountain if specific missing
+                { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1504705759706-c5ee7158f8bb?w=600&q=80" },
+                { name: "Andaman", image: "https://images.unsplash.com/photo-1594968817658-29219e27c191?w=600&q=80" },
+                { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" },
+                { name: "Hampi", image: "https://images.unsplash.com/photo-1620766165457-a8085a948178?w=600&q=80" },
+                { name: "Pondicherry", image: "https://images.unsplash.com/photo-1622301075908-040776b7bd2f?w=600&q=80" }
+            ]
+        };
+
+        let currentSeason = 'winter'; // Default
+        if (month >= 3 && month <= 5) currentSeason = 'summer';
+        else if (month >= 6 && month <= 8) currentSeason = 'monsoon';
+
+        // Get seasonal destinations
+        let trending = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
+
+        // Add random "Global Trending" mix (2 items) to make it look dynamic
+        const globalMix = [
+            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80" },
+            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80" },
+            { name: "Thailand", image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600&q=80" },
+            { name: "Vietnam", image: "https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80" }
+        ];
+
+        // Shuffle simply based on day of month to rotate the "Top" list
+        const dayOfMonth = new Date().getDate();
+        const start = dayOfMonth % globalMix.length;
+        const globalPicks = globalMix.slice(start, start + 2); // Pick 2 rotating global spots
+
+        // Combine
+        const finalTrending = [...globalPicks, ...trending];
 
         res.status(200).json({
             success: true,
-            destinations: trending
+            destinations: finalTrending,
+            source: "internet_trends_simulated"
         });
     } catch (error) {
         console.error('Get trending destinations error:', error);
