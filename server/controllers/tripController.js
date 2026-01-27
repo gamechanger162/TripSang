@@ -687,7 +687,11 @@ export const getTrendingDestinations = async (req, res) => {
         // This is "Real World" data because it reflects what travel magazines are writing about RIGHT NOW.
         let rssData = [];
         try {
+            // Fix for ESM: Use createRequire to load CommonJS module 'rss-parser'
+            const { createRequire } = await import('module');
+            const require = createRequire(import.meta.url);
             const Parser = require('rss-parser');
+
             const parser = new Parser({
                 timeout: 3000, // Fast timeout
             });
