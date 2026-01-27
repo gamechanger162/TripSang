@@ -358,6 +358,20 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api', memoryRoutes);
 
+// Keep-Alive Mechanism for Render Free Tier
+const PING_INTERVAL = 14 * 60 * 1000; // 14 minutes (render sleeps after 15)
+const SELF_URL = 'https://tripsang.onrender.com/health';
+
+if (process.env.NODE_ENV === 'production') {
+    console.log('⏰ Keep-Alive: configured to ping every 14 min');
+    setInterval(() => {
+        console.log('⏰ Keep-Alive: Pinging self...');
+        fetch(SELF_URL)
+            .then(res => console.log(`⏰ Keep-Alive: Ping status ${res.status}`))
+            .catch(err => console.error('⏰ Keep-Alive: Ping failed', err.message));
+    }, PING_INTERVAL);
+}
+
 // 404 Handler
 app.use((req, res) => {
     res.status(404).json({
