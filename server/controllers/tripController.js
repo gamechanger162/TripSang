@@ -727,38 +727,37 @@ export const getTrendingDestinations = async (req, res) => {
         }
 
         // --- Seasonal Fallback Data (Reliable & Beautiful) ---
-        const month = new Date().getMonth(); // 0-11
-
+        // Database of "Internet Popular" destinations with high-quality images
         const ALL_DESTINATIONS = {
             summer: [ // April - June
-                { name: "Ladakh", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=600&q=80" },
-                { name: "Manali", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&q=80" },
-                { name: "Spiti Valley", image: "https://images.unsplash.com/photo-1599824425744-8c886b45391d?w=600&q=80" },
-                { name: "Rishikesh", image: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=600&q=80" },
-                { name: "Munnar", image: "https://images.unsplash.com/photo-1594589254848-18544cc62635?w=600&q=80" },
-                { name: "Ooty", image: "https://images.unsplash.com/photo-1548685913-fe65775c742c?w=600&q=80" },
-                { name: "Darjeeling", image: "https://images.unsplash.com/photo-1544093959-198cfb65aa70?w=600&q=80" },
-                { name: "Kasol", image: "https://images.unsplash.com/photo-1569688329241-d68a9f9bdc3f?w=600&q=80" }
+                { name: "Ladakh", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a" },
+                { name: "Manali", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23" },
+                { name: "Spiti Valley", image: "https://images.unsplash.com/photo-1599824425744-8c886b45391d" },
+                { name: "Rishikesh", image: "https://images.unsplash.com/photo-1506665531195-35661e984842" },
+                { name: "Munnar", image: "https://images.unsplash.com/photo-1594589254848-18544cc62635" },
+                { name: "Ooty", image: "https://images.unsplash.com/photo-1548685913-fe65775c742c" },
+                { name: "Darjeeling", image: "https://images.unsplash.com/photo-1544093959-198cfb65aa70" },
+                { name: "Kasol", image: "https://images.unsplash.com/photo-1569688329241-d68a9f9bdc3f" }
             ],
             monsoon: [ // July - September
-                { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1605373307525-2e65d8365851?w=600&q=80" },
-                { name: "Lonavala", image: "https://images.unsplash.com/photo-1563290740-410e78263305?w=600&q=80" },
-                { name: "Coorg", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" },
-                { name: "Shillong", image: "https://images.unsplash.com/photo-1589136777351-94328825c14d?w=600&q=80" },
-                { name: "Udaipur", image: "https://images.unsplash.com/photo-1594494193025-p1934988f5c3?w=600&q=80" },
-                { name: "Wayanad", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&q=80" },
-                { name: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=600&q=80" },
-                { name: "Kodaikanal", image: "https://images.unsplash.com/photo-1571474004502-c184717b9383?w=600&q=80" }
+                { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1605373307525-2e65d8365851" },
+                { name: "Lonavala", image: "https://images.unsplash.com/photo-1563290740-410e78263305" },
+                { name: "Coorg", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481" },
+                { name: "Shillong", image: "https://images.unsplash.com/photo-1589136777351-94328825c14d" },
+                { name: "Udaipur", image: "https://images.unsplash.com/photo-1594494193025-p1934988f5c3" },
+                { name: "Wayanad", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1" },
+                { name: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2" },
+                { name: "Kodaikanal", image: "https://images.unsplash.com/photo-1571474004502-c184717b9383" }
             ],
             winter: [ // October - March
-                { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
-                { name: "Jaisalmer", image: "https://images.unsplash.com/photo-1577085773196-1c88d89cb218?w=600&q=80" },
-                { name: "Auli", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" }, // Reusing generic mountain if specific missing
-                { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1504705759706-c5ee7158f8bb?w=600&q=80" },
-                { name: "Andaman", image: "https://images.unsplash.com/photo-1594968817658-29219e27c191?w=600&q=80" },
-                { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" },
-                { name: "Hampi", image: "https://images.unsplash.com/photo-1620766165457-a8085a948178?w=600&q=80" },
-                { name: "Pondicherry", image: "https://images.unsplash.com/photo-1622301075908-040776b7bd2f?w=600&q=80" }
+                { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2" },
+                { name: "Jaisalmer", image: "https://images.unsplash.com/photo-1577085773196-1c88d89cb218" },
+                { name: "Auli", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481" }, // Reusing generic mountain if specific missing
+                { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1504705759706-c5ee7158f8bb" },
+                { name: "Andaman", image: "https://images.unsplash.com/photo-1594968817658-29219e27c191" },
+                { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc" },
+                { name: "Hampi", image: "https://images.unsplash.com/photo-1620766165457-a8085a948178" },
+                { name: "Pondicherry", image: "https://images.unsplash.com/photo-1622301075908-040776b7bd2f" }
             ]
         };
 
@@ -805,8 +804,8 @@ export const getTrendingDestinations = async (req, res) => {
 
         // 3. Add Global Mix if needed
         const globalMix = [
-            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", type: 'global' },
-            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80", type: 'global' },
+            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4", type: 'global' },
+            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605", type: 'global' },
         ];
 
         // Shuffle/Rotate based on date
