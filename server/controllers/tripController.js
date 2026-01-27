@@ -678,16 +678,57 @@ export const getTripByCode = async (req, res) => {
  * Get trending destinations
  * GET /api/trips/trending
  */
+// Import at the top of file would be ideal, but doing dynamic import or require here to avoid top-level issues if package missing
+// import Parser from 'rss-parser';
+
 export const getTrendingDestinations = async (req, res) => {
     try {
-        // In a real production app with budget, you would call an external API here 
-        // (e.g., Amadeus, Skyscanner, or Google Trends API).
-        // Since we don't have an API key, we will simulate "Internet Trending Data" 
-        // using a Smart Seasonal Engine that rotates destinations based on the current month.
+        // Real-Time Logic: Fetch from Travel News RSS Feeds
+        // This is "Real World" data because it reflects what travel magazines are writing about RIGHT NOW.
+        let rssData = [];
+        try {
+            const Parser = require('rss-parser');
+            const parser = new Parser({
+                timeout: 3000, // Fast timeout
+            });
 
+            // "Travel + Leisure" or "Lonely Planet" type feeds
+            const FEED_URL = 'https://feeds.feedburner.com/BreakingTravelNews';
+
+            const feed = await parser.parseURL(FEED_URL);
+
+            // Extract location names from titles
+            // Heuristic: Look for known city names in the titles
+            const KNOWN_CITIES = [
+                // International
+                'Paris', 'London', 'Dubai', 'Bali', 'Thailand', 'Vietnam', 'Singapore', 'Japan', 'Tokyo', 'Maldives', 'New York', 'Switzerland',
+                // India
+                'Goa', 'Ladakh', 'Manali', 'Kerala', 'Jaipur', 'Udaipur', 'Varanasi', 'Rishikesh', 'Mumbai', 'Bangalore', 'Kashmir', 'Ayodhya'
+            ];
+
+            const foundDestinations = new Set();
+
+            feed.items.forEach(item => {
+                KNOWN_CITIES.forEach(city => {
+                    if (item.title && item.title.includes(city)) {
+                        foundDestinations.add(city);
+                    }
+                });
+            });
+
+            rssData = Array.from(foundDestinations).map(name => {
+                // Return basic object, image will be matched from fallback map
+                return { name };
+            });
+
+        } catch (rssError) {
+            console.warn('RSS Fetch failed, using fallback:', rssError.message);
+            // Non-fatal, fallback to seasonal
+        }
+
+        // --- Seasonal Fallback Data (Reliable & Beautiful) ---
         const month = new Date().getMonth(); // 0-11
 
-        // Database of "Internet Popular" destinations with high-quality images
         const ALL_DESTINATIONS = {
             summer: [ // April - June
                 { name: "Ladakh", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=600&q=80" },
@@ -721,34 +762,69 @@ export const getTrendingDestinations = async (req, res) => {
             ]
         };
 
-        let currentSeason = 'winter'; // Default
+        // Determine season
+        let currentSeason = 'winter';
         if (month >= 3 && month <= 5) currentSeason = 'summer';
         else if (month >= 6 && month <= 8) currentSeason = 'monsoon';
 
-        // Get seasonal destinations
-        let trending = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
+        const seasonalData = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
 
-        // Add random "Global Trending" mix (2 items) to make it look dynamic
+        // Enriched Mapping Helper
+        const getImageForCity = (cityName) => {
+            // Check in our database first
+            for (const season in ALL_DESTINATIONS) {
+                const found = ALL_DESTINATIONS[season].find(d => d.name === cityName);
+                if (found) return found.image;
+            }
+            // Generic fallbacks
+            if (['Bali', 'Thailand', 'Vietnam', 'Maldives'].includes(cityName)) return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80";
+            if (['Dubai', 'Abu Dhabi'].includes(cityName)) return "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80";
+            if (['London', 'Paris', 'Europe'].includes(cityName)) return "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80";
+            return "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80"; // Default travel image
+        };
+
+        // Merge RSS + Seasonal
+        let finalTrending = [];
+
+        // 1. Add RSS found items (Real world news)
+        rssData.forEach(item => {
+            finalTrending.push({
+                name: item.name,
+                image: getImageForCity(item.name),
+                type: 'trending_news'
+            });
+        });
+
+        // 2. Fill the rest with Seasonal Data
+        seasonalData.forEach(item => {
+            // Avoid duplicates
+            if (!finalTrending.find(t => t.name === item.name)) {
+                finalTrending.push({ ...item, type: 'seasonal' });
+            }
+        });
+
+        // 3. Add Global Mix if needed
         const globalMix = [
-            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80" },
-            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80" },
-            { name: "Thailand", image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600&q=80" },
-            { name: "Vietnam", image: "https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80" }
+            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", type: 'global' },
+            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80", type: 'global' },
         ];
 
-        // Shuffle simply based on day of month to rotate the "Top" list
+        // Shuffle/Rotate based on date
         const dayOfMonth = new Date().getDate();
-        const start = dayOfMonth % globalMix.length;
-        const globalPicks = globalMix.slice(start, start + 2); // Pick 2 rotating global spots
+        // Just slice the combined list to keep it fresh but not overwhelming
+        // Ensure we prioritize RSS news items at the top
 
-        // Combine
-        const finalTrending = [...globalPicks, ...trending];
+        // If we found NO rss items, fallback to pure seasonal + global
+        if (rssData.length === 0) {
+            finalTrending = [...globalMix, ...seasonalData];
+        }
 
         res.status(200).json({
             success: true,
-            destinations: finalTrending,
-            source: "internet_trends_simulated"
+            destinations: finalTrending.slice(0, 10), // Limit to top 10
+            source: rssData.length > 0 ? "live_news_feed" : "seasonal_curated"
         });
+
     } catch (error) {
         console.error('Get trending destinations error:', error);
         res.status(500).json({
