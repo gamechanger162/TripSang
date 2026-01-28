@@ -111,7 +111,7 @@ export default function HomePage() {
                             🚀 The Future of Group Travel
                         </span>
                         <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 mb-4 font-display tracking-tight leading-none drop-shadow-2xl">
-                            TRIPSANG
+                            TRIPसंग
                         </h1>
                         <p className="text-xl md:text-2xl text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
                             Don't just travel. <span className="text-white font-semibold">Belong.</span> <br />
@@ -237,7 +237,7 @@ export default function HomePage() {
                     <div className="mb-16 md:flex items-end justify-between">
                         <div>
                             <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-                                Why <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">TripSang</span><br />
+                                Why <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Tripसंग</span><br />
                                 is Different.
                             </h2>
                             <p className="text-gray-400 max-w-md text-lg">

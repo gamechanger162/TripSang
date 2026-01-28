@@ -214,7 +214,7 @@ export function TripDetailsClient() {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: trip?.title || 'TripSang Trip',
+                    title: trip?.title || 'Tripसंग Trip',
                     text: shareText,
                     url: shareUrl,
                 });

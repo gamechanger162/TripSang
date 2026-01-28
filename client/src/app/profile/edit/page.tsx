@@ -152,7 +152,7 @@ export default function EditProfilePage() {
                     <div className="px-6 py-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-600 to-primary-700">
                         <h1 className="text-2xl font-bold text-white">Edit Profile</h1>
                         <p className="mt-1 text-primary-100">
-                            Customize how others see you on TripSang
+                            Customize how others see you on Tripसंग
                         </p>
                     </div>
 

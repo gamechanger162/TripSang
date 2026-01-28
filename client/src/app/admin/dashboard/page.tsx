@@ -396,7 +396,7 @@ export default function AdminDashboardPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage TripSang platform</p>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage Tripसंग platform</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <button

@@ -81,7 +81,7 @@ export default function SignupPaymentPage() {
             // BUT Razorpay options expects 'order_id'.
 
             currency: orderDetails.currency,
-            name: 'TripSang',
+            name: 'Tripसंग',
             description: 'Membership Fee',
             order_id: orderDetails.id,
             handler: async function (response: any) {
@@ -93,7 +93,7 @@ export default function SignupPaymentPage() {
                     });
 
                     if (verifyResponse.success) {
-                        toast.success('Payment successful! Welcome to TripSang.');
+                        toast.success('Payment successful! Welcome to Tripसंग.');
                         router.push('/dashboard');
                     } else {
                         toast.error('Payment verification failed');
@@ -146,7 +146,7 @@ export default function SignupPaymentPage() {
             <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                 <div className="bg-primary-600 px-6 py-8 text-center">
                     <h2 className="text-3xl font-bold text-white">One-Time Membership</h2>
-                    <p className="mt-2 text-primary-100">Unlock full access to TripSang</p>
+                    <p className="mt-2 text-primary-100">Unlock full access to Tripसंग</p>
                 </div>
 
                 <div className="px-6 py-8">

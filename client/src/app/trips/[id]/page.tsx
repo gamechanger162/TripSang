@@ -86,7 +86,7 @@ export async function generateMetadata({
             url: `${siteUrl}/trips/${id}`,
             title: trip.title,
             description: tripDescription,
-            siteName: 'TripSang',
+            siteName: 'Tripसंग',
             images: trip.coverPhoto
                 ? [
                     {

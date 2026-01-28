@@ -7,8 +7,8 @@ const siteUrl = 'https://tripsang.com';
 export const metadata: Metadata = {
     metadataBase: new URL(siteUrl),
     title: {
-        default: 'TripSang - Find Your Travel Squad',
-        template: '%s | TripSang'
+        default: 'Tripसंग - Find Your Travel Squad',
+        template: '%s | Tripसंग'
     },
     description: 'Connect with travelers, find your squad, share costs, and experience the world together. The ultimate social network for adventure seekers.',
     keywords: ['travel', 'travel buddies', 'trip planning', 'adventure travel', 'group travel', 'travel social network', 'backpacking', 'tourism', 'travel squad', 'cost sharing'],
@@ -24,21 +24,21 @@ export const metadata: Metadata = {
         type: 'website',
         locale: 'en_US',
         url: siteUrl,
-        siteName: 'TripSang',
-        title: 'TripSang - Find Your Travel Squad',
+        siteName: 'Tripसंग',
+        title: 'Tripसंग - Find Your Travel Squad',
         description: 'Connect with travelers, find your squad, share costs, and experience the world together.',
         images: [
             {
                 url: `${siteUrl}/og-image.png`,
                 width: 1200,
                 height: 630,
-                alt: 'TripSang - Find Your Travel Squad',
+                alt: 'Tripसंग - Find Your Travel Squad',
             },
         ],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'TripSang - Find Your Travel Squad',
+        title: 'Tripसंग - Find Your Travel Squad',
         description: 'Connect with travelers, find your squad, share costs, and experience the world together.',
         images: [`${siteUrl}/og-image.png`],
         creator: '@tripsang',
@@ -91,7 +91,7 @@ export default function RootLayout({
                             "@graph": [
                                 {
                                     "@type": "Organization",
-                                    "name": "TripSang",
+                                    "name": "Tripसंग",
                                     "url": "https://tripsang.com",
                                     "logo": "https://tripsang.com/logo.png",
                                     "sameAs": [
@@ -103,7 +103,7 @@ export default function RootLayout({
                                 },
                                 {
                                     "@type": "WebSite",
-                                    "name": "TripSang",
+                                    "name": "Tripसंग",
                                     "url": "https://tripsang.com",
                                     "potentialAction": {
                                         "@type": "SearchAction",
