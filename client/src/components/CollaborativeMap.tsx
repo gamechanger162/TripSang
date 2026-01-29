@@ -57,7 +57,7 @@ function RoutingMachine({ waypoints, startPoint }: { waypoints: Waypoint[], star
         if (routingControlRef.current) {
             routingControlRef.current.setWaypoints(points);
         } else {
-            routingControlRef.current = L.Routing.control({
+            routingControlRef.current = (L as any).Routing.control({
                 waypoints: points,
                 lineOptions: {
                     styles: [{ color: '#6366f1', opacity: 0.8, weight: 6 }]
