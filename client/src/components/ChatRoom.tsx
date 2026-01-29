@@ -38,10 +38,11 @@ interface ChatRoomProps {
     isSquadMember: boolean;
     squadMembers?: SquadMember[];
     startPoint: { lat: number; lng: number; name: string };
+    endPoint?: { lat: number; lng: number; name: string };
     initialWaypoints?: any[];
 }
 
-export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], startPoint, initialWaypoints = [] }: ChatRoomProps) {
+export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], startPoint, endPoint, initialWaypoints = [] }: ChatRoomProps) {
     const { data: session } = useSession();
     const { socketUrl } = useEnv();
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -394,7 +395,8 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                     <CollaborativeMap
                         tripId={tripId}
                         initialWaypoints={initialWaypoints}
-                        startPoint={startPoint} // Ensure startPoint has correct shape
+                        startPoint={startPoint}
+                        endPoint={endPoint}
                     />
                 )}
             </div>

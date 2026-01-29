@@ -482,6 +482,11 @@ export function TripDetailsClient() {
                                 lng: trip.startPoint.coordinates?.longitude || 78.9629,
                                 name: trip.startPoint.name
                             }}
+                            endPoint={trip.endPoint ? {
+                                lat: trip.endPoint.coordinates?.latitude || 20.5937,
+                                lng: trip.endPoint.coordinates?.longitude || 78.9629,
+                                name: trip.endPoint.name
+                            } : undefined}
                             initialWaypoints={trip.waypoints}
                         />
 

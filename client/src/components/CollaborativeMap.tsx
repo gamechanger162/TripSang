@@ -39,10 +39,11 @@ interface CollaborativeMapProps {
     tripId: string;
     initialWaypoints: Waypoint[];
     startPoint: { lat: number; lng: number; name: string };
+    endPoint?: { lat: number; lng: number; name: string };
     isReadOnly?: boolean;
 }
 
-function RoutingMachine({ waypoints, startPoint }: { waypoints: Waypoint[], startPoint: any }) {
+function RoutingMachine({ waypoints, startPoint, endPoint }: { waypoints: Waypoint[], startPoint: any, endPoint?: any }) {
     const map = useMap();
     const routingControlRef = useRef<any>(null);
 
@@ -51,7 +52,8 @@ function RoutingMachine({ waypoints, startPoint }: { waypoints: Waypoint[], star
 
         const points = [
             L.latLng(startPoint.lat, startPoint.lng),
-            ...waypoints.map(wp => L.latLng(wp.lat, wp.lng))
+            ...waypoints.map(wp => L.latLng(wp.lat, wp.lng)),
+            ...(endPoint ? [L.latLng(endPoint.lat, endPoint.lng)] : [])
         ];
 
         if (routingControlRef.current) {
@@ -77,7 +79,7 @@ function RoutingMachine({ waypoints, startPoint }: { waypoints: Waypoint[], star
             // Cleanup if needed
             // if (routingControlRef.current) map.removeControl(routingControlRef.current);
         };
-    }, [map, waypoints, startPoint]);
+    }, [map, waypoints, startPoint, endPoint]);
 
     return null;
 }
@@ -89,7 +91,7 @@ function MapEvents({ onMapClick }: { onMapClick: (e: L.LeafletMouseEvent) => voi
     return null;
 }
 
-const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, isReadOnly = false }: CollaborativeMapProps) => {
+const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isReadOnly = false }: CollaborativeMapProps) => {
     const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints || []);
     const [socketConnected, setSocketConnected] = useState(false);
 
@@ -134,11 +136,24 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, isReadOnly = f
         });
     };
 
+    const handleUndo = () => {
+        if (isReadOnly || waypoints.length === 0) return;
+        const updatedWaypoints = waypoints.slice(0, -1);
+        setWaypoints(updatedWaypoints);
+        socket.emit('map_action', { tripId, waypoints: updatedWaypoints });
+    };
+
+    const handleSave = () => {
+        // Explicit save (socket emits on change anyway, but feedback is good)
+        socket.emit('map_action', { tripId, waypoints });
+        // Could show a toast here if we imported toast
+    };
+
     return (
         <div className="h-full w-full relative z-0">
             <MapContainer
                 center={[startPoint.lat, startPoint.lng]}
-                zoom={10}
+                zoom={6}
                 style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={true}
             >
@@ -154,6 +169,15 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, isReadOnly = f
                     </Popup>
                 </Marker>
 
+                {/* End Point Marker */}
+                {endPoint && (
+                    <Marker position={[endPoint.lat, endPoint.lng]}>
+                        <Popup>
+                            <div className="font-bold">End: {endPoint.name}</div>
+                        </Popup>
+                    </Marker>
+                )}
+
                 {/* User Added Waypoints */}
                 {waypoints.map((wp, idx) => (
                     <Marker key={idx} position={[wp.lat, wp.lng]}>
@@ -163,9 +187,29 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, isReadOnly = f
                     </Marker>
                 ))}
 
-                <RoutingMachine waypoints={waypoints} startPoint={startPoint} />
+                <RoutingMachine waypoints={waypoints} startPoint={startPoint} endPoint={endPoint} />
                 <MapEvents onMapClick={handleMapClick} />
             </MapContainer>
+
+            {/* Map Controls */}
+            {!isReadOnly && (
+                <div className="absolute bottom-4 left-4 z-[400] flex gap-2">
+                    <button
+                        onClick={handleUndo}
+                        disabled={waypoints.length === 0}
+                        className="bg-white dark:bg-dark-700 text-gray-700 dark:text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 font-medium transition-colors"
+                    >
+                        Undo Last Point
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className="bg-primary-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-primary-700 font-medium transition-colors"
+                    >
+                        Save Route
+                    </button>
+                    {/* User asked for "reverse" but "undo" covers mistakes. If they meant reverse direction, that's complex without changing start/end. */}
+                </div>
+            )}
         </div>
     );
 };

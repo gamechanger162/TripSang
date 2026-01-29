@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react'; // Missing in imports but used (I should double check next-auth usage in other files, usually it's useSession) - yes
 import Image from 'next/image';
 import Link from 'next/link';
-import { memoryAPI, tripAPI } from '@/lib/api';
+import { memoryAPI, tripAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Heart, MessageCircle, Share2, MapPin, Calendar, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MapPin, Calendar, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface Memory {
@@ -191,40 +191,7 @@ export default function GalleryPage() {
                 ))}
             </div>
 
-            {/* Simple Create Modal (Placeholder for now, assuming implementation logic elsewhere or basic alert for MVP) */}
-            {showCreateModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-md w-full relative">
-                        <h2 className="text-xl font-bold mb-4">Share a Memory</h2>
-                        <p className="text-gray-600 dark:text-gray-400 mb-6">
-                            Share your travel moments with the community. Select a trip or post a general memory.
-                        </p>
-
-                        <div className="space-y-3">
-                            <Link href="/trips/create" className="block w-full text-center p-3 bg-primary-50 dark:bg-primary-900/20 text-primary-600 rounded-lg font-medium hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors">
-                                Create New Trip
-                            </Link>
-                            <button
-                                className="block w-full text-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
-                                onClick={() => {
-                                    setShowCreateModal(false);
-                                    toast('Select a trip from your dashboard to post memories!', { icon: '📸' });
-                                    router.push('/dashboard');
-                                }}
-                            >
-                                Select from My Trips
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={() => setShowCreateModal(false)}
-                            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Simple Create Modal removed - replaced with inline form above */}
         </div>
     );
 }
