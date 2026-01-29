@@ -8,6 +8,7 @@ import { memoryAPI, tripAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Heart, MessageCircle, Share2, MapPin, Calendar, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import ShareMemoryModal from '@/components/ShareMemoryModal';
 
 interface Memory {
     _id: string;
@@ -29,8 +30,7 @@ export default function GalleryPage() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [completedTrips, setCompletedTrips] = useState<any[]>([]);
-    const [checkingEligibility, setCheckingEligibility] = useState(false);
+
 
     const router = useRouter(); // Initialize router
 
@@ -191,7 +191,16 @@ export default function GalleryPage() {
                 ))}
             </div>
 
-            {/* Simple Create Modal removed - replaced with inline form above */}
+            {/* Share Memory Modal */}
+            {showCreateModal && (
+                <ShareMemoryModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={() => {
+                        setPage(1);
+                        fetchMemories();
+                    }}
+                />
+            )}
         </div>
     );
 }
