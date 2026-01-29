@@ -108,7 +108,7 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
             }
 
             // Create memory
-            const response = await memoryAPI.createMemory(tripId, {
+            const response = await memoryAPI.create(tripId, {
                 content: newMemoryContent.trim() || undefined,
                 photos: uploadedPhotos.length > 0 ? uploadedPhotos : undefined
             });
