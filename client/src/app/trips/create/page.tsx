@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { tripAPI, friendAPI } from '@/lib/api';
+import { geocodeCity } from '@/lib/geocoding';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import CityAutocomplete from '@/components/CityAutocomplete';
@@ -264,15 +265,27 @@ export default function CreateTripPage() {
                 toast.success('Image uploaded!', { id: 'upload' });
             }
 
+            // Geocode Start and End Points
+            const startCoords = await geocodeCity(formData.startPoint);
+            const endCoords = await geocodeCity(formData.endPoint);
+
             // Prepare trip data
             const tripData = {
                 title: formData.title,
                 description: formData.description || undefined,
                 startPoint: {
                     name: formData.startPoint,
+                    coordinates: startCoords ? {
+                        latitude: startCoords.lat,
+                        longitude: startCoords.lng
+                    } : undefined
                 },
                 endPoint: {
                     name: formData.endPoint,
+                    coordinates: endCoords ? {
+                        latitude: endCoords.lat,
+                        longitude: endCoords.lng
+                    } : undefined
                 },
                 startDate: formData.startDate,
                 endDate: formData.endDate,
@@ -714,8 +727,8 @@ export default function CreateTripPage() {
                                         <label
                                             key={friend._id}
                                             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${selectedFriends.includes(friend._id)
-                                                    ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
-                                                    : 'bg-gray-50 dark:bg-dark-700 hover:bg-gray-100 dark:hover:bg-dark-600 border border-transparent'
+                                                ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
+                                                : 'bg-gray-50 dark:bg-dark-700 hover:bg-gray-100 dark:hover:bg-dark-600 border border-transparent'
                                                 }`}
                                         >
                                             <input
