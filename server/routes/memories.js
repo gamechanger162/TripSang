@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 // Gallery / Feed route
-router.get('/feed', getAllMemories);
+router.get('/memories/feed', getAllMemories);
 
 // Trip memories routes
 router.get('/trips/:tripId/memories', getTripMemories);
