@@ -525,6 +525,42 @@ export const reviewAPI = {
 };
 
 // =========================
+// MEMORY API
+// =========================
+export const memoryAPI = {
+    // Get all memories (Gallery Feed)
+    getFeed: async (page = 1, limit = 20) => {
+        return fetch(`${API_URL}/api/memories/feed?page=${page}&limit=${limit}`).then(res => res.json());
+    },
+
+    // Get trip memories
+    getTripMemories: async (tripId: string) => {
+        return fetch(`${API_URL}/api/trips/${tripId}/memories`).then(res => res.json());
+    },
+
+    // Create memory
+    create: async (tripId: string, data: any) => {
+        return fetchWithAuth(`/api/trips/${tripId}/memories`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+
+    // Like memory
+    toggleLike: async (memoryId: string) => {
+        return fetchWithAuth(`/api/memories/${memoryId}/like`, { method: 'POST' });
+    },
+
+    // Add comment
+    addComment: async (memoryId: string, text: string) => {
+        return fetchWithAuth(`/api/memories/${memoryId}/comments`, {
+            method: 'POST',
+            body: JSON.stringify({ text })
+        });
+    }
+};
+
+// =========================
 // MESSAGE API
 // =========================
 export const messageAPI = {

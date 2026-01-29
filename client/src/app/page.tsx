@@ -265,51 +265,121 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
-                        {/* Integrated Chat - Large Block */}
-                        <div className="md:col-span-2 row-span-2 bg-gradient-to-br from-indigo-900/50 to-purple-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 relative overflow-hidden group hover:border-indigo-500/50 transition-all duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Integrated Chat & Map - Large Block */}
+                        <div className="md:col-span-2 bg-gradient-to-br from-indigo-900/50 to-purple-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 relative overflow-hidden group hover:border-indigo-500/50 transition-all duration-500 min-h-[400px]">
                             <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-600/30 rounded-full blur-3xl group-hover:bg-indigo-600/50 transition-all duration-500" />
-                            <h3 className="text-3xl font-bold text-white mb-4 relative z-10">Vibe-Check Before You Fly</h3>
-                            <p className="text-indigo-200 mb-8 max-w-sm relative z-10">
-                                Don't travel with strangers. Our integrated chat rooms let you break the ice, plan itineraries, and build hype before day one.
-                            </p>
+                            <div className="relative z-10">
+                                <span className="inline-block py-1 px-3 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold mb-3 border border-indigo-500/20">
+                                    NEW: LIVE MAPS 📍
+                                </span>
+                                <h3 className="text-3xl font-bold text-white mb-4">Plan & Track Together</h3>
+                                <p className="text-indigo-200 mb-8 max-w-sm">
+                                    Real-time chat meets collaborative maps. Drop pins, plan routes, and see where your squad is—all in one place.
+                                </p>
+                            </div>
 
-                            <div className="relative z-10 bg-black/40 rounded-xl p-4 max-w-md border border-white/5 backdrop-blur-md transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-black font-bold text-xs">A</div>
-                                    <div className="bg-gray-800 rounded-lg rounded-tl-none p-2 px-3 text-sm text-gray-200">
-                                        Anyone up for paragliding in Bir? 🪂
+                            {/* Mock UI for Chat/Map */}
+                            <div className="relative z-10 bg-black/40 rounded-xl p-4 max-w-md border border-white/5 backdrop-blur-md transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 hover:shadow-2xl">
+                                <div className="absolute top-4 right-4 text-green-400 animate-pulse">
+                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" /></svg>
+                                </div>
+                                <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-3">
+                                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center p-1">
+                                        <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-1.447-.894L15 7m0 13V7" /></svg>
+                                    </div>
+                                    <div className="text-sm">
+                                        <div className="text-white font-bold">Trip Map</div>
+                                        <div className="text-gray-400 text-xs">Akshay added "Cafe 1947"</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 justify-end">
-                                    <div className="bg-primary-900/50 border border-primary-700/50 rounded-lg rounded-tr-none p-2 px-3 text-sm text-white">
-                                        Count me in! Always wanted to try.
+                                    <div className="bg-primary-600 rounded-2xl rounded-tr-sm p-3 text-sm text-white shadow-lg">
+                                        Map updated! Meet there at 5? 🗺️
                                     </div>
-                                    <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold text-xs">Me</div>
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-400 to-purple-500 border border-white/20"></div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Split Costs - Small Block */}
-                        <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                            <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-4 text-green-400">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {/* Right Column Stack */}
+                        <div className="space-y-6">
+                            {/* Trip Gallery Feature - New! */}
+                            <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 relative overflow-hidden group hover:bg-gray-900/80 transition-all duration-300 h-full flex flex-col justify-center">
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 z-0"></div>
+                                <Image
+                                    src="https://images.unsplash.com/photo-1533105079780-92b9be482077?w=500&q=80"
+                                    fill
+                                    alt="Gallery"
+                                    className="object-cover absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity duration-500 scale-100 group-hover:scale-105"
+                                />
+                                <div className="relative z-10 mt-auto">
+                                    <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 text-white border border-white/30">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-1">Trip Moments</h3>
+                                    <p className="text-gray-300 text-sm mb-4">
+                                        Share your travel memories with the community gallery.
+                                    </p>
+                                    <Link href="/gallery" className="text-primary-400 text-sm font-bold hover:text-primary-300 flex items-center gap-1">
+                                        View Gallery <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                    </Link>
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Budget Transparently</h3>
-                            <p className="text-gray-400 text-sm">
-                                Set a budget range. We help you find squads that match your wallet.
+
+                            {/* Trust Block */}
+                            <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-6 border border-white/10 relative overflow-hidden group hover:border-gray-700 transition-colors duration-300">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Verified Vibes</h3>
+                                        <p className="text-gray-400 text-xs">
+                                            Travel safely with verified profiles and reviews.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* New "Moments" Showcase Section */}
+            <section className="py-20 bg-black relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row items-center gap-12">
+                        <div className="md:w-1/2 relative z-10">
+                            <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary-400 via-purple-500 to-pink-500 mb-6 leading-tight">
+                                CAPTURE.<br />SHARE.<br />INSPIRE.
+                            </h2>
+                            <p className="text-gray-400 text-lg mb-8 max-w-md">
+                                Your trip doesn't end when you return home. Post your favorite shots to the <strong>Trip Moments</strong> gallery and inspire the next wave of travelers.
                             </p>
+                            <Link
+                                href="/gallery"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:bg-gray-100 transition-all hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                Visit Gallery
+                            </Link>
                         </div>
 
-                        {/* Verified - Small Block */}
-                        <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                            <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 text-blue-400">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div className="md:w-1/2 relative">
+                            {/* Floating Cards Effect */}
+                            <div className="relative w-full aspect-square md:aspect-[4/3]">
+                                <div className="absolute top-0 right-0 w-2/3 h-5/6 bg-gray-800 rounded-2xl rotate-6 overflow-hidden border-4 border-white/5 opacity-60 transform translate-x-4">
+                                    <Image src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80" fill alt="Travel 1" className="object-cover" />
+                                </div>
+                                <div className="absolute top-10 right-12 w-2/3 h-5/6 bg-gray-800 rounded-2xl -rotate-3 overflow-hidden border-4 border-white/10 shadow-2xl z-10">
+                                    <Image src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=600&q=80" fill alt="Travel 2" className="object-cover" />
+                                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-white/20">
+                                        @Sarah in Bali 🌴
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-4 -left-4 bg-primary-600/20 w-32 h-32 rounded-full blur-3xl"></div>
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Verified Travelers</h3>
-                            <p className="text-gray-400 text-sm">
-                                Mobile verification and profile reviews ensure you travel safe.
-                            </p>
                         </div>
                     </div>
                 </div>

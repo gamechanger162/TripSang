@@ -7,6 +7,14 @@ import { useEnv } from '@/hooks/useEnv';
 import toast from 'react-hot-toast';
 import { uploadAPI } from '@/lib/api';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { X, Map as MapIcon } from 'lucide-react';
+
+// Dynamic import for Map to avoid SSR issues
+const CollaborativeMap = dynamic(() => import('./CollaborativeMap'), {
+    loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-100 dark:bg-dark-800">Loading Map...</div>,
+    ssr: false
+});
 
 interface Message {
     _id?: string;
@@ -29,9 +37,11 @@ interface ChatRoomProps {
     tripId: string;
     isSquadMember: boolean;
     squadMembers?: SquadMember[];
+    startPoint: { lat: number; lng: number; name: string };
+    initialWaypoints?: any[];
 }
 
-export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: ChatRoomProps) {
+export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], startPoint, initialWaypoints = [] }: ChatRoomProps) {
     const { data: session } = useSession();
     const { socketUrl } = useEnv();
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -40,6 +50,7 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
     const [connected, setConnected] = useState(false);
     const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
     const [isUploading, setIsUploading] = useState(false);
+    const [showMap, setShowMap] = useState(false); // Map Toggle State
 
     // Mention state
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -333,51 +344,83 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
     }
 
     return (
-        <div className="card flex flex-col h-[600px] p-0 overflow-hidden bg-white dark:bg-dark-800 border-0 shadow-lg">
-            {/* Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-dark-800 sticky top-0 z-10">
-                <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-3">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+        <div className="card relative flex flex-col h-[650px] p-0 overflow-hidden bg-white/80 dark:bg-dark-800/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl">
+            {/* Decorated Header */}
+            <div className="p-4 border-b border-gray-100/50 dark:border-gray-700/50 flex items-center justify-between bg-white/90 dark:bg-dark-800/90 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-400 to-purple-500 p-0.5 shadow-lg">
+                            <div className="w-full h-full rounded-full bg-white dark:bg-dark-800 flex items-center justify-center">
+                                <svg className="w-6 h-6 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        {connected && (
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-dark-800 rounded-full"></span>
+                        )}
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Squad Chat</h3>
-                        <div className="flex items-center text-xs">
-                            {connected ? (
-                                <span className="flex items-center text-green-600 font-medium">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse" />
-                                    Online
-                                </span>
-                            ) : (
-                                <span className="flex items-center text-orange-500 font-medium">
-                                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-1.5 animate-pulse" />
-                                    Connecting...
-                                </span>
-                            )}
+                        <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Squad Chat</h3>
+                        <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                            {squadMembers.length} members • {connected ? 'Live' : 'Connect...'}
                         </div>
                     </div>
                 </div>
+                <button
+                    onClick={() => setShowMap(!showMap)}
+                    className="group relative p-3 bg-gray-50 dark:bg-dark-700/50 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-500 hover:text-primary-600 transition-all duration-300 hover:shadow-md"
+                    title="Toggle Map"
+                >
+                    <div className="absolute inset-0 bg-primary-100/20 dark:bg-primary-900/10 rounded-2xl scale-0 group-hover:scale-100 transition-transform duration-300"></div>
+                    <MapIcon size={20} className="relative z-10" />
+                </button>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900/50">
+            {/* Map Drawer/Overlay */}
+            <div
+                className={`absolute inset-0 z-20 bg-white dark:bg-dark-800 transition-transform duration-300 transform ${showMap ? 'translate-y-0' : 'translate-y-full'}`}
+            >
+                <div className="absolute top-4 right-4 z-[400] bg-white/90 dark:bg-dark-700/90 backdrop-blur rounded-full shadow-lg p-1">
+                    <button
+                        onClick={() => setShowMap(false)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded-full transition-colors text-gray-500"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+                {/* Render map only when visible or mounted to save resources, but keeping it mounted preserves state */}
+                {showMap && (
+                    <CollaborativeMap
+                        tripId={tripId}
+                        initialWaypoints={initialWaypoints}
+                        startPoint={startPoint} // Ensure startPoint has correct shape
+                    />
+                )}
+            </div>
+
+            {/* Messages Area - Added subtle pattern background */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-[#f8fafc] dark:bg-dark-900 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-dark-700 scrollbar-track-transparent">
+                {/* Decorative background pattern */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+
                 {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                        <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <p className="text-center font-medium">No messages yet.</p>
-                        <p className="text-sm text-gray-500">Be the first to say hello! 👋</p>
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 relative z-10">
+                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                            <svg className="w-10 h-10 text-indigo-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </div>
+                        <p className="text-lg font-semibold text-gray-600 dark:text-gray-300">Quiet in here...</p>
+                        <p className="text-sm text-gray-500">Break the ice and start planning! 🚀</p>
                     </div>
                 ) : (
                     messages.map((msg, index) => {
                         // System message
                         if (msg.type === 'system') {
                             return (
-                                <div key={index} className="flex justify-center my-2">
-                                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs py-1 px-3 rounded-full">
+                                <div key={index} className="flex justify-center my-4 relative z-10">
+                                    <span className="bg-gray-100/80 dark:bg-dark-700/80 backdrop-blur-sm text-gray-500 dark:text-gray-400 text-[11px] font-medium py-1 px-4 rounded-full border border-gray-200/50 dark:border-gray-600/50 shadow-sm">
                                         {msg.message}
                                     </span>
                                 </div>
@@ -388,19 +431,19 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
                         const showAvatar = index === 0 || messages[index - 1].senderName !== msg.senderName || messages[index - 1].type === 'system';
 
                         return (
-                            <div key={msg._id || index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group`}>
+                            <div key={msg._id || index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group relative z-10 animate-fade-in-up`}>
                                 {!isOwnMessage && (
-                                    <div className={`mr-2 w-8 h-8 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
+                                    <div className={`mr-2 w-9 h-9 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'} self-end mb-1`}>
                                         {msg.senderProfilePicture ? (
                                             <Image
                                                 src={msg.senderProfilePicture}
                                                 alt={msg.senderName}
-                                                width={32}
-                                                height={32}
-                                                className="w-full h-full rounded-full object-cover shadow-sm"
+                                                width={36}
+                                                height={36}
+                                                className="w-full h-full rounded-2xl object-cover shadow-sm border border-white dark:border-dark-600"
                                             />
                                         ) : (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md border border-white dark:border-dark-600">
                                                 {msg.senderName[0]}
                                             </div>
                                         )}
@@ -410,33 +453,33 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
                                 <div className={`flex flex-col max-w-[75%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                                     {/* Sender Name (only if first in group) */}
                                     {!isOwnMessage && showAvatar && (
-                                        <span className="text-xs text-gray-500 ml-1 mb-1">{msg.senderName}</span>
+                                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 ml-1 mb-1">{msg.senderName}</span>
                                     )}
 
                                     {/* Message Bubble */}
                                     <div
-                                        className={`px-4 py-2 shadow-sm relative ${isOwnMessage
-                                            ? 'bg-primary-600 text-white rounded-2xl rounded-tr-sm'
-                                            : 'bg-white dark:bg-dark-700 text-gray-900 dark:text-white rounded-2xl rounded-tl-sm'
+                                        className={`px-5 py-3 shadow-md backdrop-blur-sm transition-all duration-200 ${isOwnMessage
+                                            ? 'bg-gradient-to-br from-primary-600 to-purple-600 text-white rounded-2xl rounded-tr-sm hover:shadow-lg'
+                                            : 'bg-white dark:bg-dark-700/80 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tl-sm border border-gray-100 dark:border-gray-600 hover:shadow-md'
                                             }`}
                                     >
                                         {msg.type === 'image' && msg.imageUrl ? (
-                                            <div className="mb-1 rounded-lg overflow-hidden">
+                                            <div className="-m-2 rounded-xl overflow-hidden cursor-pointer">
                                                 <Image
                                                     src={msg.imageUrl}
                                                     alt="Shared image"
-                                                    width={250}
-                                                    height={200}
-                                                    className="w-full h-auto object-cover"
+                                                    width={300}
+                                                    height={225}
+                                                    className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
                                         ) : (
-                                            <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">{renderMessageWithMentions(msg.message)}</p>
+                                            <p className="text-sm break-words whitespace-pre-wrap leading-relaxed tracking-wide font-normal">{renderMessageWithMentions(msg.message)}</p>
                                         )}
+                                    </div>
 
-                                        <div className={`text-[10px] mt-1 flex justify-end opacity-70 ${isOwnMessage ? 'text-blue-100' : 'text-gray-400'}`}>
-                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
+                                    <div className={`text-[10px] mt-1 flex items-center opacity-0 group-hover:opacity-60 transition-opacity ${isOwnMessage ? 'mr-1' : 'ml-1'}`}>
+                                        <span className="text-gray-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
                                 </div>
                             </div>
@@ -446,14 +489,14 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
 
                 {/* Typing Indicator */}
                 {typingUsers.size > 0 && (
-                    <div className="flex items-center ml-10 space-x-2">
-                        <div className="flex space-x-1 bg-gray-200 dark:bg-gray-700 p-2 rounded-xl rounded-tl-none">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="flex items-center ml-12 space-x-2 animate-pulse">
+                        <div className="flex space-x-1 bg-white/50 dark:bg-dark-700/50 p-2.5 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-700">
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                        <span className="text-xs text-gray-500">
-                            {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+                        <span className="text-[10px] text-gray-400 font-medium tracking-wide lowercase">
+                            {typingUsers.size} typing...
                         </span>
                     </div>
                 )}
@@ -462,10 +505,10 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-dark-800 border-t border-gray-100 dark:border-gray-700">
-                <form onSubmit={sendMessage} className="flex items-end gap-2">
+            <div className="p-4 bg-white dark:bg-dark-800/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-700/50 z-20">
+                <form onSubmit={sendMessage} className="flex items-end gap-3 relative">
                     {/* Image Upload Button */}
-                    <div className="relative">
+                    <div className="relative group">
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -478,44 +521,44 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={!connected || isUploading}
-                            className="p-3 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors disabled:opacity-50"
+                            className="p-3 text-gray-400 hover:text-primary-600 bg-gray-50 dark:bg-dark-700 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl transition-all duration-200 border border-transparent hover:border-primary-100"
                             title="Send image"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 transform group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </button>
                     </div>
 
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative group">
                         {/* Mention Dropdown */}
                         {showMentionDropdown && filteredMembers.length > 0 && (
-                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-dark-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 max-h-48 overflow-y-auto z-50">
-                                <div className="p-2 text-xs text-gray-500 border-b border-gray-100 dark:border-gray-600">
-                                    Mention a squad member
+                            <div className="absolute bottom-full left-0 right-0 mb-3 bg-white dark:bg-dark-700 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-600 max-h-48 overflow-y-auto z-50 animate-fade-in-up">
+                                <div className="p-2.5 text-[10px] uppercase tracking-wider font-semibold text-gray-400 border-b border-gray-50 dark:border-gray-600/50">
+                                    Mention Member
                                 </div>
                                 {filteredMembers.map((member, index) => (
                                     <button
                                         key={member._id}
                                         type="button"
                                         onClick={() => handleMentionSelect(member)}
-                                        className={`w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${index === mentionIndex ? 'bg-primary-50 dark:bg-primary-900/30' : ''
+                                        className={`w-full px-3 py-2.5 flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600/50 transition-colors ${index === mentionIndex ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                                             }`}
                                     >
                                         {member.profilePicture ? (
                                             <Image
                                                 src={member.profilePicture}
                                                 alt={member.name}
-                                                width={28}
-                                                height={28}
-                                                className="w-7 h-7 rounded-full object-cover"
+                                                width={24}
+                                                height={24}
+                                                className="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-700"
                                             />
                                         ) : (
-                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">
                                                 {member.name[0]}
                                             </div>
                                         )}
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                                             {member.name}
                                         </span>
                                     </button>
@@ -523,31 +566,30 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
                             </div>
                         )}
 
+                        <div className="absolute inset-0 bg-primary-500/5 rounded-2xl pointer-events-none group-focus-within:bg-primary-500/10 transition-colors"></div>
                         <input
                             ref={inputRef}
                             type="text"
                             value={newMessage}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
-                            placeholder={isUploading ? "Uploading image..." : "Type @ to mention..."}
-                            className="w-full pl-4 pr-10 py-3 bg-gray-100 dark:bg-gray-700 border-0 rounded-full focus:ring-2 focus:ring-primary-500 dark:text-white transition-all"
+                            placeholder={isUploading ? "Uploading image..." : "Type your message..."}
+                            className="w-full pl-5 pr-12 py-3.5 bg-gray-50 dark:bg-dark-700 border-2 border-transparent focus:border-primary-200 dark:focus:border-primary-800 rounded-2xl focus:ring-0 text-gray-800 dark:text-gray-100 placeholder-gray-400 transition-all font-medium shadow-inner"
                             disabled={!connected || isUploading}
                         />
                         <button
                             type="button"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            title="Type @ to mention someone"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500 transition-colors"
+                            title="Mention someone"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                            </svg>
+                            <span className="text-xl font-bold">@</span>
                         </button>
                     </div>
 
                     <button
                         type="submit"
                         disabled={!connected || (!newMessage.trim() && !isUploading)}
-                        className="p-3 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-0"
+                        className="p-3.5 bg-gradient-to-br from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white rounded-2xl shadow-lg hover:shadow-primary-500/30 transform hover:-translate-y-1 active:translate-y-0 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed group"
                     >
                         {isUploading ? (
                             <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -555,7 +597,7 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [] }: C
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         ) : (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>
                         )}

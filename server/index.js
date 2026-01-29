@@ -160,6 +160,27 @@ io.on('connection', (socket) => {
         }
     });
 
+
+
+    // ========== COLLABORATIVE MAP EVENTS ==========
+    socket.on('map_action', async ({ tripId, waypoints }) => {
+        try {
+            if (!tripId || !waypoints) return;
+
+            // Broadcast to others in the room immediately for real-time feel
+            socket.to(tripId).emit('map_update', { waypoints, updatedBy: socket.user.name });
+
+            // Persist to database (debounced in frontend usually, but here we save on every action for safety)
+            // To avoid circular dependency issues if we imported Trip at top level, dynamic import might be safer or check existing imports.
+            // We can just use mongoose.model('Trip') since it's already registered.
+            const Trip = mongoose.model('Trip');
+            await Trip.findByIdAndUpdate(tripId, { waypoints });
+
+        } catch (error) {
+            console.error('Map action error:', error);
+        }
+    });
+
     // Leave Room Event
     socket.on('leave_room', ({ tripId }) => {
         if (tripId) {

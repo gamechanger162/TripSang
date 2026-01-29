@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // Create review (requires authentication)
-router.post('/', authenticate, createReview);
+router.post('/create', authenticate, createReview);
 router.get('/pending', authenticate, getPendingReviews);
 router.get('/user/:userId', getUserReviews); // Public - anyone can see reviews
 router.delete('/:id', authenticate, deleteReview);

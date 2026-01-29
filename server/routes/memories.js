@@ -5,10 +5,14 @@ import {
     createMemory,
     toggleMemoryLike,
     addComment,
-    deleteMemory
+    deleteMemory,
+    getAllMemories
 } from '../controllers/memoryController.js';
 
 const router = express.Router();
+
+// Gallery / Feed route
+router.get('/feed', getAllMemories);
 
 // Trip memories routes
 router.get('/trips/:tripId/memories', getTripMemories);

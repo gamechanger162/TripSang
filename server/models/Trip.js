@@ -159,6 +159,16 @@ const tripSchema = new mongoose.Schema({
     likedBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    }],
+    // Collaborative Map Waypoints
+    waypoints: [{
+        lat: Number,
+        lng: Number,
+        name: String,
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
     }]
 }, {
     timestamps: true,

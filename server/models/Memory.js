@@ -4,8 +4,12 @@ const memorySchema = new mongoose.Schema({
     trip: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Trip',
-        required: true,
+        required: false, // Changed from true
         index: true
+    },
+    locationName: {
+        type: String, // For posts not linked to a specific trip
+        trim: true
     },
     author: {
         type: mongoose.Schema.Types.ObjectId,

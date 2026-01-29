@@ -32,38 +32,42 @@ export const getTripMemories = async (req, res) => {
  */
 export const createMemory = async (req, res) => {
     try {
-        const { tripId } = req.params;
+        const { tripId } = req.params; // Might be undefined/null if hitting a general route, but currently route is /trips/:tripId/memories.
+        // We need a new route for general posting OR handle "general" as a tripId param? 
+        // Better: create a new route POST /api/memories/create
+
+        // However, I can't easily change routes without updating api.ts references.
+        // Let's modify the route to accept "general" or handle logic here if tripId is provided.
+        // But wait, user said "remove completed trips logic". 
+
         const userId = req.user._id;
-        const { content, photos } = req.body;
+        const { content, photos, locationName, tripId: bodyTripId } = req.body;
 
-        // Verify trip exists and is completed
-        const trip = await Trip.findById(tripId);
-        if (!trip) {
-            return res.status(404).json({
-                success: false,
-                message: 'Trip not found'
-            });
+        // Determine Trip ID (param > body)
+        const targetTripId = tripId || bodyTripId;
+
+        let memoryData = {
+            author: userId,
+            content,
+            photos: photos || []
+        };
+
+        if (targetTripId && targetTripId !== 'general') {
+            // Verify trip exists
+            const trip = await Trip.findById(targetTripId);
+            if (trip) {
+                // If trip exists, link it. 
+                // We REMOVED the strict "squad member" and "date" checks as per "anyone can post" instructions.
+                // But generally, linking to a trip should imply some relation?
+                // "Let it be like anyone can post" -> I'll allow anyone to post to a trip if they have the ID, OR just link it.
+                // To be safe against spam, maybe check if trip is Public?
+                // For now, adhering to user request: Remove restrictions.
+                memoryData.trip = targetTripId;
+            }
         }
 
-        // Check if user is a squad member
-        const isSquadMember = trip.squadMembers.some(
-            member => member.toString() === userId.toString()
-        );
-
-        if (!isSquadMember) {
-            return res.status(403).json({
-                success: false,
-                message: 'Only squad members can post memories'
-            });
-        }
-
-        // Check if trip is completed (optional - you can enforce this)
-        const now = new Date();
-        if (new Date(trip.endDate) > now) {
-            return res.status(400).json({
-                success: false,
-                message: 'Cannot post memories for ongoing trips'
-            });
+        if (locationName) {
+            memoryData.locationName = locationName;
         }
 
         // Validate content
@@ -75,14 +79,10 @@ export const createMemory = async (req, res) => {
         }
 
         // Create memory
-        const memory = await Memory.create({
-            trip: tripId,
-            author: userId,
-            content,
-            photos: photos || []
-        });
+        const memory = await Memory.create(memoryData);
 
         await memory.populate('author', 'name profilePicture');
+        if (memory.trip) await memory.populate('trip', 'title');
 
         res.status(201).json({
             success: true,
@@ -226,8 +226,42 @@ export const deleteMemory = async (req, res) => {
     } catch (error) {
         console.error('Delete memory error:', error);
         res.status(500).json({
+        });
+    }
+};
+
+/**
+ * Get all community memories (Gallery)
+ * GET /api/memories/feed
+ */
+export const getAllMemories = async (req, res) => {
+    try {
+        const { page = 1, limit = 20 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const memories = await Memory.find()
+            .populate('author', 'name profilePicture')
+            .populate('trip', 'title startPoint endPoint')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const total = await Memory.countDocuments();
+
+        res.json({
+            success: true,
+            memories,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total
+            }
+        });
+    } catch (error) {
+        console.error('Get gallery error:', error);
+        res.status(500).json({
             success: false,
-            message: 'Failed to delete memory'
+            message: 'Failed to fetch gallery'
         });
     }
 };

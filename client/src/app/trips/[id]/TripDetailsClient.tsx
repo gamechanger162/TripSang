@@ -51,6 +51,11 @@ interface TripDetails {
     isPublic: boolean;
     status: string;
     createdAt: string;
+    waypoints?: Array<{
+        lat: number;
+        lng: number;
+        name?: string;
+    }>;
 }
 
 export function TripDetailsClient() {
@@ -468,7 +473,17 @@ export function TripDetailsClient() {
                         <GoogleAd className="min-h-[250px]" />
 
                         {/* Chat Room */}
-                        <ChatRoom tripId={tripId} isSquadMember={isSquadMember} squadMembers={trip.squadMembers} />
+                        <ChatRoom
+                            tripId={tripId}
+                            isSquadMember={isSquadMember}
+                            squadMembers={trip.squadMembers}
+                            startPoint={{
+                                lat: trip.startPoint.coordinates?.latitude || 20.5937,
+                                lng: trip.startPoint.coordinates?.longitude || 78.9629,
+                                name: trip.startPoint.name
+                            }}
+                            initialWaypoints={trip.waypoints}
+                        />
 
                         {/* Trip Memories */}
                         <TripMemories
