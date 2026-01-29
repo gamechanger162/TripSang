@@ -56,9 +56,7 @@ export default function Navbar() {
         ? 'text-gray-700 dark:text-gray-200 hover:text-primary-600'
         : 'text-gray-200 hover:text-white';
 
-    const logoClass = scrolled || !isHomePage
-        ? 'text-transparent bg-gradient-to-r from-primary-600 to-indigo-600'
-        : 'text-white';
+
 
     const menuIconColor = scrolled || !isHomePage ? 'text-gray-700 dark:text-gray-200' : 'text-white';
 
@@ -182,13 +180,10 @@ export default function Navbar() {
                             <Image
                                 src="/logo.png"
                                 alt="Tripसंग Logo"
-                                width={55}
-                                height={55}
+                                width={140}
+                                height={45}
                                 className="object-contain"
                             />
-                            <span className={`text-2xl font-bold bg-clip-text ${logoClass}`}>
-                                Tripसंग
-                            </span>
                         </Link>
                     </div>
 
