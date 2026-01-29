@@ -32,6 +32,8 @@ export default function GalleryPage() {
     const [completedTrips, setCompletedTrips] = useState<any[]>([]);
     const [checkingEligibility, setCheckingEligibility] = useState(false);
 
+    const router = useRouter(); // Initialize router
+
     useEffect(() => {
         fetchMemories();
     }, []);
@@ -61,6 +63,36 @@ export default function GalleryPage() {
             return router.push('/auth/signin');
         }
         setShowCreateModal(true);
+    };
+
+    const handleLike = async (memoryId: string) => {
+        if (!session) {
+            toast.error('Please login to like');
+            return;
+        }
+
+        try {
+            // Optimistic update
+            setMemories(prev => prev.map(m => {
+                if (m._id === memoryId) {
+                    const isLiked = m.likes.includes(session.user.id);
+                    return {
+                        ...m,
+                        likes: isLiked
+                            ? m.likes.filter(id => id !== session.user.id)
+                            : [...m.likes, session.user.id],
+                        likeCount: isLiked ? m.likeCount - 1 : m.likeCount + 1
+                    };
+                }
+                return m;
+            }));
+
+            await memoryAPI.toggleLike(memoryId);
+        } catch (error) {
+            console.error('Error toggling like:', error);
+            toast.error('Failed to like post');
+            // Revert changes could be added here if needed
+        }
     };
 
     return (
@@ -137,8 +169,8 @@ export default function GalleryPage() {
                                 <button
                                     onClick={() => handleLike(memory._id)}
                                     className={`flex items-center gap-2 text-sm transition-colors ${session && memory.likes.includes(session.user.id)
-                                            ? 'text-red-500'
-                                            : 'text-gray-500 hover:text-red-500'
+                                        ? 'text-red-500'
+                                        : 'text-gray-500 hover:text-red-500'
                                         }`}
                                 >
                                     <Heart size={20} fill={session && memory.likes.includes(session.user.id) ? "currentColor" : "none"} />
