@@ -64,6 +64,7 @@ function RoutingMachine({ waypoints, startPoint, endPoint }: { waypoints: Waypoi
                 lineOptions: {
                     styles: [{ color: '#6366f1', opacity: 0.8, weight: 6 }]
                 },
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
                 show: false, // Hide the itenerary text box
                 addWaypoints: false,
                 routeWhileDragging: false,
