@@ -75,7 +75,9 @@ export default function InstallPrompt() {
                             <img src="/icon-192.png" alt="App Icon" className="w-10 h-10 rounded-lg" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-white text-lg">Install Tripसंग</h3>
+                            <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                                Install <img src="/logo-text.png" alt="TripSang" className="h-6 w-auto object-contain bg-white/10 rounded px-1" />
+                            </h3>
                             <p className="text-slate-300 text-sm leading-tight">
                                 {isIOS
                                     ? "Install for the best experience"

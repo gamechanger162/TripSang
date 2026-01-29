@@ -110,9 +110,16 @@ export default function HomePage() {
                         <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium text-primary-300 mb-6">
                             🚀 The Future of Group Travel
                         </span>
-                        <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 mb-4 font-display tracking-tight leading-none drop-shadow-2xl">
-                            TRIPसंग
-                        </h1>
+                        <div className="flex justify-center mb-4">
+                            <Image
+                                src="/logo-text.png"
+                                alt="Tripसंग"
+                                width={400}
+                                height={120}
+                                className="object-contain drop-shadow-2xl"
+                                priority
+                            />
+                        </div>
                         <p className="text-xl md:text-2xl text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
                             Don't just travel. <span className="text-white font-semibold">Belong.</span> <br />
                             Find your squad, split costs, and create stories that last forever.
@@ -237,7 +244,7 @@ export default function HomePage() {
                     <div className="mb-16 md:flex items-end justify-between">
                         <div>
                             <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-                                Why <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Tripसंग</span><br />
+                                Why <span className="inline-block relative top-4"><Image src="/logo-text.png" alt="Tripसंग" width={180} height={60} className="object-contain" /></span><br />
                                 is Different.
                             </h2>
                             <p className="text-gray-400 max-w-md text-lg">

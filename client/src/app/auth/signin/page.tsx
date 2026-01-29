@@ -63,9 +63,10 @@ export default function SignInPage() {
 
             <div className="max-w-md w-full space-y-8 relative z-10 bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
                 <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-                        Welcome to Tripसंग
-                    </h2>
+                    <div className="mt-6 flex flex-col items-center gap-4">
+                        <span className="text-xl font-medium text-white">Welcome to</span>
+                        <Image src="/logo-text.png" alt="Tripसंग" width={240} height={80} className="object-contain" />
+                    </div>
                     <p className="mt-2 text-center text-sm text-gray-300">
                         Sign in to start your adventure
                     </p>
