@@ -576,7 +576,6 @@ export const createOrder = async (req, res) => {
             error: error.message
         });
     }
-}
 };
 
 /**
