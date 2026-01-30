@@ -124,6 +124,13 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
     const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints || []);
     const [socketConnected, setSocketConnected] = useState(false);
 
+    // Sync state with prop when data loads
+    useEffect(() => {
+        if (initialWaypoints && initialWaypoints.length > 0) {
+            setWaypoints(initialWaypoints);
+        }
+    }, [initialWaypoints]);
+
     useEffect(() => {
         socket.on('connect', () => {
             setSocketConnected(true);
@@ -160,6 +167,13 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
     const handleUndo = () => {
         if (isReadOnly || waypoints.length === 0) return;
         const updatedWaypoints = waypoints.slice(0, -1);
+        setWaypoints(updatedWaypoints);
+        socket.emit('map_action', { tripId, waypoints: updatedWaypoints });
+    };
+
+    const handleDeleteStop = (index: number) => {
+        if (isReadOnly) return;
+        const updatedWaypoints = waypoints.filter((_, i) => i !== index);
         setWaypoints(updatedWaypoints);
         socket.emit('map_action', { tripId, waypoints: updatedWaypoints });
     };
@@ -201,7 +215,20 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                 {waypoints.map((wp, idx) => (
                     <Marker key={idx} position={[wp.lat, wp.lng]} icon={createCustomIcon('stop', idx + 1)}>
                         <Popup>
-                            <div className="font-bold">{wp.name || `Stop ${idx + 1}`}</div>
+                            <div className="flex flex-col gap-2">
+                                <div className="font-bold">{wp.name || `Stop ${idx + 1}`}</div>
+                                {!isReadOnly && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent map click
+                                            handleDeleteStop(idx);
+                                        }}
+                                        className="bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition-colors w-full"
+                                    >
+                                        Delete Stop
+                                    </button>
+                                )}
+                            </div>
                         </Popup>
                     </Marker>
                 ))}

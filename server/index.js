@@ -170,11 +170,10 @@ io.on('connection', (socket) => {
             // Broadcast to others in the room immediately for real-time feel
             socket.to(tripId).emit('map_update', { waypoints, updatedBy: socket.user.name });
 
-            // Persist to database (debounced in frontend usually, but here we save on every action for safety)
-            // To avoid circular dependency issues if we imported Trip at top level, dynamic import might be safer or check existing imports.
-            // We can just use mongoose.model('Trip') since it's already registered.
+            // Persist to database
             const Trip = mongoose.model('Trip');
             await Trip.findByIdAndUpdate(tripId, { waypoints });
+            console.log(`🗺️ Map updated for trip ${tripId}, saved ${waypoints.length} waypoints.`);
 
         } catch (error) {
             console.error('Map action error:', error);
