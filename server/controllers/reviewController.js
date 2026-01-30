@@ -78,27 +78,38 @@ export const createReview = async (req, res) => {
             });
         }
 
-        // Create review
-        const review = await Review.create({
-            trip: tripId,
-            reviewer: reviewerId,
-            reviewee: revieweeId,
-            rating,
-            comment,
-            categories
-        });
-
+        // Create review (Atomic operation if possible, but here singular)
+        let review;
         try {
+            review = await Review.create({
+                trip: tripId,
+                reviewer: reviewerId,
+                reviewee: revieweeId,
+                rating,
+                comment,
+                categories
+            });
+        } catch (createError) {
+            // If duplicate (race condition), handle gracefully
+            if (createError.code === 11000) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You have already reviewed this traveler for this trip'
+                });
+            }
+            throw createError;
+        }
+
+        // --- NON-CRITICAL POST-PROCESSING ---
+        // We wrap this separately so if it fails, we still return success for the review creation
+        try {
+            // Population
             await review.populate('reviewer', 'name profilePicture');
             await review.populate('reviewee', 'name profilePicture');
             await review.populate('trip', 'title startDate endDate');
-        } catch (popError) {
-            console.warn('Population warning:', popError.message);
-        }
 
-        // Create Notification
-        try {
-            const { Notification } = await import('../models/index.js');
+            // Notifications
+            const Notification = mongoose.model('Notification');
             const io = req.app.get('io');
 
             const notification = await Notification.create({
@@ -114,29 +125,22 @@ export const createReview = async (req, res) => {
                 }
             });
 
-            // Real-time socket notification
             if (io) {
                 io.to(`user_${revieweeId}`).emit('new_notification', notification);
             }
-        } catch (notifError) {
-            console.error('Notification creation failed:', notifError);
-            // Don't fail the request just because notification failed
+        } catch (postProcessError) {
+            console.error('Review post-processing error (non-fatal):', postProcessError);
+            // We do NOT return error here, as the review is already saved.
         }
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             message: 'Review submitted successfully',
             review
         });
+
     } catch (error) {
         console.error('Create review error:', error);
-
-        if (error.code === 11000) {
-            return res.status(400).json({
-                success: false,
-                message: 'You have already reviewed this traveler for this trip'
-            });
-        }
 
         if (error.name === 'ValidationError') {
             return res.status(400).json({
