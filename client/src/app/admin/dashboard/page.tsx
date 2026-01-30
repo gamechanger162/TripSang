@@ -297,7 +297,8 @@ export default function AdminDashboardPage() {
                     title: 'Site Banner',
                     message: bannerMessage,
                     type: 'info',
-                    imageUrl: finalImageUrl
+                    imageUrl: finalImageUrl,
+                    isActive: true
                 })
             });
 

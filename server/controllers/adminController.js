@@ -36,6 +36,7 @@ export const updateConfig = async (req, res) => {
             enablePaidSignup: req.body.enablePaidSignup,
             signupFee: req.body.signupFee,
             signupFeeCurrency: req.body.signupFeeCurrency,
+            razorpayPlanId: req.body.razorpayPlanId, // Added support for updating plan ID
             'features.enableChat': req.body['features.enableChat'], // Support nested toggles if needed
             // Add other feature toggles if they are sent in bulk, but dashboard sends specific structure
         };
