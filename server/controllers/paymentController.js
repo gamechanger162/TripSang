@@ -536,10 +536,15 @@ export const createOrder = async (req, res) => {
         const amount = 3000; // ₹30.00
         const currency = 'INR';
 
+        // Shorten receipt ID (Max 40 chars)
+        // UserID (24) + "_" + ts (~13) = 38 chars. It fits.
+        // But let's be safe: `rcpt_${userId.toString().slice(-8)}_${Date.now()}`
+        const receiptId = `rcpt_${userId.toString().slice(-8)}_${Date.now()}`;
+
         const options = {
             amount: amount,
             currency: currency,
-            receipt: `receipt_${userId}_${Date.now()}`,
+            receipt: receiptId,
             notes: {
                 userId: userId.toString(),
                 type: 'one_time_premium'
@@ -557,7 +562,17 @@ export const createOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Create order error:', error);
+        // Detailed logging for debugging
+        console.error('Create order error failed.');
+        console.error('Error Name:', error.name);
+        console.error('Error Message:', error.message);
+        if (error.error) {
+            console.error('Razorpay Error Description:', error.error.description);
+            console.error('Razorpay Error Source:', error.error.source);
+            console.error('Razorpay Error Step:', error.error.step);
+            console.error('Razorpay Error Reason:', error.error.reason);
+        }
+
         res.status(500).json({
             success: false,
             message: 'Failed to create order.',
