@@ -110,7 +110,21 @@ const userSchema = new mongoose.Schema({
     blockedUsers: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }]
+    }],
+    // Subscription Details
+    subscription: {
+        status: {
+            type: String,
+            enum: ['active', 'inactive', 'past_due', 'cancelled', 'trial'],
+            default: 'inactive'
+        },
+        planId: String,
+        subscriptionId: String,
+        currentStart: Date,
+        currentEnd: Date,
+        trialEnds: Date,
+        razorpayCustomerId: String
+    }
 }, {
     timestamps: true, // Adds createdAt and updatedAt
     toJSON: { virtuals: true },

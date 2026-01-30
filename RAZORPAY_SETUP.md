@@ -1,42 +1,53 @@
-# Razorpay Logic Setup Guide
+# TripSang Razorpay Setup Guide
 
-## Overview
-Razorpay integration has been fully implemented in the TripSang codebase. This includes:
-1.  **Backend Controller**: Handles Order Creation, Payment Verification, and Webhooks.
-2.  **Frontend Page**: A dedicated `/payment/signup` page that checks if payment is required and processes it.
-3.  **Signup Integration**: Users are automatically redirected to the payment page after registration.
+Follow these steps to configure the monthly subscription system with a 30-day free trial.
 
-## Steps to Activate
+## Step 1: Create a Razorpay Account
+1. Go to [https://razorpay.com/](https://razorpay.com/) and sign up.
+2. Log in to your Dashboard.
+3. Ensure you are in **Test Mode** (toggle switch at the top) for development.
 
-To make payments work, you simply need to configure the credentials.
+## Step 2: Get API Keys
+1. In the Dashboard left menu, go to **Settings** (gear icon) -> **API Keys**.
+2. Click **Generate Test Key**.
+3. You will see a `Key ID` (starts with `rzp_test_...`) and a `Key Secret`.
+4. **Copy these immediately**. You won't be able to see the secret again.
 
-### 1. Get Razorpay Keys
-1.  Log in to your [Razorpay Dashboard](https://dashboard.razorpay.com/).
-2.  Go to **Settings** -> **API Keys**.
-3.  Generate a **Key ID** and **Key Secret**.
+## Step 3: Create a Subscription Plan
+1. In the Dashboard left menu, go to **Subscriptions**. (If you don't see it, look under "Payment Products").
+2. Click on **Plans**.
+3. Click **+ Create New Plan**.
+4. Fill in the details:
+   - **Plan Name**: TripSang Monthly Premium
+   - **Plan Description**: Monthly membership with verified badge and unlimited trips.
+   - **Billing Frequency**: 
+     - **Period**: Monthly
+     - **Interval**: 1
+   - **Billing Amount**: 99 (or your desired amount in INR)
+   - **Notes**: (Optional)
+5. Click **Create Plan**.
+6. Once created, you will see a **Plan ID** in the list (e.g., `plan_LNxxxxxxxxx`). **Copy this ID**.
 
-### 2. Configure Server Environment
-Open `server/.env` and add the following lines (replace placeholders with your actual keys):
+## Step 4: Configure Environment Variables
+You need to update your server `.env` file with these values.
+
+Open `server/.env` and update/add the following lines:
 
 ```env
-RAZORPAY_KEY_ID=rzp_test_YourKeyID
-RAZORPAY_KEY_SECRET=YourKeySecret
-RAZORPAY_WEBHOOK_SECRET=optional_webhook_secret
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your_key_id_from_step_2
+RAZORPAY_KEY_SECRET=your_key_secret_from_step_2
+RAZORPAY_PLAN_ID=your_plan_id_from_step_3
 ```
 
-### 3. Deploy
-- **Backend**: Redeploy your backend to Render/Heroku so the new env vars take effect.
-- **Frontend**: The frontend changes are already deployed.
+## Step 5: Webhooks (Optional for local dev, Required for Prod)
+To automatically handle failed payments or subscription cancellations:
+1. Go to **Settings** -> **Webhooks**.
+2. Add a new webhook.
+3. **Webhook URL**: Your server URL + `/api/payments/webhook` (e.g., `https://api.tripsang.com/api/payments/webhook`).
+4. **Secret**: Create a strong password (e.g., `tripsang_webhook_secret_123`).
+5. **Active Events**: Check `subscription.activated`, `subscription.charged`, `subscription.cancelled`, `payment.failed`.
+6. Add `RAZORPAY_WEBHOOK_SECRET` to your `.env` file.
 
-### 4. Enable Paid Signup (Admin)
-1.  Log in as Admin (`admin@tripsang.com`).
-2.  Go to **Admin Dashboard**.
-3.  Navigate to **Settings**.
-4.  Toggle **"Enable Paid Signup"**.
-5.  Set the **Signup Fee** (e.g., 499 INR).
-
-### 5. Test
-1.  Sign up a new user.
-2.  You should be redirected to the Payment Page.
-3.  Complete payment (use Razorpay Test Card credentials if in test mode).
-4.  You will be redirected to the User Dashboard with a "Premium" badge.
+---
+**Status**: The code changes for the subscription logic are already applied. Once you update the `.env` file, restart the server and the payment page will work!

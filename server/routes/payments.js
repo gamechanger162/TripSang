@@ -1,7 +1,7 @@
 import express from 'express';
 import {
-    createSignupOrder,
-    verifyPayment,
+    createSubscription,
+    verifySubscription,
     getMyPayments,
     razorpayWebhook,
     getAllPayments
@@ -11,22 +11,18 @@ import { authenticate, isAdmin } from '../middleware/auth.js';
 const router = express.Router();
 
 /**
- * @route   POST /api/payments/create-order
- * @desc    Create Razorpay order for signup fee
+ * @route   POST /api/payments/create-subscription
+ * @desc    Create Razorpay subscription for membership
  * @access  Private
- * 
- * Checks GlobalConfig:
- * - If enablePaidSignup = false, returns { skipped: true }
- * - If enablePaidSignup = true, creates Razorpay order
  */
-router.post('/create-order', authenticate, createSignupOrder);
+router.post('/create-subscription', authenticate, createSubscription);
 
 /**
- * @route   POST /api/payments/verify-payment
- * @desc    Verify Razorpay payment signature
+ * @route   POST /api/payments/verify-subscription
+ * @desc    Verify Razorpay subscription signature
  * @access  Private
  */
-router.post('/verify-payment', authenticate, verifyPayment);
+router.post('/verify-subscription', authenticate, verifySubscription);
 
 /**
  * @route   GET /api/payments/my-payments

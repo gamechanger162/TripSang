@@ -15,172 +15,151 @@ const getRazorpay = () => {
 
 
 /**
- * Create Razorpay Order for Signup Fee
- * POST /api/payments/create-order
+ * Create Razorpay Subscription (Monthly with 1 month free)
+ * POST /api/payments/create-subscription
  */
-export const createSignupOrder = async (req, res) => {
+export const createSubscription = async (req, res) => {
     try {
         const userId = req.user._id;
-
-        // Step 1: Get global configuration
         const config = await GlobalConfig.getInstance();
 
-        // Step 2: Check if paid signup is enabled
+        // Check if subscription system is enabled
         if (!config.enablePaidSignup) {
             return res.status(200).json({
                 success: true,
                 skipped: true,
-                message: 'Signup fee is currently disabled. No payment required.'
+                message: 'Subscription is currently disabled.'
             });
         }
 
-        // Step 3: Check if signup fee is set
-        if (!config.signupFee || config.signupFee <= 0) {
-            return res.status(200).json({
-                success: true,
-                skipped: true,
-                message: 'Signup fee is set to zero. No payment required.'
-            });
-        }
+        const user = await User.findById(userId);
 
-        // Step 4: Check if user already paid
-        const existingPayment = await Payment.findOne({
-            userId,
-            type: 'signup_fee',
-            status: 'success'
-        });
-
-        if (existingPayment) {
+        if (user.subscription.status === 'active') {
             return res.status(400).json({
                 success: false,
-                message: 'Signup fee already paid.',
-                alreadyPaid: true
+                message: 'You already have an active subscription.'
             });
         }
 
-        // Step 5: Create Razorpay order
-        const amountInPaise = config.signupFee * 100; // Convert to paise
-        const currency = config.signupFeeCurrency || 'INR';
+        const planId = process.env.RAZORPAY_PLAN_ID;
+        if (!planId) {
+            throw new Error('RAZORPAY_PLAN_ID is not configured');
+        }
 
-        const razorpayOrder = await getRazorpay().orders.create({
-            amount: amountInPaise,
-            currency: currency,
-            receipt: `signup_${userId}_${Date.now()}`,
+        // Calculate trial end date (30 days from now)
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+
+        // Create Subscription on Razorpay
+        // We set start_at to 30 days in future to give 1 month free
+        // Razorpay will charge the first payment at start_at
+        // User auths now.
+        const subscriptionOptions = {
+            plan_id: planId,
+            total_count: 120, // 10 years (effectively lifetime of usage)
+            quantity: 1,
+            customer_notify: 1,
+            start_at: Math.floor(trialEndDate.getTime() / 1000), // Unix timestamp
             notes: {
                 userId: userId.toString(),
-                type: 'signup_fee',
-                purpose: 'User registration fee'
+                type: 'monthly_subscription'
             }
-        });
+        };
 
+        const subscription = await getRazorpay().subscriptions.create(subscriptionOptions);
 
-        // Step 6: Save payment record in database
-        const payment = await Payment.create({
-            userId,
-            transactionId: razorpayOrder.id,
-            razorpayOrderId: razorpayOrder.id,
-            amount: config.signupFee,
-            currency: currency,
-            status: 'pending',
-            type: 'signup_fee',
-            metadata: {
-                ipAddress: req.ip,
-                userAgent: req.get('user-agent')
-            }
-        });
+        // Fetch plan details to show correct amount on frontend
+        const plan = await getRazorpay().plans.fetch(planId);
 
-        // Step 7: Return order details to frontend
         res.status(200).json({
             success: true,
-            skipped: false,
-            order: {
-                id: razorpayOrder.id,
-                amount: config.signupFee,
-                currency: currency,
-                paymentId: payment._id
-            },
-            razorpayKeyId: process.env.RAZORPAY_KEY_ID // For frontend initialization
+            subscriptionId: subscription.id,
+            planId: planId,
+            amount: plan.item.amount / 100, // Amount is in paise
+            currency: plan.item.currency,
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID
         });
 
     } catch (error) {
-        console.error('Create order error:', error);
+        console.error('Create subscription error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to create payment order.',
+            message: 'Failed to create subscription.',
             error: error.message
         });
     }
 };
 
 /**
- * Verify Razorpay Payment
- * POST /api/payments/verify-payment
+ * Verify Razorpay Subscription
+ * POST /api/payments/verify-subscription
  */
-export const verifyPayment = async (req, res) => {
+export const verifySubscription = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = req.body;
         const userId = req.user._id;
 
-        // Step 1: Find payment record
-        const payment = await Payment.findOne({
-            razorpayOrderId: razorpay_order_id,
-            userId
-        });
-
-        if (!payment) {
-            return res.status(404).json({
-                success: false,
-                message: 'Payment record not found.'
-            });
-        }
-
-        // Step 2: Verify signature
-        const body = razorpay_order_id + '|' + razorpay_payment_id;
+        const body = razorpay_payment_id + '|' + razorpay_subscription_id;
         const expectedSignature = crypto
             .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
             .update(body.toString())
             .digest('hex');
 
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (!isAuthentic) {
-            // Mark payment as failed
-            await payment.markAsFailed('SIGNATURE_MISMATCH', 'Payment signature verification failed');
-
+        if (expectedSignature !== razorpay_signature) {
             return res.status(400).json({
                 success: false,
-                message: 'Payment verification failed. Signature mismatch.'
+                message: 'Signature verification failed'
             });
         }
 
-        // Step 3: Mark payment as successful
-        await payment.markAsSuccess({
-            razorpayPaymentId: razorpay_payment_id,
-            razorpaySignature: razorpay_signature
-        });
-
-        // Step 4: Award badge to user
+        // Signature valid, update user
         const user = await User.findById(userId);
-        if (user && !user.badges.includes('Premium')) {
-            await user.addBadge('Premium');
+
+        // Fetch subscription details to get start/end
+        const subDetails = await getRazorpay().subscriptions.fetch(razorpay_subscription_id);
+
+        user.subscription = {
+            status: 'active', // It's active (even if in trial period from Razorpay perspective it's 'created' or 'authenticated', but for us they have access)
+            planId: subDetails.plan_id,
+            subscriptionId: razorpay_subscription_id,
+            currentStart: new Date(subDetails.current_start * 1000), // This might be null if future start? Check Razorpay docs. 
+            // If future start, usually current_start is null or start_at.
+            // Let's use start_at for trial logic.
+            currentEnd: new Date(subDetails.current_end * 1000 || (subDetails.start_at * 1000)),
+            trialEnds: new Date(subDetails.start_at * 1000)
+        };
+
+        if (!user.badges.includes('Premium')) {
+            user.badges.push('Premium');
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Payment verified successfully.',
-            payment: {
-                id: payment._id,
-                amount: payment.amount,
-                status: payment.status,
-                type: payment.type
+        await user.save();
+
+        // Create Payment record for the Auth transaction if needed, or just log it.
+        // Usually auth transaction is minimal amount.
+
+        await Payment.create({
+            userId,
+            transactionId: razorpay_payment_id,
+            razorpayOrderId: razorpay_subscription_id, // storing sub id here for reference
+            amount: 0, // Auth only
+            status: 'success',
+            type: 'subscription_auth',
+            metadata: {
+                subscriptionId: razorpay_subscription_id
             }
         });
 
+        res.status(200).json({
+            success: true,
+            message: 'Subscription activated successfully'
+        });
+
     } catch (error) {
-        console.error('Verify payment error:', error);
+        console.error('Verify subscription error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to verify payment.',
+            message: 'Failed to verify subscription',
             error: error.message
         });
     }

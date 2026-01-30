@@ -436,25 +436,25 @@ export const adminAPI = {
 
 export const paymentAPI = {
     /**
-     * Create Razorpay Order for Signup Fee
-     * POST /api/payments/create-order
+     * Create Razorpay Subscription
+     * POST /api/payments/create-subscription
      */
-    createSignupOrder: async () => {
-        return fetchWithAuth('/api/payments/create-order', {
+    createSubscription: async () => {
+        return fetchWithAuth('/api/payments/create-subscription', {
             method: 'POST',
         });
     },
 
     /**
-     * Verify Razorpay Payment
-     * POST /api/payments/verify-payment
+     * Verify Razorpay Subscription
+     * POST /api/payments/verify-subscription
      */
-    verifyPayment: async (data: {
-        razorpay_order_id: string;
+    verifySubscription: async (data: {
         razorpay_payment_id: string;
+        razorpay_subscription_id: string;
         razorpay_signature: string;
     }) => {
-        return fetchWithAuth('/api/payments/verify-payment', {
+        return fetchWithAuth('/api/payments/verify-subscription', {
             method: 'POST',
             body: JSON.stringify(data),
         });
