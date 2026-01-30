@@ -7,6 +7,7 @@ declare module 'next-auth' {
             role: string;
             accessToken: string;
             isMobileVerified: boolean;
+            mobileNumber?: string;
         } & DefaultSession['user'];
     }
 

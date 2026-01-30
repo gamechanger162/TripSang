@@ -107,7 +107,7 @@ export default function SignupPaymentPage() {
             prefill: {
                 name: session?.user?.name,
                 email: session?.user?.email,
-                contact: session?.user?.mobileNumber || ''
+                contact: (session?.user as any)?.mobileNumber || ''
             },
             theme: {
                 color: '#7C3AED', // Primary Purple

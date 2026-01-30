@@ -71,6 +71,17 @@ export default function MobileNav() {
                     <span className="text-[10px] font-medium">Moments</span>
                 </Link>
 
+                {/* My Plan */}
+                <Link
+                    href="/my-plan"
+                    className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive('/my-plan') ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'}`}
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive('/my-plan') ? 2.5 : 2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-[10px] font-medium">My Plan</span>
+                </Link>
+
                 {/* Profile/Login */}
                 <Link
                     href={session ? '/dashboard' : '/auth/signin'}
