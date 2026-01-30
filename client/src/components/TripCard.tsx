@@ -148,11 +148,10 @@ export default function TripCard({ trip }: TripCardProps) {
                 {/* Cover Image */}
                 <div className="relative h-48 w-full overflow-hidden rounded-lg mb-4">
                     {trip.coverPhoto ? (
-                        <Image
+                        <img
                             src={trip.coverPhoto}
                             alt={trip.title}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center">
