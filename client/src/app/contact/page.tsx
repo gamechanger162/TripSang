@@ -40,30 +40,41 @@ export default function ContactPage() {
                                     <h3 className="font-medium text-gray-900 dark:text-white">Registered Office</h3>
                                     <p className="text-gray-600 dark:text-gray-400">
                                         TripSang HQ<br />
-                                        Bangalore, Karnataka, India
+                                        Bettiah, Bihar, India
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Support Form (Placeholder) */}
+                    {/* Support Form */}
                     <div className="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-xl">
                         <h3 className="text-lg font-semibold mb-4">Send us a message</h3>
-                        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                        <form
+                            className="space-y-4"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                const form = e.target as HTMLFormElement;
+                                const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                                const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+                                const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
+
+                                window.location.href = `mailto:support@tripsang.com?subject=Support Request from ${name}&body=${message}%0D%0A%0D%0AFrom: ${email}`;
+                            }}
+                        >
                             <div>
                                 <label className="block text-sm font-medium mb-1">Name</label>
-                                <input type="text" className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" placeholder="Your name" />
+                                <input name="name" type="text" className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" placeholder="Your name" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Email</label>
-                                <input type="email" className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" placeholder="your@email.com" />
+                                <input name="email" type="email" className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" placeholder="your@email.com" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Message</label>
-                                <textarea className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" rows={4} placeholder="How can we help?"></textarea>
+                                <textarea name="message" className="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800" rows={4} placeholder="How can we help?" required></textarea>
                             </div>
-                            <button className="w-full btn-primary py-2">Send Message</button>
+                            <button type="submit" className="w-full btn-primary py-2">Send Message</button>
                         </form>
                     </div>
                 </div>
