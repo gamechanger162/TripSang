@@ -172,7 +172,7 @@ export default function EditTripModal({ trip, onClose, onUpdate }: EditTripModal
             // Fallback mock if backend not ready? Or use the mock from CreatePage
             console.log('Using mock upload as fallback');
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            return `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80`;
+            return `https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80`;
         }
     };
 
@@ -213,7 +213,7 @@ export default function EditTripModal({ trip, onClose, onUpdate }: EditTripModal
                     coverPhotoUrl = response.url;
                 } catch (err) {
                     // Fallback mock
-                    coverPhotoUrl = `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80`;
+                    coverPhotoUrl = `https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80`;
                 }
                 toast.success('Image uploaded!', { id: 'upload' });
             }

@@ -222,7 +222,7 @@ export default function CreateTripPage() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         // Return mock URL (in production, this would be the uploaded image URL)
-        return `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80`;
+        return `https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

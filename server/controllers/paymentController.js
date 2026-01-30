@@ -144,7 +144,7 @@ export const verifySubscription = async (req, res) => {
             razorpayOrderId: razorpay_subscription_id, // storing sub id here for reference
             amount: 0, // Auth only
             status: 'success',
-            type: 'subscription_auth',
+            type: 'premium_subscription',
             metadata: {
                 subscriptionId: razorpay_subscription_id
             }
@@ -228,6 +228,7 @@ export const razorpayWebhook = async (req, res) => {
                 .digest('hex');
 
             if (signature !== expectedSignature) {
+                console.error('Invalid webhook signature');
                 return res.status(400).json({
                     success: false,
                     message: 'Invalid webhook signature'
@@ -237,48 +238,120 @@ export const razorpayWebhook = async (req, res) => {
 
         // Process webhook event
         const event = req.body.event;
-        const payloadData = req.body.payload.payment.entity;
+        const payload = req.body.payload;
 
         console.log('Razorpay Webhook Event:', event);
 
-        // Find payment by order_id
-        const payment = await Payment.findOne({
-            razorpayOrderId: payloadData.order_id
-        });
+        // Handle Subscription Events
+        if (event.startsWith('subscription.')) {
+            const subEntity = payload.subscription.entity;
+            const subscriptionId = subEntity.id;
 
-        if (!payment) {
-            console.log('Payment not found for order:', payloadData.order_id);
-            return res.status(200).json({ success: true }); // Always return 200 to Razorpay
+            // Find user by subscription ID
+            const user = await User.findOne({ 'subscription.subscriptionId': subscriptionId });
+
+            if (user) {
+                switch (event) {
+                    case 'subscription.charged':
+                        // Payment successful for a subscription cycle
+                        console.log(`Subscription charged for user: ${user._id}`);
+
+                        user.subscription.status = 'active';
+                        // Update dates from the subscription entity
+                        // Razorpay gives unix timestamps
+                        user.subscription.currentStart = new Date(subEntity.current_start * 1000);
+                        user.subscription.currentEnd = new Date(subEntity.current_end * 1000);
+
+                        // Ensure they have the badge
+                        if (!user.badges.includes('Premium')) {
+                            user.badges.push('Premium');
+                        }
+
+                        await user.save();
+
+                        // Record the payment
+                        // The payment entity might be available in payload.payment
+                        if (payload.payment) {
+                            const paymentEntity = payload.payment.entity;
+
+                            // Check if payment already recorded
+                            const existingPayment = await Payment.findOne({ transactionId: paymentEntity.id });
+                            if (!existingPayment) {
+                                await Payment.create({
+                                    userId: user._id,
+                                    transactionId: paymentEntity.id,
+                                    razorpayOrderId: paymentEntity.order_id, // Might be null for recurring
+                                    amount: paymentEntity.amount / 100,
+                                    currency: paymentEntity.currency,
+                                    status: 'success',
+                                    type: 'premium_subscription',
+                                    method: paymentEntity.method,
+                                    notes: `Subscription Charge: ${subscriptionId}. ${paymentEntity.description || ''}`,
+                                    webhookData: req.body
+                                });
+                            }
+                        }
+                        break;
+
+                    case 'subscription.cancelled':
+                        console.log(`Subscription cancelled for user: ${user._id}`);
+                        user.subscription.status = 'cancelled';
+                        // We usually keep the badge until the currentEnd date, 
+                        // but strictly speaking, the status is cancelled.
+                        // Logic for badge removal could be a daily cron job checking dates.
+                        await user.save();
+                        break;
+
+                    case 'subscription.halted':
+                        console.log(`Subscription halted for user: ${user._id}`);
+                        user.subscription.status = 'past_due';
+                        // Remove premium badge immediately if payment failed multiple times
+                        user.removeBadge('Premium');
+                        await user.save();
+                        break;
+
+                    case 'subscription.completed':
+                        console.log(`Subscription completed for user: ${user._id}`);
+                        user.subscription.status = 'inactive';
+                        user.removeBadge('Premium');
+                        await user.save();
+                        break;
+                }
+            } else {
+                console.warn(`No user found for subscription ID: ${subscriptionId}`);
+            }
         }
 
-        // Update payment based on event
-        switch (event) {
-            case 'payment.captured':
-                if (payment.status !== 'success') {
+        // Handle standalone Payment Events (if relevant)
+        else if (event.startsWith('payment.')) {
+            const paymentEntity = payload.payment.entity;
+
+            // Try to find payment by order_id (for one-time payments)
+            // Or transactionId if we already created it
+            const payment = await Payment.findOne({
+                $or: [
+                    { razorpayOrderId: paymentEntity.order_id },
+                    { transactionId: paymentEntity.id }
+                ]
+            });
+
+            if (payment) {
+                if (event === 'payment.captured' && payment.status !== 'success') {
                     await payment.markAsSuccess({
-                        razorpayPaymentId: payloadData.id
+                        razorpayPaymentId: paymentEntity.id
                     });
-                    console.log('Payment marked as success:', payment._id);
-                }
-                break;
-
-            case 'payment.failed':
-                if (payment.status === 'pending') {
+                } else if (event === 'payment.failed' && payment.status === 'pending') {
                     await payment.markAsFailed(
-                        payloadData.error_code,
-                        payloadData.error_description
+                        paymentEntity.error_code,
+                        paymentEntity.error_description
                     );
-                    console.log('Payment marked as failed:', payment._id);
                 }
-                break;
 
-            default:
-                console.log('Unhandled webhook event:', event);
+                // Update webhook data
+                payment.webhookData = req.body;
+                await payment.save();
+            }
         }
-
-        // Save webhook data
-        payment.webhookData = req.body;
-        await payment.save();
 
         res.status(200).json({ success: true });
 

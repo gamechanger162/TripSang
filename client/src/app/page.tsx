@@ -76,10 +76,10 @@ export default function HomePage() {
     // Marquee content
     const staticTrending = [
         { name: "Manali Trek", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=500&q=80" },
-        { name: "Goa Beach Party", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&q=80" },
-        { name: "Rishikesh Rafting", image: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=500&q=80" },
-        { name: "Kerala Backwaters", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=500&q=80" },
-        { name: "Ladakh Bike Trip", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=500&q=80" },
+        { name: "Goa Beach Party", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80" }, // New known beach ID
+        { name: "Rishikesh Rafting", image: "https://images.unsplash.com/photo-1530866495561-507c9faab9f5?w=500&q=80" }, // New known river ID
+        { name: "Kerala Backwaters", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=500&q=80" }, // New known boat ID
+        { name: "Ladakh Bike Trip", image: "https://images.unsplash.com/photo-1566371486490-560ded23b5e4?w=500&q=80" }, // New known mountain bike/road ID
         { name: "Jaipur Culture", image: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=500&q=80" },
     ];
 
