@@ -28,6 +28,7 @@ export const getConfig = async (req, res) => {
  */
 export const updateConfig = async (req, res) => {
     try {
+        const adminUserId = req.user._id;
         // Explicitly pick allowed fields
         const allowedFields = {
             enableGoogleAds: req.body.enableGoogleAds,
