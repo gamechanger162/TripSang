@@ -54,8 +54,8 @@ export const createReview = async (req, res) => {
         }
 
         // Check if both users were part of the trip
-        const reviewerInTrip = trip.squadMembers.includes(reviewerId);
-        const revieweeInTrip = trip.squadMembers.includes(revieweeId);
+        const reviewerInTrip = trip.squadMembers.some(id => id.toString() === reviewerId.toString());
+        const revieweeInTrip = trip.squadMembers.some(id => id.toString() === revieweeId.toString());
 
         if (!reviewerInTrip || !revieweeInTrip) {
             return res.status(403).json({
@@ -88,9 +88,13 @@ export const createReview = async (req, res) => {
             categories
         });
 
-        await review.populate('reviewer', 'name profilePicture');
-        await review.populate('reviewee', 'name profilePicture');
-        await review.populate('trip', 'title startDate endDate');
+        try {
+            await review.populate('reviewer', 'name profilePicture');
+            await review.populate('reviewee', 'name profilePicture');
+            await review.populate('trip', 'title startDate endDate');
+        } catch (popError) {
+            console.warn('Population warning:', popError.message);
+        }
 
         // Create Notification
         try {
@@ -103,7 +107,7 @@ export const createReview = async (req, res) => {
                 type: 'review',
                 title: 'New Review Recieved',
                 message: `${req.user.name} rated you ${rating} stars for ${trip.title}`,
-                link: `/profile/${req.user._id}`, // Redirect to reviewer's profile or own profile
+                link: `/profile/${req.user._id}`,
                 metadata: {
                     tripId,
                     reviewId: review._id
@@ -131,6 +135,13 @@ export const createReview = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'You have already reviewed this traveler for this trip'
+            });
+        }
+
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: Object.values(error.errors).map(val => val.message).join(', ')
             });
         }
 
