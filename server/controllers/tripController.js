@@ -1,4 +1,4 @@
-import { Trip, User } from '../models/index.js';
+import { Trip, User, GlobalConfig } from '../models/index.js';
 
 /**
  * Create a new trip
