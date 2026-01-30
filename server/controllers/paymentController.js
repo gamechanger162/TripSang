@@ -544,7 +544,7 @@ export const createOrder = async (req, res) => {
         const options = {
             amount: amount,
             currency: currency,
-            receipt: receiptId,
+            // receipt: receiptId, // Commenting out to rule out validation errors
             notes: {
                 userId: userId.toString(),
                 type: 'one_time_premium'
@@ -566,19 +566,17 @@ export const createOrder = async (req, res) => {
         console.error('Create order error failed.');
         console.error('Error Name:', error.name);
         console.error('Error Message:', error.message);
-        if (error.error) {
-            console.error('Razorpay Error Description:', error.error.description);
-            console.error('Razorpay Error Source:', error.error.source);
-            console.error('Razorpay Error Step:', error.error.step);
-            console.error('Razorpay Error Reason:', error.error.reason);
-        }
+
+        // Extract specific Razorpay error if available
+        const specificError = error.error?.description || error.message;
 
         res.status(500).json({
             success: false,
-            message: 'Failed to create order.',
+            message: specificError, // Send the real error to the frontend
             error: error.message
         });
     }
+}
 };
 
 /**
