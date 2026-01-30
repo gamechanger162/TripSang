@@ -131,13 +131,16 @@ export const createSubscription = async (req, res) => {
         const subscription = await getRazorpay().subscriptions.create(subscriptionOptions);
         const plan = await getRazorpay().plans.fetch(planId);
 
+        const isTrialEligible = !user.subscription.trialEnds;
+
         res.status(200).json({
             success: true,
             subscriptionId: subscription.id,
             planId: planId,
             amount: plan.item.amount / 100,
             currency: plan.item.currency,
-            razorpayKeyId: process.env.RAZORPAY_KEY_ID
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+            isTrialEligible
         });
 
     } catch (error) {

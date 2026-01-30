@@ -50,7 +50,7 @@ export default function MyPlanPage() {
     const isTrial = subscription?.status === 'trial'; // unlikely given Razorpay structure but good to handle if we add manual logic
 
     // Fallback if status is active but we are in trial period based on dates
-    const inTrialPeriod = isActive && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
+    const inTrialPeriod = (subscription?.status === 'trial' || (isActive && subscription?.trialEnds)) && new Date(subscription.trialEnds) > new Date();
 
     if (!isActive && !inTrialPeriod) {
         return (

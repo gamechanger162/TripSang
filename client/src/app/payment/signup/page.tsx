@@ -49,7 +49,7 @@ export default function SignupPaymentPage() {
                     planId: response.planId,
                     amount: response.amount,
                     currency: response.currency,
-                    isTrialEligible: true
+                    isTrialEligible: response.isTrialEligible
                 });
                 setRazorpayKey(response.razorpayKeyId);
             }
