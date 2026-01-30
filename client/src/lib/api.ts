@@ -476,6 +476,19 @@ export const paymentAPI = {
         return fetchWithAuth('/api/payments/start-trial', {
             method: 'POST',
         });
+    },
+
+    createOrder: async () => {
+        return fetchWithAuth('/api/payments/create-order', {
+            method: 'POST'
+        });
+    },
+
+    verifyOrder: async (data: any) => {
+        return fetchWithAuth('/api/payments/verify-order', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     }
 };
 

@@ -5,7 +5,9 @@ import {
     getMyPayments,
     razorpayWebhook,
     getAllPayments,
-    activateFreeTrial
+    activateFreeTrial,
+    createOrder,
+    verifyOrder
 } from '../controllers/paymentController.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
 
@@ -25,6 +27,9 @@ router.post('/start-trial', authenticate, activateFreeTrial);
  * @access  Private
  */
 router.post('/verify-subscription', authenticate, verifySubscription);
+
+router.post('/create-order', authenticate, createOrder);
+router.post('/verify-order', authenticate, verifyOrder);
 
 /**
  * @route   GET /api/payments/my-payments

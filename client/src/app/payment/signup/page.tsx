@@ -66,36 +66,11 @@ export default function SignupPaymentPage() {
         }
     };
 
-    const handlePayment = async () => {
-        // Logic for "Start Free Trial" button
-        if (subscriptionDetails?.isTrialEligible) {
-            setProcessing(true);
-            try {
-                const response = await paymentAPI.startTrial();
-                if (response.success) {
-                    toast.success('Free Trial Activated!');
-                    router.push('/dashboard');
-                } else {
-                    toast.error(response.message || 'Failed to start trial');
-                }
-            } catch (error: any) {
-                toast.error(error.message || 'Failed to start trial');
-            } finally {
-                setProcessing(false);
-            }
-            return;
-        }
-
-        // Logic for Paid Subscription
+    const handleSubscription = async () => {
         if (!isRazorpayLoaded) {
             toast.error('Razorpay SDK failed to load');
             return;
         }
-        if (!subscriptionDetails || !razorpayKey) {
-            toast.error('Subscription details missing');
-            return;
-        }
-
         setProcessing(true);
 
         const options = {
@@ -111,41 +86,85 @@ export default function SignupPaymentPage() {
                         razorpay_subscription_id: response.razorpay_subscription_id,
                         razorpay_signature: response.razorpay_signature,
                     });
-
                     if (verifyResponse.success) {
-                        toast.success('Welcome to TripSang Premium!');
+                        toast.success('Premium Activated!');
                         router.push('/dashboard');
                     } else {
-                        toast.error('Verification failed. Please contact support.');
+                        toast.error('Verification failed');
                     }
-                } catch (error) {
-                    toast.error('Verification error');
-                    console.error(error);
-                } finally {
-                    setProcessing(false);
-                }
+                } catch (error) { toast.error('Verification error'); }
+                finally { setProcessing(false); }
             },
             prefill: {
                 name: session?.user?.name,
                 email: session?.user?.email,
                 contact: (session?.user as any)?.mobileNumber || ''
             },
-            theme: {
-                color: '#7C3AED',
-            },
-            modal: {
-                ondismiss: function () {
-                    setProcessing(false);
-                }
-            }
+            theme: { color: '#7C3AED' }
         };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    };
 
-        const rzp1 = new window.Razorpay(options);
-        rzp1.on('payment.failed', function (response: any) {
-            toast.error(response.error.description || 'Payment Failed');
+    const handleOneTimePayment = async () => {
+        if (!isRazorpayLoaded) {
+            toast.error('Razorpay SDK failed to load');
+            return;
+        }
+        setProcessing(true);
+
+        try {
+            const orderResponse = await paymentAPI.createOrder();
+            if (!orderResponse.success) {
+                toast.error(orderResponse.message);
+                setProcessing(false);
+                return;
+            }
+
+            const options = {
+                key: orderResponse.razorpayKeyId,
+                amount: orderResponse.amount * 100, // Razorpay takes paise
+                currency: orderResponse.currency,
+                name: 'TripSang',
+                description: '1 Month Premium Pass',
+                image: '/logo.png',
+                order_id: orderResponse.orderId,
+                handler: async function (response: any) {
+                    try {
+                        const verifyResponse = await paymentAPI.verifyOrder({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                        });
+                        if (verifyResponse.success) {
+                            toast.success('30-Day Pass Activated!');
+                            router.push('/dashboard');
+                        } else {
+                            toast.error('Verification failed');
+                        }
+                    } catch (error) { toast.error('Verification error'); }
+                    finally { setProcessing(false); }
+                },
+                prefill: {
+                    name: session?.user?.name,
+                    email: session?.user?.email,
+                    contact: (session?.user as any)?.mobileNumber || ''
+                },
+                theme: { color: '#7C3AED' }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response: any) {
+                toast.error(response.error.description || 'Payment Failed');
+                setProcessing(false);
+            });
+            rzp.open();
+
+        } catch (error: any) {
+            console.error(error);
+            toast.error('Failed to create order');
             setProcessing(false);
-        });
-        rzp1.open();
+        }
     };
 
     if (loading) {
@@ -160,22 +179,15 @@ export default function SignupPaymentPage() {
     }
 
     if (skipPayment) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
-                <div className="text-center p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">You're all set!</h2>
-                    <p className="text-gray-600">Redirecting to dashboard...</p>
-                </div>
-            </div>
-        );
+        return <div className="min-h-screen flex items-center justify-center"><p>Redirecting to dashboard...</p></div>;
     }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-dark-900 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-            <div className="max-w-4xl w-full grid md:grid-cols-2 gap-8 items-center">
+            <div className="max-w-4xl w-full grid md:grid-cols-2 gap-8 items-start">
 
                 {/* Left Side: Value Prop */}
-                <div className="space-y-8">
+                <div className="space-y-8 sticky top-8">
                     <div>
                         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
                             Start Your Journey <br />
@@ -195,102 +207,83 @@ export default function SignupPaymentPage() {
                     </div>
                 </div>
 
-                {/* Right Side: Payment Card */}
-                <div className="bg-white dark:bg-dark-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-dark-700 relative">
+                {/* Right Side: Payment Options */}
+                <div className="space-y-6">
 
-                    <div className="p-8 text-center">
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Monthly Membership</h3>
-                        <div className="flex items-baseline justify-center my-6">
-                            <span className="text-5xl font-extrabold text-primary-600">
-                                {subscriptionDetails?.currency === 'INR' ? '₹' : subscriptionDetails?.currency} {subscriptionDetails?.amount || 99}
-                            </span>
-                            <span className="text-gray-500 ml-2">/ month</span>
-                        </div>
-
-                        <div className="space-y-3">
-                            {/* TRIAL BUTTON */}
+                    {/* Free Trial Option */}
+                    {subscriptionDetails?.isTrialEligible && (
+                        <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                                BEST WAY TO START
+                            </div>
+                            <h3 className="text-lg font-bold">30-Day Free Trial</h3>
+                            <p className="text-sm text-gray-500 mb-4">Experience Premium for free. No card required.</p>
                             <button
                                 onClick={async () => {
                                     setProcessing(true);
                                     try {
                                         const res = await paymentAPI.startTrial();
                                         if (res.success) {
-                                            toast.success('30-Day Free Trial Activated!');
+                                            toast.success('Trial Activated!');
                                             router.push('/dashboard');
-                                        } else {
-                                            toast.error(res.message);
-                                        }
-                                    } catch (err: any) {
-                                        toast.error(err.message);
-                                    } finally {
-                                        setProcessing(false);
-                                    }
+                                        } else { toast.error(res.message); }
+                                    } catch (err: any) { toast.error(err.message); }
+                                    finally { setProcessing(false); }
                                 }}
                                 disabled={processing}
-                                className="w-full btn-outline py-3 text-lg border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                                className="w-full btn-outline py-2.5 text-primary-600 border-primary-600 hover:bg-primary-50"
                             >
-                                Start 30-Day Free Trial
-                            </button>
-
-                            <div className="relative flex py-2 items-center">
-                                <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-                                <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase">Or Pay Now</span>
-                                <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-                            </div>
-
-                            {/* BUY NOW BUTTON */}
-                            <button
-                                onClick={() => {
-                                    if (!isRazorpayLoaded) {
-                                        toast.error('Razorpay SDK failed to load');
-                                        return;
-                                    }
-                                    setProcessing(true);
-
-                                    const options = {
-                                        key: razorpayKey,
-                                        subscription_id: subscriptionDetails.id,
-                                        name: 'TripSang',
-                                        description: 'Monthly Premium Membership',
-                                        image: '/logo.png',
-                                        handler: async function (response: any) {
-                                            try {
-                                                const verifyResponse = await paymentAPI.verifySubscription({
-                                                    razorpay_payment_id: response.razorpay_payment_id,
-                                                    razorpay_subscription_id: response.razorpay_subscription_id,
-                                                    razorpay_signature: response.razorpay_signature,
-                                                });
-                                                if (verifyResponse.success) {
-                                                    toast.success('Premium Activated!');
-                                                    router.push('/dashboard');
-                                                } else {
-                                                    toast.error('Verification failed');
-                                                }
-                                            } catch (error) { toast.error('Verification error'); }
-                                            finally { setProcessing(false); }
-                                        },
-                                        prefill: {
-                                            name: session?.user?.name,
-                                            email: session?.user?.email,
-                                            contact: (session?.user as any)?.mobileNumber || ''
-                                        },
-                                        theme: { color: '#7C3AED' }
-                                    };
-                                    const rzp = new window.Razorpay(options);
-                                    rzp.open();
-                                }}
-                                disabled={processing || !isRazorpayLoaded}
-                                className="w-full btn-primary py-3 text-lg"
-                            >
-                                Buy 1 Month Premium
+                                Start Free Trial
                             </button>
                         </div>
+                    )}
 
-                        <p className="mt-6 text-xs text-gray-400">
-                            Free trial requires no payment details. <br />
-                            Paid plan auto-renews. Cancel anytime.
-                        </p>
+                    {/* Monthly Subscription (Recurring) */}
+                    <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-lg border-2 border-primary-500 relative">
+                        <div className="absolute top-0 center bg-primary-100 text-primary-700 text-xs font-bold px-3 py-1 rounded-b-lg left-1/2 -translate-x-1/2">
+                            POPULAR
+                        </div>
+                        <div className="flex justify-between items-center mb-2 mt-2">
+                            <h3 className="text-xl font-bold">Monthly</h3>
+                            <div>
+                                <span className="text-3xl font-bold text-gray-900 dark:text-white">₹20</span>
+                                <span className="text-sm text-gray-500">/mo</span>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6">Auto-renews every month. Cancel anytime.</p>
+
+                        <button
+                            onClick={handleSubscription}
+                            disabled={processing || !isRazorpayLoaded}
+                            className="w-full btn-primary py-3"
+                        >
+                            Subscribe Monthly
+                        </button>
                     </div>
+
+                    {/* One Time Pass */}
+                    <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-xl font-bold">1 Month Pass</h3>
+                            <div>
+                                <span className="text-3xl font-bold text-gray-900 dark:text-white">₹30</span>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6">One-time payment for 30 days access. No auto-renewal.</p>
+
+                        <button
+                            onClick={handleOneTimePayment}
+                            disabled={processing || !isRazorpayLoaded}
+                            className="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-dark-700 font-semibold"
+                        >
+                            Buy 1 Month Pass
+                        </button>
+                    </div>
+
+                    <p className="text-center text-xs text-gray-400">
+                        Secured by Razorpay • Cancel anytime
+                    </p>
+
                 </div>
             </div>
         </div>
