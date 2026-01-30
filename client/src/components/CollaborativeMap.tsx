@@ -6,27 +6,58 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
-import { socket } from '@/lib/websocket'; // Assuming socket is exported from here or passed as prop. I'll check lib/api or similar. 
-// Wait, I saw Navbar.tsx using socket. I should check how socket is initialized on client.
-// client/package.json has "socket.io-client".
-// Let's assume standard socket connection. 
+import { socket } from '@/lib/websocket';
 
-// Fix Leaflet icons
-const icon = L.icon({
-    iconUrl: '/marker-icon.png',
-    shadowUrl: '/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-});
+// --- Custom Icon Generators ---
 
-// If images are missing, we might need to point to CDN or public folder.
-// Standard Leaflet fix:
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+const createCustomIcon = (type: 'start' | 'end' | 'stop', number?: number) => {
+    let bgColor = '';
+    let label = '';
+    let size = [30, 30] as [number, number];
+
+    switch (type) {
+        case 'start':
+            bgColor = '#10b981'; // Green-500
+            label = 'S';
+            break;
+        case 'end':
+            bgColor = '#ef4444'; // Red-500
+            label = 'E';
+            break;
+        case 'stop':
+            bgColor = '#3b82f6'; // Blue-500
+            label = number ? number.toString() : '';
+            break;
+    }
+
+    const html = `
+        <div style="
+            background-color: ${bgColor};
+            color: white;
+            width: ${size[0]}px;
+            height: ${size[1]}px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        ">
+            ${label}
+        </div>
+    `;
+
+    return L.divIcon({
+        className: 'custom-map-icon',
+        html: html,
+        iconSize: size,
+        iconAnchor: [size[0] / 2, size[1] / 2],
+        popupAnchor: [0, -size[1] / 2]
+    });
+};
+
 
 interface Waypoint {
     lat: number;
@@ -70,15 +101,12 @@ function RoutingMachine({ waypoints, startPoint, endPoint }: { waypoints: Waypoi
                 routeWhileDragging: false,
                 fitSelectedRoutes: true,
                 showAlternatives: false,
-                createMarker: function () { return null; } // We handle markers manually if needed, or let routing machine do it but we want custom behavior?
-                // Actually, allowing routing machine to create markers is fine, but we want to sync them.
-                // For simplicity first: Draw lines between our custom markers.
+                createMarker: function () { return null; } // Hide default markers so we can use our custom ones
             }).addTo(map);
         }
 
         return () => {
-            // Cleanup if needed
-            // if (routingControlRef.current) map.removeControl(routingControlRef.current);
+            // Cleanup: Removing control can sometimes cause React lifecycle issues with Leaflet, keeping careful watch
         };
     }, [map, waypoints, startPoint, endPoint]);
 
@@ -96,19 +124,12 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
     const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints || []);
     const [socketConnected, setSocketConnected] = useState(false);
 
-    // Initialize socket
     useEffect(() => {
-        // We'll use the global socket if available or connect new
-        // Ideally pass socket instance or use context. 
-        // For now, let's assume `socket` imported from a singleton helper file is best.
-        // I will double check `client/src/lib/api.ts` or create `client/src/lib/socket.ts` if needed.
-
         socket.on('connect', () => {
             setSocketConnected(true);
         });
 
         socket.on('map_update', (data: { waypoints: Waypoint[], updatedBy: string }) => {
-            console.log('Map updated by', data.updatedBy);
             setWaypoints(data.waypoints);
         });
 
@@ -130,7 +151,6 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
         const updatedWaypoints = [...waypoints, newWaypoint];
         setWaypoints(updatedWaypoints);
 
-        // Emit to socket
         socket.emit('map_action', {
             tripId,
             waypoints: updatedWaypoints
@@ -145,9 +165,7 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
     };
 
     const handleSave = () => {
-        // Explicit save (socket emits on change anyway, but feedback is good)
         socket.emit('map_action', { tripId, waypoints });
-        // Could show a toast here if we imported toast
     };
 
     return (
@@ -163,25 +181,25 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
 
-                {/* Start Point Marker */}
-                <Marker position={[startPoint.lat, startPoint.lng]}>
+                {/* Start Point Marker (Green S) */}
+                <Marker position={[startPoint.lat, startPoint.lng]} icon={createCustomIcon('start')}>
                     <Popup>
                         <div className="font-bold">Start: {startPoint.name}</div>
                     </Popup>
                 </Marker>
 
-                {/* End Point Marker */}
+                {/* End Point Marker (Red E) */}
                 {endPoint && (
-                    <Marker position={[endPoint.lat, endPoint.lng]}>
+                    <Marker position={[endPoint.lat, endPoint.lng]} icon={createCustomIcon('end')}>
                         <Popup>
                             <div className="font-bold">End: {endPoint.name}</div>
                         </Popup>
                     </Marker>
                 )}
 
-                {/* User Added Waypoints */}
+                {/* User Added Waypoints (Numbered) */}
                 {waypoints.map((wp, idx) => (
-                    <Marker key={idx} position={[wp.lat, wp.lng]}>
+                    <Marker key={idx} position={[wp.lat, wp.lng]} icon={createCustomIcon('stop', idx + 1)}>
                         <Popup>
                             <div className="font-bold">{wp.name || `Stop ${idx + 1}`}</div>
                         </Popup>
@@ -200,7 +218,7 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                         disabled={waypoints.length === 0}
                         className="bg-white dark:bg-dark-700 text-gray-700 dark:text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 font-medium transition-colors"
                     >
-                        Undo Last Point
+                        Undo Last Stop
                     </button>
                     <button
                         onClick={handleSave}
@@ -208,7 +226,6 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                     >
                         Save Route
                     </button>
-                    {/* User asked for "reverse" but "undo" covers mistakes. If they meant reverse direction, that's complex without changing start/end. */}
                 </div>
             )}
         </div>
