@@ -54,6 +54,20 @@ export const register = async (req, res) => {
             userData.profilePicture = profilePicture;
         }
 
+        // New logic: Auto-enable trial if paid signup is enabled
+        if (config.enablePaidSignup) {
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 30);
+
+            // Initialize subscription as trial
+            userData.subscription = {
+                status: 'trial',
+                trialEnds: trialEndDate,
+                currentStart: new Date(),
+                currentEnd: trialEndDate
+            };
+        }
+
         // If registering via Google, mark email as verified
         if (authProvider === 'google') {
             userData.isEmailVerified = true;
@@ -64,17 +78,9 @@ export const register = async (req, res) => {
         // Generate token
         const token = generateToken({ userId: user._id });
 
-        // Check if paid signup is enabled
+        // Payment requirement is always false now as we give free trial
         let requiresPayment = false;
         let paymentDetails = null;
-
-        if (config.enablePaidSignup && config.signupFee > 0) {
-            requiresPayment = true;
-            paymentDetails = {
-                amount: config.signupFee,
-                currency: config.signupFeeCurrency
-            };
-        }
 
         // Return user data (excluding password)
         const userResponse = {

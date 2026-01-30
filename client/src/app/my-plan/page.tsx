@@ -115,9 +115,20 @@ export default function MyPlanPage() {
                                     <p className="font-semibold">
                                         {subscription?.currentEnd ? new Date(subscription.currentEnd).toLocaleDateString() : 'N/A'}
                                     </p>
-                                    {inTrialPeriod && (
+                                    {inTrialPeriod ? (
                                         <span className="text-xs text-orange-500 font-medium block mt-1">
-                                            Free trial ends on this date
+                                            Free trial ends on this date.
+                                            <br />
+                                            <button
+                                                onClick={() => router.push('/payment/signup')}
+                                                className="text-primary-600 hover:text-primary-700 underline mt-1"
+                                            >
+                                                Subscribe now to avoid interruption
+                                            </button>
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-green-500 font-medium block mt-1">
+                                            Auto-renews via Razorpay
                                         </span>
                                     )}
                                 </div>
@@ -129,8 +140,18 @@ export default function MyPlanPage() {
                             <CreditCard className="w-6 h-6 text-gray-400" />
                             <div className="flex-1">
                                 <p className="font-medium">Payment Method</p>
-                                <p className="text-sm text-gray-500">Managed via Razorpay</p>
+                                <p className="text-sm text-gray-500">
+                                    {inTrialPeriod ? 'No payment method added yet' : 'Managed via Razorpay'}
+                                </p>
                             </div>
+                            {inTrialPeriod && (
+                                <button
+                                    onClick={() => router.push('/payment/signup')}
+                                    className="text-xs btn-outline py-1 px-3"
+                                >
+                                    Add Method
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
