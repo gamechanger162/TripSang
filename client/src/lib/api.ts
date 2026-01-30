@@ -466,6 +466,16 @@ export const paymentAPI = {
      */
     getMyPayments: async () => {
         return fetchWithAuth('/api/payments/my-payments');
+    },
+
+    /**
+     * Start Free Trial (No Razorpay)
+     * POST /api/payments/start-trial
+     */
+    startTrial: async () => {
+        return fetchWithAuth('/api/payments/start-trial', {
+            method: 'POST',
+        });
     }
 };
 

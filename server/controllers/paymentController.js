@@ -15,7 +15,74 @@ const getRazorpay = () => {
 
 
 /**
- * Create Razorpay Subscription (Monthly with 1 month free)
+ * Activate Free Trial (No Razorpay)
+ * POST /api/payments/start-trial
+ */
+export const activateFreeTrial = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        const config = await GlobalConfig.getInstance();
+
+        if (!config.enablePaidSignup) {
+            return res.status(200).json({
+                success: true,
+                message: 'No subscription needed.'
+            });
+        }
+
+        // Check if already active
+        if (user.subscription.status === 'active' || user.subscription.status === 'trial') {
+            return res.status(400).json({
+                success: false,
+                message: 'You already have an active plan.'
+            });
+        }
+
+        // Check if trial was already used (prevent abuse)
+        // We check if 'trialEnds' exists and is in the past
+        if (user.subscription.trialEnds && new Date(user.subscription.trialEnds) < new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: 'You have already used your free trial. Please upgrade to continue.'
+            });
+        }
+
+        // Activate 30-day trial
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+
+        user.subscription = {
+            status: 'trial',
+            trialEnds: trialEndDate,
+            currentStart: new Date(),
+            currentEnd: trialEndDate
+        };
+
+        if (!user.badges.includes('Premium')) {
+            user.badges.push('Premium');
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Free trial activated successfully!',
+            trialEnds: trialEndDate
+        });
+
+    } catch (error) {
+        console.error('Activate trial error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to activate trial.',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Create Razorpay Subscription (Monthly)
  * POST /api/payments/create-subscription
  */
 export const createSubscription = async (req, res) => {
@@ -46,20 +113,15 @@ export const createSubscription = async (req, res) => {
             throw new Error('RAZORPAY_PLAN_ID is not configured');
         }
 
-        // Calculate trial end date (30 days from now)
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 30);
-
-        // Create Subscription on Razorpay
-        // We set start_at to 30 days in future to give 1 month free
-        // Razorpay will charge the first payment at start_at
-        // User auths now.
+        // Create Subscription on Razorpay - STARTS IMMEDIATELY (Simulating "Buy One Month" / Monthly Sub)
+        // Unlike the previous trial logic, this one starts charging immediately.
+        // If user wants trial, they use the distinct start-trial endpoint.
         const subscriptionOptions = {
             plan_id: planId,
-            total_count: 120, // 10 years (effectively lifetime of usage)
+            total_count: 120,
             quantity: 1,
             customer_notify: 1,
-            start_at: Math.floor(trialEndDate.getTime() / 1000), // Unix timestamp
+            // start_at is omitted to start immediately
             notes: {
                 userId: userId.toString(),
                 type: 'monthly_subscription'
@@ -67,15 +129,13 @@ export const createSubscription = async (req, res) => {
         };
 
         const subscription = await getRazorpay().subscriptions.create(subscriptionOptions);
-
-        // Fetch plan details to show correct amount on frontend
         const plan = await getRazorpay().plans.fetch(planId);
 
         res.status(200).json({
             success: true,
             subscriptionId: subscription.id,
             planId: planId,
-            amount: plan.item.amount / 100, // Amount is in paise
+            amount: plan.item.amount / 100,
             currency: plan.item.currency,
             razorpayKeyId: process.env.RAZORPAY_KEY_ID
         });

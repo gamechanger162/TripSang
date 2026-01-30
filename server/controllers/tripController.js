@@ -24,6 +24,29 @@ export const createTrip = async (req, res) => {
             inviteFriends // Array of friend user IDs to add to squad
         } = req.body;
 
+        // Check Subscription Status
+        // Allow if:
+        // 1. Subscription is active OR
+        // 2. Subscription is in trial period (and trial not expired) OR
+        // 3. User is Admin
+        // 4. Config allows free signup (but user asked for strict locking, so we check User status mainly)
+
+        const user = await User.findById(userId);
+        const config = await GlobalConfig.getInstance();
+
+        if (config.enablePaidSignup && req.user.role !== 'admin') {
+            const sub = user.subscription;
+            const isTrialActive = sub.status === 'trial' && new Date(sub.trialEnds) > new Date();
+            const isActive = sub.status === 'active';
+
+            if (!isActive && !isTrialActive) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Active subscription or free trial required to create trips.'
+                });
+            }
+        }
+
         // Validation
         if (!title || !startPoint || !endPoint || !startDate || !endDate) {
             return res.status(400).json({
@@ -307,6 +330,46 @@ export const getTripById = async (req, res) => {
                 success: false,
                 message: 'Trip not found.'
             });
+        }
+
+        // Access Control
+        // If system is paid-only, restrict access to non-subscribers
+        // UNLESS it is their own trip (creator) ?? User said "can not open the created trips". 
+        // If they created it during trial and trial expired, maybe they lose access? 
+        // "Cannot open the created trips" suggests strict lockout.
+
+        const config = await GlobalConfig.getInstance();
+        if (config.enablePaidSignup) {
+            // Check authentication
+            if (!req.user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Login required to view trips.',
+                    requiresSubscription: true
+                });
+            }
+
+            // Check subscription
+            // We need to re-fetch user to be sure of latest sub status if req.user is stale (though usually fresh from middleware)
+            // req.user has the basics. Middleware usually populates it.
+            // Let's rely on req.user attributes if available, or fetch.
+            // But standard auth middleware populates full user usually? 
+            // In typical express setup it does.
+
+            const user = req.user;
+            const sub = user.subscription;
+
+            const isTrialActive = sub && sub.status === 'trial' && sub.trialEnds && new Date(sub.trialEnds) > new Date();
+            const isActive = sub && sub.status === 'active';
+            const isAdmin = user.role === 'admin';
+
+            if (!isActive && !isTrialActive && !isAdmin) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Subscription required to view trip details.',
+                    requiresSubscription: true
+                });
+            }
         }
 
         // Increment view count (only if user is authenticated and not the creator)

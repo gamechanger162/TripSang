@@ -4,7 +4,8 @@ import {
     verifySubscription,
     getMyPayments,
     razorpayWebhook,
-    getAllPayments
+    getAllPayments,
+    activateFreeTrial
 } from '../controllers/paymentController.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
 
@@ -16,6 +17,7 @@ const router = express.Router();
  * @access  Private
  */
 router.post('/create-subscription', authenticate, createSubscription);
+router.post('/start-trial', authenticate, activateFreeTrial);
 
 /**
  * @route   POST /api/payments/verify-subscription

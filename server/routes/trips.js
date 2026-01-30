@@ -35,7 +35,7 @@ router.post('/create', authenticate, createTrip);
  * @desc    Search trips with filters (start, end, date, tags)
  * @access  Public (optional auth for personalization)
  */
-router.get('/search', optionalAuth, searchTrips);
+router.get('/search', authenticate, searchTrips);
 
 /**
  * @route   GET /api/trips/code/:code
@@ -49,7 +49,7 @@ router.get('/code/:code', optionalAuth, getTripByCode);
  * @desc    Get trip by ID
  * @access  Public (optional auth for view tracking)
  */
-router.get('/:id', optionalAuth, getTripById);
+router.get('/:id', authenticate, getTripById);
 
 /**
  * @route   PUT /api/trips/:id
