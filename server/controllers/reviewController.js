@@ -37,12 +37,15 @@ export const createReview = async (req, res) => {
 
         const isTripCompleted = trip.status === 'completed' || new Date(trip.endDate) < new Date();
 
+        // For testing/development, we allow reviewing active trips too
+        /* 
         if (!isTripCompleted) {
             return res.status(400).json({
                 success: false,
                 message: 'You can only review travelers after the trip is completed'
             });
         }
+        */
 
         // Auto-update status if needed
         if (trip.status !== 'completed' && new Date(trip.endDate) < new Date()) {

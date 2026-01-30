@@ -28,16 +28,21 @@ export const getConfig = async (req, res) => {
  */
 export const updateConfig = async (req, res) => {
     try {
-        const updates = req.body;
-        const adminUserId = req.user._id;
+        // Explicitly pick allowed fields
+        const allowedFields = {
+            enableGoogleAds: req.body.enableGoogleAds,
+            googleAdSenseClient: req.body.googleAdSenseClient,
+            enablePaidSignup: req.body.enablePaidSignup,
+            signupFee: req.body.signupFee,
+            signupFeeCurrency: req.body.signupFeeCurrency,
+            'features.enableChat': req.body['features.enableChat'], // Support nested toggles if needed
+            // Add other feature toggles if they are sent in bulk, but dashboard sends specific structure
+        };
 
-        // Prevent updating protected fields
-        delete updates._id;
-        delete updates.stats;
-        delete updates.createdAt;
-        delete updates.updatedAt;
+        // Remove undefined keys
+        Object.keys(allowedFields).forEach(key => allowedFields[key] === undefined && delete allowedFields[key]);
 
-        const config = await GlobalConfig.updateConfig(updates, adminUserId);
+        const config = await GlobalConfig.updateConfig(allowedFields, adminUserId);
 
         res.status(200).json({
             success: true,
