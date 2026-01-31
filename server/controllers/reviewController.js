@@ -1,5 +1,6 @@
 import Review from '../models/Review.js';
 import { Trip } from '../models/index.js';
+import mongoose from 'mongoose';
 
 /**
  * Create a review for a fellow traveler

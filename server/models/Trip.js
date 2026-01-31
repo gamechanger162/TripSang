@@ -211,7 +211,7 @@ tripSchema.index({ 'startPoint.name': 'text', 'endPoint.name': 'text', title: 't
 
 // Virtual for squad size
 tripSchema.virtual('currentSquadSize').get(function () {
-    return this.squadMembers.length;
+    return this.squadMembers ? this.squadMembers.length : 0;
 });
 
 // Virtual for trip duration in days
@@ -224,7 +224,7 @@ tripSchema.virtual('durationDays').get(function () {
 
 // Virtual to check if trip is full
 tripSchema.virtual('isFull').get(function () {
-    return this.squadMembers.length >= this.maxSquadSize;
+    return this.squadMembers ? this.squadMembers.length >= this.maxSquadSize : false;
 });
 
 // Method to add squad member
