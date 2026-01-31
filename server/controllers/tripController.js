@@ -746,69 +746,9 @@ export const getTripByCode = async (req, res) => {
 
 export const getTrendingDestinations = async (req, res) => {
     try {
-        // Real-Time Logic: Fetch from Travel News RSS Feeds
-        // Using native 'https' module to ensure compatibility with all Node.js versions and avoid 500 errors
-        let rssData = [];
-
-        try {
-            await new Promise((resolve, reject) => {
-                const https = require('https');
-                const FEED_URL = 'https://feeds.feedburner.com/BreakingTravelNews';
-
-                const request = https.get(FEED_URL, (response) => {
-                    if (response.statusCode < 200 || response.statusCode > 299) {
-                        response.resume(); // consume response data to free up memory
-                        reject(new Error(`Failed to load page, status code: ${response.statusCode}`));
-                        return;
-                    }
-
-                    const data = [];
-                    response.on('data', (chunk) => data.push(chunk));
-                    response.on('end', () => {
-                        try {
-                            const xmlText = Buffer.concat(data).toString();
-
-                            // Extract location names
-                            const KNOWN_CITIES = [
-                                // International
-                                'Paris', 'London', 'Dubai', 'Bali', 'Thailand', 'Vietnam', 'Singapore', 'Japan', 'Tokyo', 'Maldives', 'New York', 'Switzerland',
-                                // India
-                                'Goa', 'Ladakh', 'Manali', 'Kerala', 'Jaipur', 'Udaipur', 'Varanasi', 'Rishikesh', 'Mumbai', 'Bangalore', 'Kashmir', 'Ayodhya'
-                            ];
-
-                            const foundDestinations = new Set();
-                            const titleRegex = /<title>(.*?)<\/title>/g;
-                            let match;
-
-                            while ((match = titleRegex.exec(xmlText)) !== null) {
-                                const title = match[1];
-                                KNOWN_CITIES.forEach(city => {
-                                    if (title && title.includes(city)) {
-                                        foundDestinations.add(city);
-                                    }
-                                });
-                            }
-
-                            rssData = Array.from(foundDestinations).map(name => ({ name }));
-                            resolve();
-                        } catch (e) {
-                            reject(e);
-                        }
-                    });
-                });
-
-                request.on('error', (err) => reject(err));
-
-                // Set timeout
-                request.setTimeout(3000, () => {
-                    request.destroy();
-                    reject(new Error('Request timed out'));
-                });
-            });
-
-        } catch (rssError) {
-            console.warn('RSS Fetch failed (using seasonal fallback):', rssError.message);
-        }
+        // --- Simplified Logic: Reliability First ---
+        // Removed dynamic RSS fetching to prevent external image issues.
+        // Now relying 100% on high-quality, local seasonal assets.
 
         // --- Seasonal Fallback Data (Reliable & Beautiful) ---
         // Updated for FEBRUARY 2026 Trends (Rio Carnival, Venice, Warm Thailand)
