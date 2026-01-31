@@ -833,100 +833,97 @@ export const getTrendingDestinations = async (req, res) => {
                 { name: "Spiti Valley", image: "https://images.unsplash.com/photo-1599824425744-8c886b45391d?w=600&q=80" },
                 { name: "Rishikesh", image: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=600&q=80" },
                 { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80" },
-                { name: "Ooty", image: "https://images.unsplash.com/photo-1548685913-fe65775c742c?w=600&q=80" },
+                { name: "Ooty", image: "https://images.unsplash.com/photo-1548685913-fe65775c742c?w=600&q=80" }
             ],
-                { name: "Darjeeling", image: "https://images.unsplash.com/photo-1544093959-198cfb65aa70?w=600&q=80" },
-        { name: "Kasol", image: "https://images.unsplash.com/photo-1569688329241-d68a9f9bdc3f?w=600&q=80" }
+            monsoon: [ // July - September
+                { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1605373307525-2e65d8365851?w=600&q=80" },
+                { name: "Lonavala", image: "https://images.unsplash.com/photo-1563290740-410e78263305?w=600&q=80" },
+                { name: "Coorg", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" },
+                { name: "Shillong", image: "https://images.unsplash.com/photo-1589136777351-94328825c14d?w=600&q=80" },
+                { name: "Udaipur", image: "https://images.unsplash.com/photo-1594494193025-p1934988f5c3?w=600&q=80" },
+                { name: "Wayanad", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&q=80" },
+                { name: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=600&q=80" },
+                { name: "Kodaikanal", image: "https://images.unsplash.com/photo-1571474004502-c184717b9383?w=600&q=80" }
             ],
-monsoon: [ // July - September
-    { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1605373307525-2e65d8365851?w=600&q=80" },
-    { name: "Lonavala", image: "https://images.unsplash.com/photo-1563290740-410e78263305?w=600&q=80" },
-    { name: "Coorg", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" },
-    { name: "Shillong", image: "https://images.unsplash.com/photo-1589136777351-94328825c14d?w=600&q=80" },
-    { name: "Udaipur", image: "https://images.unsplash.com/photo-1594494193025-p1934988f5c3?w=600&q=80" },
-    { name: "Wayanad", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&q=80" },
-    { name: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=600&q=80" },
-    { name: "Kodaikanal", image: "https://images.unsplash.com/photo-1571474004502-c184717b9383?w=600&q=80" }
-],
-    winter: [ // October - March
-        { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
-        { name: "Jaisalmer", image: "https://images.unsplash.com/photo-1577085773196-1c88d89cb218?w=600&q=80" },
-        { name: "Auli", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" }, // Reusing generic mountain if specific missing
-        { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1504705759706-c5ee7158f8bb?w=600&q=80" },
-        { name: "Andaman", image: "https://images.unsplash.com/photo-1594968817658-29219e27c191?w=600&q=80" },
-        { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" },
-        { name: "Hampi", image: "https://images.unsplash.com/photo-1620766165457-a8085a948178?w=600&q=80" },
-        { name: "Pondicherry", image: "https://images.unsplash.com/photo-1622301075908-040776b7bd2f?w=600&q=80" }
-    ]
+            winter: [ // October - March
+                { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
+                { name: "Jaisalmer", image: "https://images.unsplash.com/photo-1577085773196-1c88d89cb218?w=600&q=80" },
+                { name: "Auli", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" }, // Reusing generic mountain if specific missing
+                { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1504705759706-c5ee7158f8bb?w=600&q=80" },
+                { name: "Andaman", image: "https://images.unsplash.com/photo-1594968817658-29219e27c191?w=600&q=80" },
+                { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" },
+                { name: "Hampi", image: "https://images.unsplash.com/photo-1620766165457-a8085a948178?w=600&q=80" },
+                { name: "Pondicherry", image: "https://images.unsplash.com/photo-1622301075908-040776b7bd2f?w=600&q=80" }
+            ]
         };
 
-// Determine season
-let currentSeason = 'winter';
-if (month >= 3 && month <= 5) currentSeason = 'summer';
-else if (month >= 6 && month <= 8) currentSeason = 'monsoon';
+        // Determine season
+        let currentSeason = 'winter';
+        if (month >= 3 && month <= 5) currentSeason = 'summer';
+        else if (month >= 6 && month <= 8) currentSeason = 'monsoon';
 
-const seasonalData = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
+        const seasonalData = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
 
-// Enriched Mapping Helper
-const getImageForCity = (cityName) => {
-    // Check in our database first
-    for (const season in ALL_DESTINATIONS) {
-        const found = ALL_DESTINATIONS[season].find(d => d.name === cityName);
-        if (found) return found.image;
-    }
-    // Generic fallbacks
-    if (['Bali', 'Thailand', 'Vietnam', 'Maldives'].includes(cityName)) return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80";
-    if (['Dubai', 'Abu Dhabi'].includes(cityName)) return "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80";
-    if (['London', 'Paris', 'Europe'].includes(cityName)) return "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80";
-    return "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80"; // Default travel image
-};
+        // Enriched Mapping Helper
+        const getImageForCity = (cityName) => {
+            // Check in our database first
+            for (const season in ALL_DESTINATIONS) {
+                const found = ALL_DESTINATIONS[season].find(d => d.name === cityName);
+                if (found) return found.image;
+            }
+            // Generic fallbacks
+            if (['Bali', 'Thailand', 'Vietnam', 'Maldives'].includes(cityName)) return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80";
+            if (['Dubai', 'Abu Dhabi'].includes(cityName)) return "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80";
+            if (['London', 'Paris', 'Europe'].includes(cityName)) return "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80";
+            return "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80"; // Default travel image
+        };
 
-// Merge RSS + Seasonal
-let finalTrending = [];
+        // Merge RSS + Seasonal
+        let finalTrending = [];
 
-// 1. Add RSS found items (Real world news)
-rssData.forEach(item => {
-    finalTrending.push({
-        name: item.name,
-        image: getImageForCity(item.name),
-        type: 'trending_news'
-    });
-});
+        // 1. Add RSS found items (Real world news)
+        rssData.forEach(item => {
+            finalTrending.push({
+                name: item.name,
+                image: getImageForCity(item.name),
+                type: 'trending_news'
+            });
+        });
 
-// 2. Fill the rest with Seasonal Data
-seasonalData.forEach(item => {
-    // Avoid duplicates
-    if (!finalTrending.find(t => t.name === item.name)) {
-        finalTrending.push({ ...item, type: 'seasonal' });
-    }
-});
+        // 2. Fill the rest with Seasonal Data
+        seasonalData.forEach(item => {
+            // Avoid duplicates
+            if (!finalTrending.find(t => t.name === item.name)) {
+                finalTrending.push({ ...item, type: 'seasonal' });
+            }
+        });
 
-// 3. Add Global Mix if needed
-const globalMix = [
-    { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", type: 'global' },
-    { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80", type: 'global' },
-];
+        // 3. Add Global Mix if needed
+        const globalMix = [
+            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", type: 'global' },
+            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80", type: 'global' },
+        ];
 
-// Shuffle/Rotate based on date
-const dayOfMonth = new Date().getDate();
+        // Shuffle/Rotate based on date
+        const dayOfMonth = new Date().getDate();
 
-// If we found NO rss items, fallback to pure seasonal + global
-if (rssData.length === 0) {
-    finalTrending = [...globalMix, ...seasonalData];
-}
+        // If we found NO rss items, fallback to pure seasonal + global
+        if (rssData.length === 0) {
+            finalTrending = [...globalMix, ...seasonalData];
+        }
 
-res.status(200).json({
-    success: true,
-    destinations: finalTrending.slice(0, 10), // Limit to top 10
-    source: rssData.length > 0 ? "live_news_feed" : "seasonal_curated"
-});
+        res.status(200).json({
+            success: true,
+            destinations: finalTrending.slice(0, 10), // Limit to top 10
+            source: rssData.length > 0 ? "live_news_feed" : "seasonal_curated"
+        });
 
     } catch (error) {
-    console.error('Get trending destinations error:', error);
-    res.status(500).json({
-        success: false,
-        message: 'Failed to fetch trending destinations.',
-        error: error.message
-    });
-}
+        console.error('Get trending destinations error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch trending destinations.',
+            error: error.message
+        });
+    }
 };
