@@ -37,6 +37,7 @@ export const updateConfig = async (req, res) => {
             signupFee: req.body.signupFee,
             signupFeeCurrency: req.body.signupFeeCurrency,
             razorpayPlanId: req.body.razorpayPlanId, // Added support for updating plan ID
+            oneMonthPremiumPrice: req.body.oneMonthPremiumPrice, // Dynamic Pricing
             'features.enableChat': req.body['features.enableChat'], // Support nested toggles if needed
             // Add other feature toggles if they are sent in bulk, but dashboard sends specific structure
         };
@@ -473,6 +474,63 @@ export const deleteTrip = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete trip',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Grant Premium Membership manually
+ * POST /api/admin/users/:id/grant-premium
+ */
+export const grantPremium = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { durationDays = 30 } = req.body;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(startDate.getDate() + parseInt(durationDays));
+
+        user.subscription = {
+            status: 'active',
+            currentStart: startDate,
+            currentEnd: endDate,
+            trialEnds: user.subscription.trialEnds // Preserve trial history
+        };
+
+        if (!user.badges.includes('Premium')) {
+            user.badges.push('Premium');
+        }
+
+        await user.save();
+
+        // Log this action as a system notification or audit log if needed
+        console.log(`Admin ${req.user.email} granted premium to ${user.email} for ${durationDays} days`);
+
+        res.status(200).json({
+            success: true,
+            message: `Granted premium for ${durationDays} days successfully.`,
+            user: {
+                _id: user._id,
+                subscription: user.subscription,
+                badges: user.badges
+            }
+        });
+
+    } catch (error) {
+        console.error('Grant premium error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to grant premium status.',
             error: error.message
         });
     }

@@ -26,7 +26,9 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        const amount = 3000; // ₹30.00
+        // Dynamic Pricing
+        const price = config.oneMonthPremiumPrice || 3000;
+        const amount = price; // In paise (e.g. 3000 = 30.00 INR)
         const currency = 'INR';
 
         const options = {
@@ -35,7 +37,8 @@ export const createOrder = async (req, res) => {
             receipt: `receipt_${userId}_${Date.now()}`,
             notes: {
                 userId: userId.toString(),
-                type: 'one_time_premium'
+                type: 'one_time_premium',
+                priceAtPurchase: amount.toString()
             }
         };
 

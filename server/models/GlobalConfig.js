@@ -50,6 +50,14 @@ const globalConfigSchema = new mongoose.Schema({
         enum: ['INR', 'USD', 'EUR', 'GBP']
     },
 
+    // One Month Premium Price (Dynamic Pricing)
+    oneMonthPremiumPrice: {
+        type: Number,
+        default: 3000, // 30.00 INR
+        min: [100, 'Price cannot be less than 1.00'],
+        max: [100000, 'Price cannot exceed 1000.00']
+    },
+
     // Payment Gateway Configuration
     razorpayEnabled: {
         type: Boolean,

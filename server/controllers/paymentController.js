@@ -48,14 +48,15 @@ export const activateFreeTrial = async (req, res) => {
             });
         }
 
-        // Activate 30-day trial
+        // Activate 30-day trial (FIXED START DATE)
+        const startDate = new Date();
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 30);
+        trialEndDate.setDate(startDate.getDate() + 30);
 
         user.subscription = {
             status: 'trial',
             trialEnds: trialEndDate,
-            currentStart: new Date(),
+            currentStart: startDate,
             currentEnd: trialEndDate
         };
 
@@ -201,17 +202,24 @@ export const verifySubscription = async (req, res) => {
         // Create Payment record for the Auth transaction if needed, or just log it.
         // Usually auth transaction is minimal amount.
 
-        await Payment.create({
-            userId,
-            transactionId: razorpay_payment_id,
-            razorpayOrderId: razorpay_subscription_id, // storing sub id here for reference
-            amount: 0, // Auth only
-            status: 'success',
-            type: 'premium_subscription',
-            metadata: {
-                subscriptionId: razorpay_subscription_id
-            }
-        });
+        // Create Payment record if not exists (for immediate revenue reflection)
+        // Usually verify is called after payment success at Razorpay
+        const existingPayment = await Payment.findOne({ transactionId: razorpay_payment_id });
+
+        if (!existingPayment) {
+            await Payment.create({
+                userId,
+                transactionId: razorpay_payment_id,
+                razorpayOrderId: razorpay_subscription_id,
+                amount: 0, // It's a subscription auth, usually 0 amount or setup fee. The "Charge" webhook handles the real money record.
+                status: 'success',
+                type: 'premium_subscription',
+                metadata: {
+                    subscriptionId: razorpay_subscription_id,
+                    notes: 'Subscription Authorization'
+                }
+            });
+        }
 
         res.status(200).json({
             success: true,

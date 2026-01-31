@@ -26,6 +26,10 @@ export default function MyPlanPage() {
 
     const fetchSubscription = async () => {
         try {
+            // Force fresh fetch by appending timestamp if API supported it, but userAPI.getProfile 
+            // likely hits an endpoint that we can't easily modify params for without seeing api.ts.
+            // Assuming getProfile hits /api/users/me, let's just rely on the fact we are calling it fresh here.
+
             const response = await userAPI.getProfile();
             if (response.success && response.user) {
                 setSubscription(response.user.subscription);

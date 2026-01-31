@@ -9,7 +9,8 @@ import {
     updateUserRole,
     getPlatformStats,
     getAllTrips,
-    deleteTrip
+    deleteTrip,
+    grantPremium
 } from '../controllers/adminController.js';
 import {
     createAnnouncement,
@@ -74,6 +75,13 @@ router.put('/users/:id/block', blockUser);
  * @access  Private (Admin only)
  */
 router.put('/users/:id/role', updateUserRole);
+
+/**
+ * @route   POST /api/admin/users/:id/grant-premium
+ * @desc    Manually grant premium status
+ * @access  Private (Admin only)
+ */
+router.post('/users/:id/grant-premium', grantPremium);
 
 /**
  * @route   GET /api/admin/stats
