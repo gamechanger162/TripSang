@@ -83,7 +83,7 @@ export default function ShareMemoryModal({ onClose, onSuccess }: ShareMemoryModa
         setUploading(true);
         try {
             // Upload photos first (in parallel)
-            let uploadedPhotos = [];
+            let uploadedPhotos: { url: string }[] = [];
             if (photos.length > 0) {
                 const uploadPromises = photos.map(photo => uploadAPI.uploadFile(photo));
                 const uploadResults = await Promise.all(uploadPromises);
