@@ -24,14 +24,14 @@ export const checkPremium = async (req, res, next) => {
         // Check date validity
         const now = new Date();
         const trialValid = isTrial && user.subscription.trialEnds && new Date(user.subscription.trialEnds) > now;
-        const subValid = isActive; // Assuming active means paid and valid, though generally we might check currentEnd too if we had expiration logic separate from status.
-        // For Razorpay 'active', good enough. For 'one-time', we manually set 'active' and currentEnd.
-        const dateValid = user.subscription.currentEnd ? new Date(user.subscription.currentEnd) > now : true; // If no currentEnd, assume good if status is active? Or fail? 
-        // Let's be safe: if trial, check trialEnds. If active, check currentEnd if it exists.
 
-        const hasPremiumBadge = user.badges && user.badges.includes('Premium');
+        // Active Subscriptions & One-time passes
+        // Must be status 'active' AND (have currentEnd in future OR be a non-expiring admin/special user?)
+        // Let's assume for normal users, currentEnd must exist and be valid.
+        const dateValid = user.subscription.currentEnd ? new Date(user.subscription.currentEnd) > now : true;
 
-        if ((isActive && dateValid) || trialValid || hasPremiumBadge) {
+        // Strict check: Must be Active (with valid date) OR Trial (with valid date)
+        if ((isActive && dateValid) || trialValid) {
             return next();
         }
 

@@ -50,7 +50,7 @@ router.get('/code/:code', optionalAuth, getTripByCode);
  * @desc    Get trip by ID
  * @access  Public (optional auth for view tracking)
  */
-router.get('/:id', authenticate, getTripById);
+router.get('/:id', authenticate, checkPremium, getTripById);
 
 /**
  * @route   PUT /api/trips/:id
