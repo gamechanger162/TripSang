@@ -82,12 +82,18 @@ export default function ShareMemoryModal({ onClose, onSuccess }: ShareMemoryModa
 
         setUploading(true);
         try {
-            // Upload photos first
-            const uploadedPhotos = [];
-            for (const photo of photos) {
-                const uploadResponse = await uploadAPI.uploadFile(photo);
-                if (uploadResponse.success) {
-                    uploadedPhotos.push({ url: uploadResponse.url });
+            // Upload photos first (in parallel)
+            let uploadedPhotos = [];
+            if (photos.length > 0) {
+                const uploadPromises = photos.map(photo => uploadAPI.uploadFile(photo));
+                const uploadResults = await Promise.all(uploadPromises);
+
+                uploadedPhotos = uploadResults
+                    .filter(res => res.success && res.url)
+                    .map(res => ({ url: res.url }));
+
+                if (uploadedPhotos.length !== photos.length) {
+                    throw new Error('Some photos failed to upload. Please try again.');
                 }
             }
 
@@ -101,10 +107,12 @@ export default function ShareMemoryModal({ onClose, onSuccess }: ShareMemoryModa
                 toast.success('Memory shared successfully!');
                 onSuccess();
                 onClose();
+            } else {
+                throw new Error(response.message || 'Failed to share memory');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error sharing memory:', error);
-            toast.error('Failed to share memory');
+            toast.error(error.message || 'Failed to share memory');
         } finally {
             setUploading(false);
         }
