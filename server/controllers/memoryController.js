@@ -53,16 +53,15 @@ export const createMemory = async (req, res) => {
         };
 
         if (targetTripId && targetTripId !== 'general') {
-            // Verify trip exists
-            const trip = await Trip.findById(targetTripId);
-            if (trip) {
-                // If trip exists, link it. 
-                // We REMOVED the strict "squad member" and "date" checks as per "anyone can post" instructions.
-                // But generally, linking to a trip should imply some relation?
-                // "Let it be like anyone can post" -> I'll allow anyone to post to a trip if they have the ID, OR just link it.
-                // To be safe against spam, maybe check if trip is Public?
-                // For now, adhering to user request: Remove restrictions.
-                memoryData.trip = targetTripId;
+            // Validate ObjectId format to prevent CastError
+            if (targetTripId.match(/^[0-9a-fA-F]{24}$/)) {
+                // Verify trip exists
+                const trip = await Trip.findById(targetTripId);
+                if (trip) {
+                    memoryData.trip = targetTripId;
+                }
+            } else {
+                console.warn(`Invalid Trip ID format: ${targetTripId}`);
             }
         }
 
@@ -93,7 +92,7 @@ export const createMemory = async (req, res) => {
         console.error('Create memory error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to create memory'
+            message: error.message || 'Failed to create memory'
         });
     }
 };
