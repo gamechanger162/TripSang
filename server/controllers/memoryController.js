@@ -32,19 +32,17 @@ export const getTripMemories = async (req, res) => {
  */
 export const createMemory = async (req, res) => {
     try {
-        const { tripId } = req.params; // Might be undefined/null if hitting a general route, but currently route is /trips/:tripId/memories.
-        // We need a new route for general posting OR handle "general" as a tripId param? 
-        // Better: create a new route POST /api/memories/create
+        console.log('📝 createMemory Request Body:', req.body);
+        console.log('📝 createMemory Params:', req.params);
+        console.log('📝 createMemory User:', req.user?._id);
 
-        // However, I can't easily change routes without updating api.ts references.
-        // Let's modify the route to accept "general" or handle logic here if tripId is provided.
-        // But wait, user said "remove completed trips logic". 
-
+        const { tripId } = req.params;
         const userId = req.user._id;
         const { content, photos, locationName, tripId: bodyTripId } = req.body;
 
         // Determine Trip ID (param > body)
         const targetTripId = tripId || bodyTripId;
+        console.log('📝 Target Trip ID:', targetTripId);
 
         let memoryData = {
             author: userId,
@@ -70,15 +68,20 @@ export const createMemory = async (req, res) => {
         }
 
         // Validate content
-        if (!content && (!photos || photos.length === 0)) {
+        const photosLength = (memoryData.photos && Array.isArray(memoryData.photos)) ? memoryData.photos.length : 0;
+
+        if (!content && photosLength === 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Memory must have content or photos'
             });
         }
 
+        console.log('📝 Creating Memory with data:', JSON.stringify(memoryData, null, 2));
+
         // Create memory
         const memory = await Memory.create(memoryData);
+        console.log('✅ Memory Created:', memory._id);
 
         await memory.populate('author', 'name profilePicture');
         if (memory.trip) await memory.populate('trip', 'title');
@@ -89,10 +92,11 @@ export const createMemory = async (req, res) => {
             memory
         });
     } catch (error) {
-        console.error('Create memory error:', error);
+        console.error('❌ Create memory error:', error);
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to create memory'
+            message: error.message || 'Failed to create memory',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
