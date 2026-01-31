@@ -62,6 +62,7 @@ export default function Navbar() {
 
     const navLinks = [
         { name: 'Explore', href: '/search' },
+        { name: 'Moments', href: '/gallery' },
         { name: 'Create Trip', href: '/trips/create' },
     ];
 

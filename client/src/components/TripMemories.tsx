@@ -302,23 +302,23 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                             {/* Comments Section */}
                             {expandedComments.has(memory._id) && (
                                 <div className="mt-4 space-y-3">
-                                    {memory.comments.map((comment) => (
+                                    {(memory.comments || []).map((comment) => (
                                         <div key={comment._id} className="flex gap-2">
-                                            {comment.user.profilePicture ? (
+                                            {comment.user?.profilePicture ? (
                                                 <Image
                                                     src={comment.user.profilePicture}
-                                                    alt={comment.user.name}
+                                                    alt={comment.user.name || 'User'}
                                                     width={32}
                                                     height={32}
                                                     className="w-8 h-8 rounded-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold">
-                                                    {comment.user.name[0]}
+                                                <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
+                                                    {(comment.user?.name?.[0]) || '?'}
                                                 </div>
                                             )}
                                             <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
-                                                <p className="text-xs font-semibold">{comment.user.name}</p>
+                                                <p className="text-xs font-semibold text-gray-900 dark:text-white">{comment.user?.name || 'Unknown User'}</p>
                                                 <p className="text-sm text-gray-700 dark:text-gray-300">{comment.text}</p>
                                             </div>
                                         </div>

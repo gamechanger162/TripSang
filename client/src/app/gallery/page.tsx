@@ -305,21 +305,21 @@ export default function GalleryPage() {
                                 <div className="mt-4 space-y-3 pt-3 border-t border-gray-100 dark:border-dark-700 animate-fadeIn">
                                     {(memory.comments || []).map((comment) => (
                                         <div key={comment._id} className="flex gap-2">
-                                            {comment.user.profilePicture ? (
+                                            {comment.user?.profilePicture ? (
                                                 <Image
                                                     src={comment.user.profilePicture}
-                                                    alt={comment.user.name}
+                                                    alt={comment.user.name || 'User'}
                                                     width={28}
                                                     height={28}
                                                     className="w-7 h-7 rounded-full object-cover"
                                                 />
                                             ) : (
                                                 <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
-                                                    {comment.user.name[0]}
+                                                    {(comment.user?.name?.[0]) || '?'}
                                                 </div>
                                             )}
                                             <div className="flex-1 bg-gray-50 dark:bg-dark-700 rounded-lg p-2 text-sm">
-                                                <p className="font-semibold text-gray-900 dark:text-white text-xs">{comment.user.name}</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white text-xs">{comment.user?.name || 'Unknown User'}</p>
                                                 <p className="text-gray-700 dark:text-gray-300">{comment.text}</p>
                                             </div>
                                         </div>
