@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { adminAPI, uploadAPI } from '@/lib/api';
+import { adminAPI, uploadAPI, memoryAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-type TabType = 'users' | 'guides' | 'trips' | 'settings';
+type TabType = 'users' | 'guides' | 'trips' | 'memories' | 'settings';
 
 interface User {
     _id: string;
@@ -78,7 +78,13 @@ export default function AdminDashboardPage() {
     const [tripsPage, setTripsPage] = useState(1);
     const [totalTrips, setTotalTrips] = useState(0);
     const [tripStatusFilter, setTripStatusFilter] = useState<string>('');
+
     const [stats, setStats] = useState<Stats | null>(null);
+
+    // Memories state
+    const [memories, setMemories] = useState<any[]>([]);
+    const [memoriesPage, setMemoriesPage] = useState(1);
+    const [totalMemories, setTotalMemories] = useState(0);
 
     // Broadcast modal state
     const [showBroadcast, setShowBroadcast] = useState(false);
@@ -197,6 +203,38 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const fetchMemories = async () => {
+        setLoading(true);
+        try {
+            const response = await memoryAPI.getFeed(memoriesPage, 20);
+            if (response.success) {
+                setMemories(response.memories);
+                // Assuming getFeed returns rough count or we just paginate until empty
+                // Ideally backend should return total count for admin. 
+                // boosting 'hasMore' logic for now if total not available
+                setTotalMemories(response.total || 0);
+            }
+        } catch (error: any) {
+            console.error('Error fetching memories:', error);
+            toast.error('Failed to load memories');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteMemory = async (memoryId: string) => {
+        if (!confirm('Delete this memory?')) return;
+        try {
+            const response = await memoryAPI.deleteMemory(memoryId);
+            if (response.success) {
+                toast.success('Memory deleted');
+                fetchMemories();
+            }
+        } catch (error: any) {
+            toast.error('Failed to delete memory');
+        }
+    };
+
     // Initial data fetch
     useEffect(() => {
         if (session?.user?.role === 'admin') {
@@ -221,6 +259,14 @@ export default function AdminDashboardPage() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, tripsPage, tripStatusFilter, session?.user?.role]);
+
+    // Fetch memories when tab changes
+    useEffect(() => {
+        if (activeTab === 'memories' && session?.user?.role === 'admin') {
+            fetchMemories();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, memoriesPage, session?.user?.role]);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -459,6 +505,7 @@ export default function AdminDashboardPage() {
                         {[
                             { id: 'users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
                             { id: 'trips', label: 'Trips', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                            { id: 'memories', label: 'Memories', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
                             { id: 'guides', label: 'Guides', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
                             { id: 'settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
                         ].map((tab) => (
@@ -739,6 +786,105 @@ export default function AdminDashboardPage() {
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Memories Tab */}
+                {activeTab === 'memories' && (
+                    <div className="space-y-6">
+                        <div className="card">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Memories Management</h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Manage user shared photos and posts
+                            </p>
+                        </div>
+
+                        <div className="card overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+                                    <thead className="bg-gray-50 dark:bg-dark-800">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Content</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Photos</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Engagement</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white dark:bg-dark-900 divide-y divide-gray-200 dark:divide-dark-700">
+                                        {memories.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                                    No memories found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            memories.map((memory) => (
+                                                <tr key={memory._id}>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center">
+                                                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                                {memory.author?.profilePicture ? (
+                                                                    <img src={memory.author.profilePicture} alt="" className="h-full w-full object-cover" />
+                                                                ) : (
+                                                                    <span className="text-xs">{memory.author?.name?.[0]}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="ml-3">
+                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{memory.author?.name}</div>
+                                                                <div className="text-xs text-gray-500">{new Date(memory.createdAt).toLocaleDateString()}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-gray-900 dark:text-white line-clamp-2 max-w-xs">{memory.content || 'No text content'}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex -space-x-2 overflow-hidden">
+                                                            {memory.photos?.slice(0, 3).map((photo: any, i: number) => (
+                                                                <img key={i} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src={photo.url} alt="" />
+                                                            ))}
+                                                            {memory.photos?.length > 3 && (
+                                                                <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-xs">
+                                                                    +{memory.photos.length - 3}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {memory.likeCount} likes • {memory.commentCount} comments
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button onClick={() => handleDeleteMemory(memory._id)} className="text-red-600 hover:text-red-900">Delete</button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="flex items-center justify-center space-x-2">
+                            <button
+                                onClick={() => setMemoriesPage((p) => Math.max(1, p - 1))}
+                                disabled={memoriesPage === 1}
+                                className="btn-outline disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <span className="text-gray-700 dark:text-gray-300 px-4">
+                                Page {memoriesPage}
+                            </span>
+                            <button
+                                onClick={() => setMemoriesPage((p) => p + 1)}
+                                disabled={memories.length < 20}
+                                className="btn-outline disabled:opacity-50"
+                            >
+                                Next
+                            </button>
                         </div>
                     </div>
                 )}

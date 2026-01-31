@@ -212,11 +212,11 @@ export const deleteMemory = async (req, res) => {
             });
         }
 
-        // Check if user is the author
-        if (memory.author.toString() !== userId.toString()) {
+        // Check if user is the author or admin
+        if (memory.author.toString() !== userId.toString() && req.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
-                message: 'Only the author can delete this memory'
+                message: 'Only the author or admin can delete this memory'
             });
         }
 
