@@ -1,6 +1,6 @@
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ImageLightboxProps {
     images: { url: string; caption?: string }[];
@@ -103,4 +103,3 @@ export default function ImageLightbox({
     );
 }
 
-import { useState } from 'react';

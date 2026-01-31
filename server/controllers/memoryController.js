@@ -245,6 +245,7 @@ export const getAllMemories = async (req, res) => {
         const memories = await Memory.find()
             .populate('author', 'name profilePicture')
             .populate('trip', 'title startPoint endPoint')
+            .populate('comments.user', 'name profilePicture')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
