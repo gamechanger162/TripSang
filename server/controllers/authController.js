@@ -54,7 +54,8 @@ export const register = async (req, res) => {
             userData.profilePicture = profilePicture;
         }
 
-        // New logic: Auto-enable trial if paid signup is enabled
+        /* 
+        // Auto-trial removed as per new requirements. Users must manually activate trial.
         if (config.enablePaidSignup) {
             const trialEndDate = new Date();
             trialEndDate.setDate(trialEndDate.getDate() + 30);
@@ -66,7 +67,8 @@ export const register = async (req, res) => {
                 currentStart: new Date(),
                 currentEnd: trialEndDate
             };
-        }
+        } 
+        */
 
         // If registering via Google, mark email as verified
         if (authProvider === 'google') {
