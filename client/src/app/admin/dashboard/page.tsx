@@ -58,6 +58,7 @@ interface GlobalConfig {
     enablePaidSignup: boolean;
     signupFee: number;
     signupFeeCurrency: string;
+    oneMonthPremiumPrice?: number;
 }
 
 export default function AdminDashboardPage() {
@@ -101,7 +102,13 @@ export default function AdminDashboardPage() {
         enablePaidSignup: false,
         signupFee: 99,
         signupFeeCurrency: 'INR',
+        oneMonthPremiumPrice: 3000,
     });
+
+    // Grant Premium Modal
+    const [grantModalOpen, setGrantModalOpen] = useState(false);
+    const [grantDuration, setGrantDuration] = useState(30);
+    const [selectedUserForGrant, setSelectedUserForGrant] = useState<User | null>(null);
 
     // Check admin access
     useEffect(() => {
@@ -378,9 +385,10 @@ export default function AdminDashboardPage() {
             const response = await adminAPI.updateConfig({
                 enableGoogleAds: config.enableGoogleAds,
                 googleAdSenseClient: config.googleAdSenseClient,
-                enablePaidSignup: config.enablePaidSignup,
-                signupFee: config.signupFee,
+                enablePaidSignup: false,
+                signupFee: 99,
                 signupFeeCurrency: config.signupFeeCurrency,
+                oneMonthPremiumPrice: config.oneMonthPremiumPrice,
             });
 
             if (response.success) {
@@ -420,6 +428,22 @@ export default function AdminDashboardPage() {
         } catch (error: any) {
             console.error('Error updating role:', error);
             toast.error(error.message || 'Failed to update role');
+        }
+    };
+
+    const handleGrantPremium = async () => {
+        if (!selectedUserForGrant) return;
+
+        try {
+            const response = await adminAPI.grantPremium(selectedUserForGrant._id, grantDuration);
+            if (response.success) {
+                toast.success(`Premium granted to ${selectedUserForGrant.name}`);
+                setGrantModalOpen(false);
+                setSelectedUserForGrant(null);
+                fetchUsers(); // Refresh list to show badge if we displayed it
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to grant premium');
         }
     };
 
@@ -633,6 +657,24 @@ export default function AdminDashboardPage() {
                                                     {new Date(user.createdAt).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedUserForGrant(user);
+                                                            setGrantModalOpen(true);
+                                                        }}
+                                                        className="text-purple-600 hover:text-purple-900 mr-4"
+                                                    >
+                                                        Grant Premium
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedUserForGrant(user);
+                                                            setGrantModalOpen(true);
+                                                        }}
+                                                        className="text-purple-600 hover:text-purple-900 mr-4"
+                                                    >
+                                                        Grant
+                                                    </button>
                                                     <button
                                                         onClick={() => handleBlockUser(user._id, !user.isActive)}
                                                         className={`${user.isActive
@@ -991,6 +1033,21 @@ export default function AdminDashboardPage() {
                             <div className="hidden">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        One Month Premium Price (Paise)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={config.oneMonthPremiumPrice || 3000}
+                                        onChange={(e) =>
+                                            setConfig({ ...config, oneMonthPremiumPrice: parseFloat(e.target.value) || 0 })
+                                        }
+                                        className="input-field"
+                                        min="100"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">3000 paise = ₹30.00</p>
+                                </div>
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Legacy Fee
                                     </label>
                                     <input
@@ -1076,6 +1133,48 @@ export default function AdminDashboardPage() {
                     </div>
                 )}
             </div>
+
+            {/* Grant Premium Modal */}
+            {grantModalOpen && selectedUserForGrant && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-dark-800 rounded-xl shadow-2xl max-w-md w-full">
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                                Grant Premium to {selectedUserForGrant.name}
+                            </h2>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Duration (Days)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={grantDuration}
+                                    onChange={(e) => setGrantDuration(parseInt(e.target.value))}
+                                    className="input-field w-full"
+                                    min="1"
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={() => {
+                                        setGrantModalOpen(false);
+                                        setSelectedUserForGrant(null);
+                                    }}
+                                    className="btn-outline"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleGrantPremium}
+                                    className="btn-primary"
+                                >
+                                    Grant Premium
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Broadcast Modal */}
             {showBroadcast && (

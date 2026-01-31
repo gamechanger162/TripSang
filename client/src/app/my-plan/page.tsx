@@ -30,7 +30,8 @@ export default function MyPlanPage() {
             // likely hits an endpoint that we can't easily modify params for without seeing api.ts.
             // Assuming getProfile hits /api/users/me, let's just rely on the fact we are calling it fresh here.
 
-            const response = await userAPI.getProfile();
+            // Force fresh fetch
+            const response = await userAPI.getProfile(true);
             if (response.success && response.user) {
                 setSubscription(response.user.subscription);
             }
@@ -53,8 +54,8 @@ export default function MyPlanPage() {
     const isActive = subscription?.status === 'active';
     const isTrial = subscription?.status === 'trial'; // unlikely given Razorpay structure but good to handle if we add manual logic
 
-    // Fallback if status is active but we are in trial period based on dates
-    const inTrialPeriod = (subscription?.status === 'trial' || (isActive && subscription?.trialEnds)) && new Date(subscription.trialEnds) > new Date();
+    // Only consider it a trial if the status is explicitly 'trial'
+    const inTrialPeriod = subscription?.status === 'trial' && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
 
     if (!isActive && !inTrialPeriod) {
         return (
@@ -130,9 +131,13 @@ export default function MyPlanPage() {
                                                 Subscribe now to avoid interruption
                                             </button>
                                         </span>
-                                    ) : (
+                                    ) : subscription?.subscriptionId ? (
                                         <span className="text-xs text-green-500 font-medium block mt-1">
                                             Auto-renews via Razorpay
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-blue-500 font-medium block mt-1">
+                                            One-time Pass (Does not auto-renew)
                                         </span>
                                     )}
                                 </div>
@@ -145,7 +150,8 @@ export default function MyPlanPage() {
                             <div className="flex-1">
                                 <p className="font-medium">Payment Method</p>
                                 <p className="text-sm text-gray-500">
-                                    {inTrialPeriod ? 'No payment method added yet' : 'Managed via Razorpay'}
+                                    {inTrialPeriod ? 'No payment method added yet' :
+                                        subscription?.subscriptionId ? 'Managed via Razorpay Subscription' : 'Prepaid One-Time Pass'}
                                 </p>
                             </div>
                             {inTrialPeriod && (

@@ -428,6 +428,17 @@ export const adminAPI = {
             body: JSON.stringify({ reason })
         });
     },
+
+    /**
+     * Grant Premium (Admin)
+     * POST /api/admin/users/:id/grant-premium
+     */
+    grantPremium: async (userId: string, durationDays: number) => {
+        return fetchWithAuth(`/api/admin/users/${userId}/grant-premium`, {
+            method: 'POST',
+            body: JSON.stringify({ durationDays })
+        });
+    },
 };
 
 // ========================================
@@ -656,8 +667,10 @@ export const userAPI = {
      * Get current user profile
      * GET /api/users/me
      */
-    getProfile: async () => {
-        return fetchWithAuth('/api/users/me');
+    getProfile: async (skipCache = false) => {
+        // Fix mangled comments
+        const endpoint = skipCache ? `/api/users/me?_t=${Date.now()}` : '/api/users/me';
+        return fetchWithAuth(endpoint);
     },
 
     /**
