@@ -203,21 +203,24 @@ export default function AdminDashboardPage() {
             fetchConfig();
             fetchStats();
         }
-    }, [session]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session?.user?.role]);
 
     // Fetch users when tab changes
     useEffect(() => {
         if (activeTab === 'users' && session?.user?.role === 'admin') {
             fetchUsers();
         }
-    }, [activeTab, usersPage, userFilter, session]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, usersPage, userFilter, session?.user?.role]);
 
     // Fetch trips when tab changes
     useEffect(() => {
         if (activeTab === 'trips' && session?.user?.role === 'admin') {
             fetchTrips();
         }
-    }, [activeTab, tripsPage, tripStatusFilter, session]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, tripsPage, tripStatusFilter, session?.user?.role]);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
