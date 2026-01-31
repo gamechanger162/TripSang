@@ -13,6 +13,7 @@ import {
     getTrendingDestinations
 } from '../controllers/tripController.js';
 import { authenticate, optionalAuth, requireMobileVerification } from '../middleware/auth.js';
+import { checkPremium } from '../middleware/checkPremium.js';
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ router.get('/trending', getTrendingDestinations);
  * @desc    Create a new trip
  * @access  Private
  */
-router.post('/create', authenticate, createTrip);
+router.post('/create', authenticate, checkPremium, createTrip);
 
 /**
  * @route   GET /api/trips/search
@@ -70,7 +71,7 @@ router.delete('/:id', authenticate, deleteTrip);
  * @desc    Join a trip squad
  * @access  Private
  */
-router.post('/:id/join', authenticate, joinTrip);
+router.post('/:id/join', authenticate, checkPremium, joinTrip);
 
 /**
  * @route   POST /api/trips/:id/leave
@@ -91,6 +92,6 @@ router.post('/:id/remove-member', authenticate, removeMember);
  * @desc    Like or unlike a trip
  * @access  Private
  */
-router.post('/:id/like', authenticate, toggleLike);
+router.post('/:id/like', authenticate, checkPremium, toggleLike);
 
 export default router;

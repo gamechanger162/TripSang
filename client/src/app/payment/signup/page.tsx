@@ -215,7 +215,7 @@ export default function SignupPaymentPage() {
                         Let's force show it if subscriptionDetails is loaded, but handle error if clicked and not eligible. 
                     */}
                     <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700 relative overflow-hidden">
-                        {(subscriptionDetails?.isTrialEligible || true) && ( // Force true for visibility during review
+                        {(subscriptionDetails?.isTrialEligible) && (
                             <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                                 BEST WAY TO START
                             </div>
@@ -239,8 +239,8 @@ export default function SignupPaymentPage() {
                                     setProcessing(false);
                                 }
                             }}
-                            disabled={processing || (!subscriptionDetails?.isTrialEligible && false)} // Keep enabled to show error message on click if needed
-                            className="w-full btn-outline py-2.5 text-primary-600 border-primary-600 hover:bg-primary-50"
+                            disabled={processing || !subscriptionDetails?.isTrialEligible}
+                            className={`w-full btn-outline py-2.5 text-primary-600 border-primary-600 hover:bg-primary-50 ${!subscriptionDetails?.isTrialEligible ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             Start Free Trial
                         </button>

@@ -206,12 +206,25 @@ export const verifySubscription = async (req, res) => {
         // Usually verify is called after payment success at Razorpay
         const existingPayment = await Payment.findOne({ transactionId: razorpay_payment_id });
 
+        // Fetch payment details to get accurate first charge amount
+        let subAmount = 0;
+        try {
+            if (razorpay_payment_id) {
+                const paymentDetails = await getRazorpay().payments.fetch(razorpay_payment_id);
+                if (paymentDetails && (paymentDetails.status === 'captured' || paymentDetails.status === 'authorized')) {
+                    subAmount = paymentDetails.amount / 100;
+                }
+            }
+        } catch (e) {
+            console.error('Error fetching subscription payment details:', e);
+        }
+
         if (!existingPayment) {
             await Payment.create({
                 userId,
                 transactionId: razorpay_payment_id,
                 razorpayOrderId: razorpay_subscription_id,
-                amount: 0, // It's a subscription auth, usually 0 amount or setup fee. The "Charge" webhook handles the real money record.
+                amount: subAmount,
                 status: 'success',
                 type: 'premium_subscription',
                 metadata: {
@@ -630,11 +643,27 @@ export const verifyOrder = async (req, res) => {
 
         await user.save();
 
+        // Fetch Payment Details from Razorpay to get the actual amount captured
+        // This ensures our revenue stats are accurate
+        let capturedAmount = 0;
+        try {
+            const paymentDetails = await getRazorpay().payments.fetch(razorpay_payment_id);
+            if (paymentDetails && paymentDetails.status === 'captured') {
+                capturedAmount = paymentDetails.amount / 100; // Convert paise to main currency unit
+            }
+        } catch (err) {
+            console.error('Failed to fetch payment details during verification:', err);
+            // Fallback to configured price if fetch fails, though arguably we should fail? 
+            // Let's rely on config if fetch fails, or 0.
+            const config = await GlobalConfig.getInstance();
+            capturedAmount = config.oneMonthPremiumPrice ? config.oneMonthPremiumPrice / 100 : 30;
+        }
+
         await Payment.create({
             userId,
             transactionId: razorpay_payment_id,
             razorpayOrderId: razorpay_order_id,
-            amount: 30, // We know it's 30
+            amount: capturedAmount,
             status: 'success',
             type: 'one_time_premium',
             notes: 'One Time 30 Days Pass'

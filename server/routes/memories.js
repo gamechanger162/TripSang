@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
+import { checkPremium } from '../middleware/checkPremium.js';
 import {
     getTripMemories,
     createMemory,
@@ -16,11 +17,11 @@ router.get('/memories/feed', getAllMemories);
 
 // Trip memories routes
 router.get('/trips/:tripId/memories', getTripMemories);
-router.post('/trips/:tripId/memories', authenticate, createMemory);
+router.post('/trips/:tripId/memories', authenticate, checkPremium, createMemory);
 
 // Memory interaction routes
-router.post('/memories/:memoryId/like', authenticate, toggleMemoryLike);
-router.post('/memories/:memoryId/comments', authenticate, addComment);
+router.post('/memories/:memoryId/like', authenticate, checkPremium, toggleMemoryLike);
+router.post('/memories/:memoryId/comments', authenticate, checkPremium, addComment);
 router.delete('/memories/:memoryId', authenticate, deleteMemory);
 
 export default router;

@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
+import { checkPremium } from '../middleware/checkPremium.js';
 import {
     getConversations,
     getOrCreateConversation,
@@ -40,14 +41,14 @@ router.get('/block-status/:userId', authenticate, getBlockStatus);
  * @desc    Get or create conversation with specific user
  * @access  Private
  */
-router.get('/conversation/:userId', authenticate, getOrCreateConversation);
+router.get('/conversation/:userId', authenticate, checkPremium, getOrCreateConversation);
 
 /**
  * @route   GET /api/messages/:conversationId/history
  * @desc    Get message history for conversation
  * @access  Private
  */
-router.get('/:conversationId/history', authenticate, getMessageHistory);
+router.get('/:conversationId/history', authenticate, checkPremium, getMessageHistory);
 
 /**
  * @route   POST /api/messages/mark-read
