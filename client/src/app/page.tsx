@@ -75,11 +75,11 @@ export default function HomePage() {
 
     // Marquee content
     const staticTrending = [
-        { name: "Rio Carnival", image: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=600&q=80" },
-        { name: "Venice", image: "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=600&q=80" },
-        { name: "Thailand", image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600&q=80" },
-        { name: "Gulmarg Snow", image: "https://images.unsplash.com/photo-1548263594-a71ea196f979?w=600&q=80" },
-        { name: "Goa Party", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
+        { name: "Rio Carnival", image: "/images/trending/rio_carnival.png" },
+        { name: "Venice", image: "/images/trending/venice_canals.png" },
+        { name: "Thailand", image: "/images/trending/thailand_beach.png" },
+        { name: "Gulmarg Snow", image: "/images/trending/snowy_mountains.png" },
+        { name: "Goa Party", image: "/images/trending/goa_party.png" },
         { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&q=80" },
     ];
 

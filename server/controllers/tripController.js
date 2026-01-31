@@ -818,11 +818,11 @@ export const getTrendingDestinations = async (req, res) => {
         const ALL_DESTINATIONS = {
             // Winter/Early Spring (Feb - March): Carnival, Snow, & Sun
             winter: [
-                { name: "Rio de Janeiro", image: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=600&q=80" }, // Carnival
-                { name: "Venice", image: "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=600&q=80" }, // Carnival
-                { name: "Thailand", image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600&q=80" }, // Warm
-                { name: "Gulmarg", image: "https://images.unsplash.com/photo-1548263594-a71ea196f979?w=600&q=80" }, // Snow
-                { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" }, // Party
+                { name: "Rio de Janeiro", image: "/images/trending/rio_carnival.png" }, // Carnival
+                { name: "Venice", image: "/images/trending/venice_canals.png" }, // Carnival
+                { name: "Thailand", image: "/images/trending/thailand_beach.png" }, // Warm
+                { name: "Gulmarg", image: "/images/trending/snowy_mountains.png" }, // Snow
+                { name: "Goa", image: "/images/trending/goa_party.png" }, // Party
                 { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&q=80" }, // Backwaters
                 { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea90b792d50?w=600&q=80" }, // Shopping/Sun
                 { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" } // Spiritual
