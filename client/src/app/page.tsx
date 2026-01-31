@@ -218,12 +218,11 @@ export default function HomePage() {
                     <div className="flex animate-marquee">
                         {marqueeItems.map((item, idx) => (
                             <div key={`${item.name}-${idx}`} className="inline-block mx-4 w-64 h-80 relative group cursor-pointer overflow-hidden rounded-2xl border border-white/10">
-                                <Image
+                                <img
                                     src={item.image || item.img || '/placeholder.jpg'} // Fallback
                                     alt={item.name}
-                                    fill
-                                    className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
-                                    sizes="(max-width: 768px) 50vw, 20vw"
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
+                                    loading="lazy"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                                 <div className="absolute bottom-0 left-0 w-full p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
