@@ -75,12 +75,12 @@ export default function HomePage() {
 
     // Marquee content
     const staticTrending = [
-        { name: "Manali Trek", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=500&q=80" },
-        { name: "Goa Beach Party", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80" }, // New known beach ID
-        { name: "Rishikesh Rafting", image: "https://images.unsplash.com/photo-1544551763-46a42a46180b?w=500&q=80" }, // Updated reliable ID
-        { name: "Kerala Backwaters", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=500&q=80" }, // New known boat ID
-        { name: "Ladakh Bike Trip", image: "https://images.unsplash.com/photo-1566371486490-560ded23b5e4?w=500&q=80" }, // New known mountain bike/road ID
-        { name: "Jaipur Culture", image: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=500&q=80" },
+        { name: "Rio Carnival", image: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=600&q=80" },
+        { name: "Venice", image: "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=600&q=80" },
+        { name: "Thailand", image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=600&q=80" },
+        { name: "Gulmarg Snow", image: "https://images.unsplash.com/photo-1548263594-a71ea196f979?w=600&q=80" },
+        { name: "Goa Party", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
+        { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&q=80" },
     ];
 
     // Use fetched data if available, otherwise static
@@ -102,6 +102,7 @@ export default function HomePage() {
                         fill
                         className="object-cover scale-105 animate-pulse-slow"
                         priority
+                        sizes="100vw"
                     />
                 </div>
 
@@ -222,7 +223,7 @@ export default function HomePage() {
                                     alt={item.name}
                                     fill
                                     className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
-                                    unoptimized
+                                    sizes="(max-width: 768px) 50vw, 20vw"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                                 <div className="absolute bottom-0 left-0 w-full p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
