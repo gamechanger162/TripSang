@@ -295,16 +295,6 @@ export const tripAPI = {
     getTrendingDestinations: async () => {
         return fetchWithAuth('/api/trips/trending');
     },
-
-    /**
-     * Delete a trip
-     * DELETE /api/trips/:id
-     */
-    delete: async (id: string) => {
-        return fetchWithAuth(`/api/trips/${id}`, {
-            method: 'DELETE',
-        });
-    },
 };
 
 // ========================================
