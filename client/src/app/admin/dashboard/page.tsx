@@ -488,7 +488,13 @@ export default function AdminDashboardPage() {
                                 Broadcast
                             </button>
                             <Link href="/admin/announcements" className="btn-outline text-sm px-3 py-2">
-                                Manage
+                                Announcements
+                            </Link>
+                            <Link href="/admin/reports" className="btn-outline text-sm px-3 py-2 flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                </svg>
+                                Reports
                             </Link>
                             <div className="badge badge-primary">Admin</div>
                         </div>
@@ -676,7 +682,7 @@ export default function AdminDashboardPage() {
                                                         Grant
                                                     </button>
                                                     <button
-                                                        onClick={() => handleBlockUser(user._id, !user.isActive)}
+                                                        onClick={() => handleBlockUser(user._id, user.isActive)}
                                                         className={`${user.isActive
                                                             ? 'text-red-600 hover:text-red-900'
                                                             : 'text-green-600 hover:text-green-900'
