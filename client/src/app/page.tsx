@@ -212,12 +212,17 @@ export default function HomePage() {
             <section className="py-12 bg-black border-y border-white/5 relative z-10 overflow-hidden">
                 <div className="mb-8 text-center">
                     <h3 className="text-sm font-bold text-primary-500 tracking-[0.2em] uppercase">Trending Locations</h3>
+                    <p className="text-gray-400 text-sm mt-2">Click to explore trips</p>
                 </div>
 
                 <div className="flex w-full whitespace-nowrap overflow-hidden pause-on-hover py-4">
                     <div className="flex animate-marquee">
                         {marqueeItems.map((item, idx) => (
-                            <div key={`${item.name}-${idx}`} className="inline-block mx-4 w-64 h-80 relative group cursor-pointer overflow-hidden rounded-2xl border border-white/10">
+                            <div
+                                key={`${item.name}-${idx}`}
+                                onClick={() => router.push(`/search?to=${encodeURIComponent(item.name)}`)}
+                                className="inline-block mx-4 w-64 h-80 relative group cursor-pointer overflow-hidden rounded-2xl border border-white/10 hover:border-primary-500/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary-500/20"
+                            >
                                 <img
                                     src={item.image || item.img || '/placeholder.jpg'} // Fallback
                                     alt={item.name}
@@ -227,8 +232,16 @@ export default function HomePage() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                                 <div className="absolute bottom-0 left-0 w-full p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                                     <h4 className="text-2xl font-bold font-display">{item.name}</h4>
+                                    {item.tripCount > 0 && (
+                                        <p className="text-xs text-gray-400 mt-1">{item.tripCount} trip{item.tripCount !== 1 ? 's' : ''} available</p>
+                                    )}
                                     <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <span className="text-xs font-semibold bg-primary-600 px-2 py-1 rounded">EXPLORE</span>
+                                        <span className="text-xs font-semibold bg-primary-600 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-primary-500 transition-colors">
+                                            EXPLORE
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
