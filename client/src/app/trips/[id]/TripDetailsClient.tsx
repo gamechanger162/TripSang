@@ -280,6 +280,25 @@ export function TripDetailsClient() {
         setShowShareModal(false);
     };
 
+    const handleDeleteTrip = async () => {
+        if (!confirm('Are you sure you want to delete this trip? This action cannot be undone!')) {
+            return;
+        }
+
+        try {
+            const response = await tripAPI.delete(tripId);
+            if (response.success) {
+                toast.success('Trip deleted successfully');
+                router.push('/search');
+            } else {
+                toast.error(response.message || 'Failed to delete trip');
+            }
+        } catch (error: any) {
+            console.error('Error deleting trip:', error);
+            toast.error(error.message || 'Failed to delete trip');
+        }
+    };
+
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('en-US', {
             month: 'long',
