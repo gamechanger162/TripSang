@@ -3,6 +3,7 @@
 import { DirectMessage } from '@/types/messages';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import { linkifyText } from '@/utils/linkify';
 
 interface MessageBubbleProps {
     message: DirectMessage;
@@ -42,7 +43,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                             />
                         </div>
                     ) : (
-                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{message.message}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{linkifyText(message.message)}</p>
                     )}
 
                     <div className={`text-[10px] mt-1 flex justify-end opacity-70 ${isOwnMessage ? 'text-blue-100' : 'text-gray-400'}`}>
