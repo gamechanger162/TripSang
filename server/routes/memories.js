@@ -6,6 +6,7 @@ import {
     createMemory,
     toggleMemoryLike,
     addComment,
+    deleteComment,
     deleteMemory,
     getAllMemories
 } from '../controllers/memoryController.js';
@@ -22,6 +23,7 @@ router.post('/trips/:tripId/memories', authenticate, checkPremium, createMemory)
 // Memory interaction routes
 router.post('/memories/:memoryId/like', authenticate, checkPremium, toggleMemoryLike);
 router.post('/memories/:memoryId/comments', authenticate, checkPremium, addComment);
+router.delete('/memories/:memoryId/comments/:commentId', authenticate, checkPremium, deleteComment);
 router.delete('/memories/:memoryId', authenticate, deleteMemory);
 
 export default router;

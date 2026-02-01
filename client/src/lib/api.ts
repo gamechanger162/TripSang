@@ -296,7 +296,16 @@ export const tripAPI = {
         // No auth needed for this one, but fetchWithAuth handles it fine (and public endpoints ignore token if not needed)
         // Actually, let's use simple fetch if we want to avoid overhead/weirdness, BUT fetchWithAuth is standard wrapper here.
         // Given it's public, it should be fine.
-        return fetchWithAuth('/api/trips/trending');
+    },
+
+    /**
+     * Delete a trip
+     * DELETE /api/trips/:id
+     */
+    delete: async (id: string) => {
+        return fetchWithAuth(`/api/trips/${id}`, {
+            method: 'DELETE',
+        });
     },
 };
 
@@ -590,6 +599,13 @@ export const memoryAPI = {
         return fetchWithAuth(`/api/memories/${memoryId}/comments`, {
             method: 'POST',
             body: JSON.stringify({ text })
+        });
+    },
+
+    // Delete a comment
+    deleteComment: async (memoryId: string, commentId: string) => {
+        return fetchWithAuth(`/api/memories/${memoryId}/comments/${commentId}`, {
+            method: 'DELETE'
         });
     },
 

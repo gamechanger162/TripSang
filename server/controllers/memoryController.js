@@ -196,6 +196,61 @@ export const addComment = async (req, res) => {
 };
 
 /**
+ * Delete a comment from a memory
+ * DELETE /api/memories/:memoryId/comments/:commentId
+ */
+export const deleteComment = async (req, res) => {
+    try {
+        const { memoryId, commentId } = req.params;
+        const userId = req.user._id;
+
+        const memory = await Memory.findById(memoryId);
+        if (!memory) {
+            return res.status(404).json({
+                success: false,
+                message: 'Memory not found'
+            });
+        }
+
+        // Find the comment
+        const comment = memory.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Comment not found'
+            });
+        }
+
+        // Check if user is the comment author, memory owner, or admin
+        const isCommentAuthor = comment.user.toString() === userId.toString();
+        const isMemoryOwner = memory.author.toString() === userId.toString();
+        const isAdmin = req.user.role === 'admin';
+
+        if (!isCommentAuthor && !isMemoryOwner && !isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only delete your own comments or comments on your memories'
+            });
+        }
+
+        // Remove the comment using pull
+        memory.comments.pull(commentId);
+        await memory.save();
+
+        res.json({
+            success: true,
+            message: 'Comment deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete comment error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete comment'
+        });
+    }
+};
+
+/**
  * Delete a memory (author only)
  * DELETE /api/memories/:memoryId
  */
@@ -229,6 +284,8 @@ export const deleteMemory = async (req, res) => {
     } catch (error) {
         console.error('Delete memory error:', error);
         res.status(500).json({
+            success: false,
+            message: 'Failed to delete memory'
         });
     }
 };
