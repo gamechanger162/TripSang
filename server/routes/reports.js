@@ -1,12 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const { protect, adminOnly } = require('../middleware/auth');
-const {
+import express from 'express';
+import { protect, adminOnly } from '../middleware/auth.js';
+import {
     createUserReport,
     getAllReports,
     updateReportStatus,
     getUserReports
-} = require('../controllers/reportController');
+} from '../controllers/reportController.js';
+
+const router = express.Router();
 
 // Public routes (protected by authentication)
 router.post('/user', protect, createUserReport);
@@ -16,4 +17,4 @@ router.get('/', protect, adminOnly, getAllReports);
 router.get('/user/:userId', protect, adminOnly, getUserReports);
 router.put('/:reportId/status', protect, adminOnly, updateReportStatus);
 
-module.exports = router;
+export default router;

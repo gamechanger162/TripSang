@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const reportSchema = new mongoose.Schema({
     reportedUser: {
@@ -44,4 +44,4 @@ reportSchema.index({ reportedUser: 1, createdAt: -1 });
 reportSchema.index({ reportedBy: 1 });
 reportSchema.index({ status: 1 });
 
-module.exports = mongoose.model('Report', reportSchema);
+export default mongoose.model('Report', reportSchema);

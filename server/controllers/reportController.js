@@ -1,8 +1,8 @@
-const Report = require('../models/Report');
-const User = require('../models/User');
+import Report from '../models/Report.js';
+import User from '../models/User.js';
 
 // Create a user report
-exports.createUserReport = async (req, res) => {
+export const createUserReport = async (req, res) => {
     try {
         const { reportedUserId, reason, description } = req.body;
         const reportedBy = req.user._id;
@@ -70,7 +70,7 @@ exports.createUserReport = async (req, res) => {
 };
 
 // Get all reports (Admin only)
-exports.getAllReports = async (req, res) => {
+export const getAllReports = async (req, res) => {
     try {
         const { status, page = 1, limit = 20 } = req.query;
 
@@ -106,7 +106,7 @@ exports.getAllReports = async (req, res) => {
 };
 
 // Update report status (Admin only)
-exports.updateReportStatus = async (req, res) => {
+export const updateReportStatus = async (req, res) => {
     try {
         const { reportId } = req.params;
         const { status, adminNotes } = req.body;
@@ -143,7 +143,7 @@ exports.updateReportStatus = async (req, res) => {
 };
 
 // Get reports for a specific user (Admin only)
-exports.getUserReports = async (req, res) => {
+export const getUserReports = async (req, res) => {
     try {
         const { userId } = req.params;
 
