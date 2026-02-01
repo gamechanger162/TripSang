@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 interface ReportUserModalProps {
@@ -35,11 +36,25 @@ export default function ReportUserModal({ isOpen, onClose, reportedUserId, repor
         setSubmitting(true);
 
         try {
+            // Get token from next-auth session
+            const session = await getSession();
+            let token = session?.user?.accessToken;
+
+            // Fallback to localStorage
+            if (!token && typeof window !== 'undefined') {
+                token = localStorage.getItem('token') || undefined;
+            }
+
+            if (!token) {
+                toast.error('Please login to report users');
+                return;
+            }
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/user`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 credentials: 'include',
                 body: JSON.stringify({

@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import UserReviews from '@/components/reviews/UserReviews';
+import ReportUserModal from '@/components/ReportUserModal';
 import Link from 'next/link';
 import { userAPI, friendAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { Flag } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -43,6 +45,7 @@ export default function UserProfilePage() {
     const [friendStatus, setFriendStatus] = useState<FriendshipStatus>('none');
     const [friendsCount, setFriendsCount] = useState(0);
     const [friendLoading, setFriendLoading] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
 
     useEffect(() => {
         if (userId) {
@@ -298,6 +301,13 @@ export default function UserProfilePage() {
                                         >
                                             Message
                                         </Link>
+                                        <button
+                                            onClick={() => setShowReportModal(true)}
+                                            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
+                                            title="Report User"
+                                        >
+                                            <Flag className="w-4 h-4" />
+                                        </button>
                                     </>
                                 )}
                             </div>
@@ -366,7 +376,18 @@ export default function UserProfilePage() {
                     </button>
                 </div>
             </div>
+
+            {/* Report User Modal */}
+            {!isOwnProfile && profile && (
+                <ReportUserModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
+                    reportedUserId={userId}
+                    reportedUserName={profile.name}
+                />
+            )}
         </div>
     );
 }
+
 
