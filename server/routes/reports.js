@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect, adminOnly } from '../middleware/auth.js';
+import { authenticate, isAdmin } from '../middleware/auth.js';
 import {
     createUserReport,
     getAllReports,
@@ -10,11 +10,11 @@ import {
 const router = express.Router();
 
 // Public routes (protected by authentication)
-router.post('/user', protect, createUserReport);
+router.post('/user', authenticate, createUserReport);
 
 // Admin routes
-router.get('/', protect, adminOnly, getAllReports);
-router.get('/user/:userId', protect, adminOnly, getUserReports);
-router.put('/:reportId/status', protect, adminOnly, updateReportStatus);
+router.get('/', authenticate, isAdmin, getAllReports);
+router.get('/user/:userId', authenticate, isAdmin, getUserReports);
+router.put('/:reportId/status', authenticate, isAdmin, updateReportStatus);
 
 export default router;
