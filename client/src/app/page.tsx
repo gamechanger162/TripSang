@@ -434,7 +434,7 @@ export default function HomePage() {
                         <Link href="/search" className="btn-outline border-white/30 text-white hover:bg-white hover:text-black hover:border-white">
                             Browse Trips
                         </Link>
-                        <Link href="/auth/register" className="btn-primary">
+                        <Link href="/auth/signup" className="btn-primary">
                             Create Account
                         </Link>
                     </div>
