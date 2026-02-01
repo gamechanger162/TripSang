@@ -9,6 +9,7 @@ import { uploadAPI } from '@/lib/api';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { X, Map as MapIcon } from 'lucide-react';
+import { linkifyText } from '@/utils/linkify';
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('./CollaborativeMap'), {
@@ -247,30 +248,51 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
         }
     };
 
-    // Render message with highlighted mentions
+    // Render message with highlighted mentions and clickable links
     const renderMessageWithMentions = (text: string) => {
-        const mentionRegex = /@(\w+(?:\s\w+)?)/g;
-        const parts = text.split(mentionRegex);
+        // First, process mentions
+        const mentionRegex = /@(\w+)/g;
+        const parts: (string | JSX.Element)[] = [];
+        let lastIndex = 0;
+        let match;
 
-        return parts.map((part, index) => {
-            // Check if this part is a mentioned name
-            const isMention = squadMembers.some(m =>
-                m.name.toLowerCase() === part.toLowerCase()
+        while ((match = mentionRegex.exec(text)) !== null) {
+            const username = match[1];
+            const index = match.index;
+
+            // Add text before mention (with link detection)
+            if (index > lastIndex) {
+                const beforeText = text.substring(lastIndex, index);
+                parts.push(...linkifyText(beforeText));
+            }
+
+            // Check if mentioned user is in squad
+            const mentionedUser = squadMembers.find(
+                member => member.name.toLowerCase() === username.toLowerCase()
             );
 
-            if (isMention) {
-                const isSelfMention = part.toLowerCase() === session?.user?.name?.toLowerCase();
-                return (
-                    <span
-                        key={index}
-                        className={`font-medium ${isSelfMention ? 'bg-yellow-200 dark:bg-yellow-700 text-yellow-800 dark:text-yellow-100' : 'text-primary-600 dark:text-primary-400'} px-0.5 rounded`}
-                    >
-                        @{part}
-                    </span>
-                );
-            }
-            return part;
-        });
+            // Add mention
+            parts.push(
+                <span
+                    key={`mention-${index}`}
+                    className={`font-semibold ${mentionedUser ? 'text-primary-400' : 'text-gray-300'
+                        }`}
+                >
+                    @{username}
+                </span>
+            );
+
+            lastIndex = index + match[0].length;
+        }
+
+        // Add remaining text (with link detection)
+        if (lastIndex < text.length) {
+            const remainingText = text.substring(lastIndex);
+            parts.push(...linkifyText(remainingText));
+        }
+
+        // If no mentions, just linkify the whole text
+        return parts.length > 0 ? parts : linkifyText(text);
     };
 
     const sendMessage = (e: React.FormEvent) => {
