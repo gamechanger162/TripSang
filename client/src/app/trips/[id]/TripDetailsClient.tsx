@@ -13,6 +13,7 @@ import EditTripModal from '@/components/EditTripModal';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import { Map as MapIcon, X } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('@/components/CollaborativeMap'), {
@@ -556,7 +557,7 @@ export function TripDetailsClient() {
                                 href={`/profile/${trip.creator._id}`}
                                 className="flex items-start space-x-4 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 -m-3 rounded-lg transition-colors"
                             >
-                                <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <div className="relative w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden flex-shrink-0">
                                     {trip.creator.profilePicture ? (
                                         <Image
                                             src={trip.creator.profilePicture}
@@ -570,6 +571,7 @@ export function TripDetailsClient() {
                                             {trip.creator.name[0]}
                                         </span>
                                     )}
+                                    {(trip.creator as any)?.subscription?.status === 'active' && <PremiumBadge size="md" />}
                                 </div>
                                 <div className="flex-1">
                                     <h4 className="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
@@ -641,7 +643,7 @@ export function TripDetailsClient() {
                                                 href={`/profile/${member._id}`}
                                                 className="flex items-center space-x-2 flex-1"
                                             >
-                                                <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
+                                                <div className="relative w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
                                                     {member.profilePicture ? (
                                                         <Image
                                                             src={member.profilePicture}
@@ -655,6 +657,7 @@ export function TripDetailsClient() {
                                                             {member.name[0]}
                                                         </span>
                                                     )}
+                                                    {(member as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
                                                 </div>
                                                 <span className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                                                     {member.name}

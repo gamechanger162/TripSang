@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { memoryAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface Memory {
     _id: string;
@@ -228,19 +229,22 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                             {/* Author Info */}
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                    {memory.author.profilePicture ? (
-                                        <Image
-                                            src={memory.author.profilePicture}
-                                            alt={memory.author.name}
-                                            width={40}
-                                            height={40}
-                                            className="w-10 h-10 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold">
-                                            {memory.author.name[0]}
-                                        </div>
-                                    )}
+                                    <div className="relative w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
+                                        {memory.author?.profilePicture ? (
+                                            <Image
+                                                src={memory.author.profilePicture}
+                                                alt={memory.author.name || 'User'}
+                                                width={40}
+                                                height={40}
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-sm font-bold text-gray-600 dark:text-gray-300">
+                                                {(memory.author?.name?.[0]) || '?'}
+                                            </span>
+                                        )}
+                                        {(memory.author as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
+                                    </div>
                                     <div>
                                         <p className="font-semibold text-gray-900 dark:text-white">{memory.author.name}</p>
                                         <p className="text-xs text-gray-500">{new Date(memory.createdAt).toLocaleDateString()}</p>
@@ -304,19 +308,22 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                                 <div className="mt-4 space-y-3">
                                     {(memory.comments || []).map((comment) => (
                                         <div key={comment._id} className="flex gap-2">
-                                            {comment.user?.profilePicture ? (
-                                                <Image
-                                                    src={comment.user.profilePicture}
-                                                    alt={comment.user.name || 'User'}
-                                                    width={32}
-                                                    height={32}
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
-                                                    {(comment.user?.name?.[0]) || '?'}
-                                                </div>
-                                            )}
+                                            <div className="relative flex-shrink-0">
+                                                {comment.user?.profilePicture ? (
+                                                    <Image
+                                                        src={comment.user.profilePicture}
+                                                        alt={comment.user.name || 'User'}
+                                                        width={32}
+                                                        height={32}
+                                                        className="w-8 h-8 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
+                                                        {(comment.user?.name?.[0]) || '?'}
+                                                    </div>
+                                                )}
+                                                {(comment.user as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
+                                            </div>
                                             <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
                                                 <p className="text-xs font-semibold text-gray-900 dark:text-white">{comment.user?.name || 'Unknown User'}</p>
                                                 <p className="text-sm text-gray-700 dark:text-gray-300">{comment.text}</p>
