@@ -1,19 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { tripAPI } from '@/lib/api';
-import ChatRoom from '@/components/ChatRoom';
+import { toast } from 'react-hot-toast';
+import { tripAPI, reviewAPI } from '@/lib/api';
 import TripMemories from '@/components/TripMemories';
+import ChatRoom from '@/components/ChatRoom';
+import ReviewCard from '@/components/ReviewCard';
+import ShareModal from '@/components/ShareModal';
 import GoogleAd from '@/components/GoogleAd';
-import EditTripModal from '@/components/EditTripModal';
-import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import { Map as MapIcon, X } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
+import { isPremiumUser } from '@/utils/linkify';
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('@/components/CollaborativeMap'), {
@@ -571,7 +573,7 @@ export function TripDetailsClient() {
                                             {trip.creator.name[0]}
                                         </span>
                                     )}
-                                    {(trip.creator as any)?.subscription?.status === 'active' && <PremiumBadge size="md" />}
+                                    {isPremiumUser(trip.creator) && <PremiumBadge size="md" />}
                                 </div>
                                 <div className="flex-1">
                                     <h4 className="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
@@ -657,7 +659,7 @@ export function TripDetailsClient() {
                                                             {member.name[0]}
                                                         </span>
                                                     )}
-                                                    {(member as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
+                                                    {isPremiumUser(member) && <PremiumBadge size="sm" />}
                                                 </div>
                                                 <span className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                                                     {member.name}

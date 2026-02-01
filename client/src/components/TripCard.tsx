@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import PremiumBadge from '@/components/PremiumBadge';
+import { isPremiumUser } from '@/utils/linkify';
 
 interface TripCardProps {
     trip: {
@@ -343,7 +344,7 @@ export default function TripCard({ trip }: TripCardProps) {
                                         {trip.creator?.name?.[0] || '?'}
                                     </span>
                                 )}
-                                {(trip.creator as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
+                                {isPremiumUser(trip.creator) && <PremiumBadge size="sm" />}
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { memoryAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import PremiumBadge from '@/components/PremiumBadge';
+import { isPremiumUser } from '@/utils/linkify';
 
 interface Memory {
     _id: string;
@@ -243,7 +244,7 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                                                 {(memory.author?.name?.[0]) || '?'}
                                             </span>
                                         )}
-                                        {(memory.author as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
+                                        {isPremiumUser(memory.author) && <PremiumBadge size="sm" />}
                                     </div>
                                     <div>
                                         <p className="font-semibold text-gray-900 dark:text-white">{memory.author.name}</p>
@@ -322,7 +323,7 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                                                         {(comment.user?.name?.[0]) || '?'}
                                                     </div>
                                                 )}
-                                                {(comment.user as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
+                                                {isPremiumUser(comment.user) && <PremiumBadge size="sm" />}
                                             </div>
                                             <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
                                                 <p className="text-xs font-semibold text-gray-900 dark:text-white">{comment.user?.name || 'Unknown User'}</p>

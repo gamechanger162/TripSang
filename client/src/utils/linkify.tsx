@@ -7,6 +7,15 @@
 const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
 /**
+ * Check if a user is premium (has active subscription or trial)
+ * @param user - User object with subscription field
+ * @returns boolean indicating if user is premium
+ */
+export const isPremiumUser = (user: any): boolean => {
+    return user?.subscription?.status === 'active' || user?.subscription?.status === 'trial';
+};
+
+/**
  * Converts plain text URLs into clickable links
  * @param text - The text containing potential URLs
  * @returns JSX with linkified URLs
