@@ -11,6 +11,14 @@ import TripMemories from '@/components/TripMemories';
 import GoogleAd from '@/components/GoogleAd';
 import EditTripModal from '@/components/EditTripModal';
 import toast from 'react-hot-toast';
+import dynamic from 'next/dynamic';
+import { Map as MapIcon, X } from 'lucide-react';
+
+// Dynamic import for Map to avoid SSR issues
+const CollaborativeMap = dynamic(() => import('@/components/CollaborativeMap'), {
+    loading: () => <div className="h-full w-full flex items-center justify-center bg-gray-100 dark:bg-dark-800">Loading Map...</div>,
+    ssr: false
+});
 
 interface TripDetails {
     _id: string;
@@ -71,6 +79,7 @@ export function TripDetailsClient() {
     const [showAllMembers, setShowAllMembers] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showMap, setShowMap] = useState(false);
 
     const userId = session?.user?.id;
 
@@ -425,6 +434,15 @@ export function TripDetailsClient() {
                                     {trip.difficulty}
                                 </span>
                             )}
+                            {/* Map Button */}
+                            <button
+                                onClick={() => setShowMap(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all border border-white/30 hover:border-white/50"
+                                title="View Route Map"
+                            >
+                                <MapIcon size={16} className="text-white" />
+                                <span className="text-sm font-medium text-white">View Map</span>
+                            </button>
                         </div>
                     </div>
                 </div>

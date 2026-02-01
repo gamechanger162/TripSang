@@ -382,7 +382,7 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
             <div
                 className={`absolute inset-0 z-20 bg-white dark:bg-dark-800 transition-transform duration-300 transform ${showMap ? 'translate-y-0' : 'translate-y-full'}`}
             >
-                <div className="absolute top-4 right-4 z-[400] bg-white/90 dark:bg-dark-700/90 backdrop-blur rounded-full shadow-lg p-1">
+                <div className="absolute top-4 right-4 z-[1000] bg-white/90 dark:bg-dark-700/90 backdrop-blur rounded-full shadow-lg p-1">
                     <button
                         onClick={() => setShowMap(false)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-dark-600 rounded-full transition-colors text-gray-500"

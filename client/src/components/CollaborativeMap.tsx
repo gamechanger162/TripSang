@@ -7,6 +7,8 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
 import { socket } from '@/lib/websocket';
+import toast from 'react-hot-toast';
+import { Share2, ExternalLink } from 'lucide-react';
 
 // --- Custom Icon Generators ---
 
@@ -145,6 +147,17 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
         };
     }, []);
 
+    // Auto-save waypoints when they change
+    useEffect(() => {
+        if (waypoints.length > 0 && !isReadOnly) {
+            const timer = setTimeout(() => {
+                socket.emit('map_action', { tripId, waypoints });
+            }, 500); // Debounce for 500ms
+
+            return () => clearTimeout(timer);
+        }
+    }, [waypoints, tripId, isReadOnly]);
+
     const handleMapClick = (e: L.LeafletMouseEvent) => {
         if (isReadOnly) return;
 
@@ -178,8 +191,34 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
         socket.emit('map_action', { tripId, waypoints: updatedWaypoints });
     };
 
-    const handleSave = () => {
-        socket.emit('map_action', { tripId, waypoints });
+    const generateGoogleMapsUrl = () => {
+        // Build Google Maps URL with all waypoints
+        const origin = `${startPoint.lat},${startPoint.lng}`;
+        const destination = endPoint ? `${endPoint.lat},${endPoint.lng}` : origin;
+
+        // Format waypoints as lat,lng pairs separated by |
+        const waypointsParam = waypoints.length > 0
+            ? `&waypoints=${waypoints.map(wp => `${wp.lat},${wp.lng}`).join('|')}`
+            : '';
+
+        return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointsParam}&travelmode=driving`;
+    };
+
+    const handleShareGoogleMaps = () => {
+        const url = generateGoogleMapsUrl();
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(url).then(() => {
+            toast.success('Google Maps link copied to clipboard!');
+        }).catch(() => {
+            toast.error('Failed to copy link');
+        });
+    };
+
+    const handleOpenGoogleMaps = () => {
+        const url = generateGoogleMapsUrl();
+        window.open(url, '_blank');
+        toast.success('Opening in Google Maps...');
     };
 
     return (
@@ -238,8 +277,8 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
             </MapContainer>
 
             {/* Map Controls */}
-            {!isReadOnly && (
-                <div className="absolute bottom-4 left-4 z-[400] flex gap-2">
+            <div className="absolute bottom-4 left-4 z-[400] flex gap-2">
+                {!isReadOnly && (
                     <button
                         onClick={handleUndo}
                         disabled={waypoints.length === 0}
@@ -247,14 +286,27 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                     >
                         Undo Last Stop
                     </button>
-                    <button
-                        onClick={handleSave}
-                        className="bg-primary-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-primary-700 font-medium transition-colors"
-                    >
-                        Save Route
-                    </button>
-                </div>
-            )}
+                )}
+
+                {/* Share Buttons - Always visible */}
+                <button
+                    onClick={handleOpenGoogleMaps}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
+                    title="Open in Google Maps"
+                >
+                    <ExternalLink size={18} />
+                    Open in Google Maps
+                </button>
+
+                <button
+                    onClick={handleShareGoogleMaps}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 font-medium transition-colors flex items-center gap-2"
+                    title="Copy Google Maps link"
+                >
+                    <Share2 size={18} />
+                    Share Link
+                </button>
+            </div>
         </div>
     );
 };
