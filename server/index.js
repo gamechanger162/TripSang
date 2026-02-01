@@ -363,6 +363,7 @@ import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
 import friendRoutes from './routes/friends.js';
 import memoryRoutes from './routes/memories.js';
+import reportRoutes from './routes/reports.js';
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -377,6 +378,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api', memoryRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Keep-Alive Mechanism for Render Free Tier
 const PING_INTERVAL = 14 * 60 * 1000; // 14 minutes (render sleeps after 15)
