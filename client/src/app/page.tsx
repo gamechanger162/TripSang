@@ -257,7 +257,7 @@ export default function HomePage() {
                     <div className="mb-16 md:flex items-end justify-between">
                         <div>
                             <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-                                Why <span className="inline-block relative top-4"><Image src="/logo-text.png" alt="Tripसंग" width={180} height={60} className="object-contain" /></span><br />
+                                Why <span className="inline-block relative top-4"><Image src="/logo-text.png" alt="Tripसंग" width={140} height={47} className="object-contain" /></span><br />
                                 is Different.
                             </h2>
                             <p className="text-gray-400 max-w-md text-lg">
