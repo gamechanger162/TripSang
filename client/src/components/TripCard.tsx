@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import PremiumBadge from '@/components/PremiumBadge';
 
 interface TripCardProps {
     trip: {
@@ -312,7 +313,7 @@ export default function TripCard({ trip }: TripCardProps) {
                     <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                         {/* Creator */}
                         <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
+                            <div className="relative w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
                                 {trip.creator?.profilePicture ? (
                                     <Image
                                         src={trip.creator.profilePicture}
@@ -326,6 +327,7 @@ export default function TripCard({ trip }: TripCardProps) {
                                         {trip.creator?.name?.[0] || '?'}
                                     </span>
                                 )}
+                                {(trip.creator as any)?.subscription?.status === 'active' && <PremiumBadge size="sm" />}
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
