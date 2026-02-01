@@ -947,6 +947,37 @@ export function TripDetailsClient() {
                     </div>
                 </div>
             )}
+
+            {/* Map Overlay */}
+            {showMap && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="relative w-full max-w-6xl h-[80vh] bg-white dark:bg-dark-800 rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="absolute top-4 right-4 z-[1000]">
+                            <button
+                                onClick={() => setShowMap(false)}
+                                className="p-3 bg-white/90 dark:bg-dark-700/90 backdrop-blur rounded-full shadow-lg hover:bg-white dark:hover:bg-dark-600 transition-colors"
+                            >
+                                <X size={24} className="text-gray-700 dark:text-gray-200" />
+                            </button>
+                        </div>
+                        <CollaborativeMap
+                            tripId={tripId}
+                            initialWaypoints={trip?.waypoints || []}
+                            startPoint={{
+                                lat: trip?.startPoint.coordinates?.latitude || 20.5937,
+                                lng: trip?.startPoint.coordinates?.longitude || 78.9629,
+                                name: trip?.startPoint.name || 'Start'
+                            }}
+                            endPoint={trip?.endPoint ? {
+                                lat: trip.endPoint.coordinates?.latitude || 20.5937,
+                                lng: trip.endPoint.coordinates?.longitude || 78.9629,
+                                name: trip.endPoint.name
+                            } : undefined}
+                            isReadOnly={!isSquadMember}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
