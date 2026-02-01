@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import PremiumBadge from '@/components/PremiumBadge';
@@ -40,6 +42,8 @@ interface TripCardProps {
 }
 
 export default function TripCard({ trip }: TripCardProps) {
+    const { data: session, status } = useSession();
+    const router = useRouter();
     const [liked, setLiked] = useState(false);
     const [likes, setLikes] = useState(trip.stats.likes);
 
@@ -47,10 +51,22 @@ export default function TripCard({ trip }: TripCardProps) {
         e.preventDefault();
         e.stopPropagation();
 
+        // Check if user is authenticated
+        if (status === 'unauthenticated') {
+            toast.error('Please login to like trips');
+            router.push('/auth/signin');
+            return;
+        }
+
+        if (status === 'loading') {
+            return;
+        }
+
         try {
             await tripAPI.like(trip._id);
             setLiked(!liked);
             setLikes(liked ? likes - 1 : likes + 1);
+            toast.success(liked ? 'Removed from favorites' : 'Added to favorites');
         } catch (error: any) {
             toast.error(error.message || 'Failed to like trip');
         }
