@@ -13,17 +13,13 @@ import {
 
 const router = express.Router();
 
-// Gallery / Feed route
-router.get('/memories/feed', getAllMemories);
+// Gallery / Feed route - accessible at /api/memories/feed
+router.get('/feed', getAllMemories);
 
-// Trip memories routes
-router.get('/trips/:tripId/memories', getTripMemories);
-router.post('/trips/:tripId/memories', authenticate, checkPremium, createMemory);
-
-// Memory interaction routes
-router.post('/memories/:memoryId/like', authenticate, checkPremium, toggleMemoryLike);
-router.post('/memories/:memoryId/comments', authenticate, checkPremium, addComment);
-router.delete('/memories/:memoryId/comments/:commentId', authenticate, checkPremium, deleteComment);
-router.delete('/memories/:memoryId', authenticate, deleteMemory);
+// Memory interaction routes - accessible at /api/memories/:memoryId/...
+router.post('/:memoryId/like', authenticate, checkPremium, toggleMemoryLike);
+router.post('/:memoryId/comments', authenticate, checkPremium, addComment);
+router.delete('/:memoryId/comments/:commentId', authenticate, checkPremium, deleteComment);
+router.delete('/:memoryId', authenticate, deleteMemory);
 
 export default router;

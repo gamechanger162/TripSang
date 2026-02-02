@@ -12,6 +12,7 @@ import {
     toggleLike,
     getTrendingDestinations
 } from '../controllers/tripController.js';
+import { getTripMemories, createMemory } from '../controllers/memoryController.js';
 import { authenticate, optionalAuth, requireMobileVerification } from '../middleware/auth.js';
 import { checkPremium } from '../middleware/checkPremium.js';
 
@@ -93,5 +94,19 @@ router.post('/:id/remove-member', authenticate, removeMember);
  * @access  Private
  */
 router.post('/:id/like', authenticate, checkPremium, toggleLike);
+
+/**
+ * @route   GET /api/trips/:id/memories
+ * @desc    Get memories for a trip
+ * @access  Public
+ */
+router.get('/:id/memories', getTripMemories);
+
+/**
+ * @route   POST /api/trips/:id/memories
+ * @desc    Create a memory for a trip
+ * @access  Private
+ */
+router.post('/:id/memories', authenticate, checkPremium, createMemory);
 
 export default router;

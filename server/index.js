@@ -378,7 +378,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/friends', friendRoutes);
-app.use('/api', memoryRoutes);
+app.use('/api/memories', memoryRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/support', supportRoutes);
 
