@@ -132,8 +132,6 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
-userSchema.index({ email: 1 });
-userSchema.index({ mobileNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ createdAt: -1 });
 

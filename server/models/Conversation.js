@@ -37,10 +37,7 @@ conversationSchema.pre('save', function (next) {
     next();
 });
 
-// Index for efficient lookups
-conversationSchema.index({ participants: 1 });
-
-// Compound index to prevent duplicate conversations
+// Compound index for efficient lookups and prevent duplicates
 conversationSchema.index(
     { participants: 1 },
     {

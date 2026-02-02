@@ -206,7 +206,6 @@ tripSchema.pre('save', async function (next) {
 // Indexes for performance
 tripSchema.index({ creator: 1, status: 1 });
 tripSchema.index({ startDate: 1, endDate: 1 });
-tripSchema.index({ tags: 1 });
 tripSchema.index({ 'startPoint.name': 'text', 'endPoint.name': 'text', title: 'text' });
 
 // Virtual for squad size

@@ -141,10 +141,8 @@ const paymentSchema = new mongoose.Schema({
 
 // Indexes for performance
 paymentSchema.index({ userId: 1, status: 1 });
-paymentSchema.index({ transactionId: 1 });
 paymentSchema.index({ type: 1, status: 1 });
 paymentSchema.index({ createdAt: -1 });
-paymentSchema.index({ razorpayOrderId: 1 });
 
 // Virtual for processing time
 paymentSchema.virtual('processingTime').get(function () {
