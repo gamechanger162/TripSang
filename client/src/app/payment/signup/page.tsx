@@ -78,7 +78,7 @@ export default function SignupPaymentPage() {
             subscription_id: subscriptionDetails.id,
             name: 'TripSang',
             description: 'Monthly Premium Membership',
-            image: '/logo.png',
+            image: '/logo-new.png',
             handler: async function (response: any) {
                 try {
                     const verifyResponse = await paymentAPI.verifySubscription({
@@ -127,7 +127,7 @@ export default function SignupPaymentPage() {
                 currency: orderResponse.currency,
                 name: 'TripSang',
                 description: '1 Month Premium Pass',
-                image: '/logo.png',
+                image: '/logo-new.png',
                 order_id: orderResponse.orderId,
                 handler: async function (response: any) {
                     try {

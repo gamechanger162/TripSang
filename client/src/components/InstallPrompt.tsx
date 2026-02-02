@@ -76,7 +76,7 @@ export default function InstallPrompt() {
                         </div>
                         <div>
                             <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                                Install <img src="/logo-text.png" alt="TripSang" className="h-6 w-auto object-contain bg-white/10 rounded px-1" />
+                                Install <img src="/logo-new.png" alt="TripSang" className="h-6 w-auto object-contain bg-white/10 rounded px-1" />
                             </h3>
                             <p className="text-slate-300 text-sm leading-tight">
                                 {isIOS

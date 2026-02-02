@@ -179,7 +179,7 @@ export default function Navbar() {
                     <div className="flex-shrink-0 flex items-center">
                         <Link href="/" className="flex items-center gap-2">
                             <Image
-                                src="/logo.png"
+                                src="/logo-new.png"
                                 alt="Tripसंग Logo"
                                 width={140}
                                 height={45}
