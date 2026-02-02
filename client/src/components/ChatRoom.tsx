@@ -10,6 +10,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { X, Map as MapIcon } from 'lucide-react';
 import { linkifyText } from '@/utils/linkify';
+import Link from 'next/link';
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('./CollaborativeMap'), {
@@ -457,7 +458,10 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                         return (
                             <div key={msg._id || index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group relative z-10 animate-fade-in-up`}>
                                 {!isOwnMessage && (
-                                    <div className={`mr-2 w-9 h-9 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'} self-end mb-1`}>
+                                    <Link
+                                        href={`/profile/${msg.senderId}`}
+                                        className={`mr-2 w-9 h-9 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'} self-end mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
+                                    >
                                         {msg.senderProfilePicture ? (
                                             <Image
                                                 src={msg.senderProfilePicture}
@@ -471,7 +475,7 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                                 {msg.senderName[0]}
                                             </div>
                                         )}
-                                    </div>
+                                    </Link>
                                 )}
 
                                 <div className={`flex flex-col max-w-[75%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>

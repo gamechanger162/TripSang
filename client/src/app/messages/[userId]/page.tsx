@@ -141,8 +141,8 @@ export default function ChatPage() {
                                 </svg>
                             </Link>
 
-                            {/* User info */}
-                            <div className="flex items-center space-x-3">
+                            {/* User info - Clickable to view profile */}
+                            <Link href={`/profile/${userId}`} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
                                     {otherUser.profilePicture ? (
                                         <Image
@@ -166,7 +166,7 @@ export default function ChatPage() {
                                         <p className="text-xs text-red-500">This user has blocked you</p>
                                     )}
                                 </div>
-                            </div>
+                            </Link>
                         </div>
 
                         {/* Menu button */}
