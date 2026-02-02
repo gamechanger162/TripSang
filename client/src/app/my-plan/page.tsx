@@ -57,24 +57,12 @@ export default function MyPlanPage() {
     // Only consider it a trial if the status is explicitly 'trial'
     const inTrialPeriod = subscription?.status === 'trial' && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
 
+    // Redirect non-premium users directly to the plans page
     if (!isActive && !inTrialPeriod) {
+        router.push('/payment/signup');
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8">
-                <div className="max-w-md mx-auto card p-8 text-center bg-white dark:bg-dark-800 rounded-2xl shadow-xl">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Shield className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h1 className="text-2xl font-bold mb-2">No Active Plan</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6">
-                        You are currently on the free tier. Upgrade to Premium to unlock all features.
-                    </p>
-                    <button
-                        onClick={() => router.push('/payment/signup')}
-                        className="btn-primary w-full py-3"
-                    >
-                        View Plans & Upgrade
-                    </button>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
             </div>
         );
     }

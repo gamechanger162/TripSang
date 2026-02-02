@@ -148,7 +148,13 @@ export function TripDetailsClient() {
             }
         } catch (error: any) {
             console.error('Error joining squad:', error);
-            toast.error(error.message || 'Failed to join squad');
+            // Check if premium is required
+            if (error.requiresPremium || error.redirectUrl) {
+                toast.error('Premium membership required to join trips!');
+                router.push(error.redirectUrl || '/payment/signup');
+            } else {
+                toast.error(error.message || 'Failed to join squad');
+            }
         } finally {
             setJoining(false);
         }

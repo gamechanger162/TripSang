@@ -520,6 +520,19 @@ export const joinTrip = async (req, res) => {
         const { id } = req.params;
         const userId = req.user._id;
 
+        // Check if user has premium/active subscription
+        const user = req.user; // Already populated by auth middleware
+        const isPremium = user.subscription?.status === 'active' || user.subscription?.status === 'trial';
+
+        if (!isPremium) {
+            return res.status(403).json({
+                success: false,
+                message: 'Premium membership required to join trips. Upgrade now to join squads!',
+                requiresPremium: true,
+                redirectUrl: '/payment/signup'
+            });
+        }
+
         const trip = await Trip.findById(id);
 
         if (!trip) {
