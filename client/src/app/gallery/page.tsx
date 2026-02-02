@@ -10,17 +10,19 @@ import { Heart, MessageCircle, Share2, MapPin, Plus, X, Trash2 } from 'lucide-re
 import { useRouter } from 'next/navigation';
 import ShareMemoryModal from '@/components/ShareMemoryModal';
 import ImageLightbox from '@/components/ImageLightbox';
+import PremiumBadge from '@/components/PremiumBadge';
+import { isPremiumUser } from '@/utils/linkify';
 
 interface Memory {
     _id: string;
     content: string;
     photos: { url: string; caption?: string }[];
-    author: { _id: string; name: string; profilePicture?: string };
+    author: { _id: string; name: string; profilePicture?: string; subscription?: any };
     trip: { _id: string; title: string; startPoint: any; endPoint: any };
     likes: string[];
     comments: {
         _id: string;
-        user: { _id: string; name: string; profilePicture?: string };
+        user: { _id: string; name: string; profilePicture?: string; subscription?: any };
         text: string;
         createdAt: string;
     }[];
@@ -219,6 +221,7 @@ export default function GalleryPage() {
                                         fill
                                         className="object-cover"
                                     />
+                                    {isPremiumUser(memory.author) && <PremiumBadge size="sm" />}
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{memory.author.name}</h3>
@@ -305,19 +308,22 @@ export default function GalleryPage() {
                                 <div className="mt-4 space-y-3 pt-3 border-t border-gray-100 dark:border-dark-700 animate-fadeIn">
                                     {(memory.comments || []).map((comment) => (
                                         <div key={comment._id} className="flex gap-2">
-                                            {comment.user?.profilePicture ? (
-                                                <Image
-                                                    src={comment.user.profilePicture}
-                                                    alt={comment.user.name || 'User'}
-                                                    width={28}
-                                                    height={28}
-                                                    className="w-7 h-7 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
-                                                    {(comment.user?.name?.[0]) || '?'}
-                                                </div>
-                                            )}
+                                            <div className="relative flex-shrink-0">
+                                                {comment.user?.profilePicture ? (
+                                                    <Image
+                                                        src={comment.user.profilePicture}
+                                                        alt={comment.user.name || 'User'}
+                                                        width={28}
+                                                        height={28}
+                                                        className="w-7 h-7 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-dark-600 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
+                                                        {(comment.user?.name?.[0]) || '?'}
+                                                    </div>
+                                                )}
+                                                {isPremiumUser(comment.user) && <PremiumBadge size="sm" />}
+                                            </div>
                                             <div className="flex-1 bg-gray-50 dark:bg-dark-700 rounded-lg p-2 text-sm">
                                                 <p className="font-semibold text-gray-900 dark:text-white text-xs">{comment.user?.name || 'Unknown User'}</p>
                                                 <p className="text-gray-700 dark:text-gray-300">{comment.text}</p>

@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { userAPI, friendAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Flag } from 'lucide-react';
+import PremiumBadge from '@/components/PremiumBadge';
+import { isPremiumUser } from '@/utils/linkify';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -26,6 +28,7 @@ interface UserProfile {
     badges: string[];
     createdAt: string;
     isMobileVerified?: boolean;
+    subscription?: any;
     stats?: {
         tripsCreated: number;
         tripsJoined: number;
@@ -227,6 +230,7 @@ export default function UserProfilePage() {
                                         </svg>
                                     </div>
                                 )}
+                                {isPremiumUser(profile) && <PremiumBadge size="lg" className="absolute -top-1 -right-1" />}
                             </div>
 
                             {/* Name & Info */}

@@ -9,8 +9,8 @@ export const getTripMemories = async (req, res) => {
         const { tripId } = req.params;
 
         const memories = await Memory.find({ trip: tripId })
-            .populate('author', 'name profilePicture')
-            .populate('comments.user', 'name profilePicture')
+            .populate('author', 'name profilePicture subscription')
+            .populate('comments.user', 'name profilePicture subscription')
             .sort({ createdAt: -1 });
 
         res.json({
@@ -300,9 +300,9 @@ export const getAllMemories = async (req, res) => {
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
         const memories = await Memory.find()
-            .populate('author', 'name profilePicture')
+            .populate('author', 'name profilePicture subscription')
             .populate('trip', 'title startPoint endPoint')
-            .populate('comments.user', 'name profilePicture')
+            .populate('comments.user', 'name profilePicture subscription')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
