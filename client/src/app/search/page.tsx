@@ -66,6 +66,20 @@ function SearchPageContent() {
             }
         } catch (error: any) {
             console.error('Error fetching trips:', error);
+
+            // Check for auth-related errors and redirect
+            const errorMessage = error.message?.toLowerCase() || '';
+            if (errorMessage.includes('login required') || errorMessage.includes('access denied') || errorMessage.includes('no token')) {
+                toast.error('Please login to view trips');
+                router.push('/auth/signin?callbackUrl=/search');
+                return;
+            }
+            if (errorMessage.includes('subscription required')) {
+                toast.error('Premium subscription required');
+                router.push('/payment/signup');
+                return;
+            }
+
             toast.error(error.message || 'Failed to load trips');
         } finally {
             setLoading(false);
