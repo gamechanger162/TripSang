@@ -45,26 +45,34 @@ export default function AdminReportsPage() {
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
     const [adminNotes, setAdminNotes] = useState('');
     const [updating, setUpdating] = useState(false);
+    const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
     // Check admin access
     useEffect(() => {
         if (status === 'loading') return;
+        if (hasCheckedAuth) return; // Prevent re-running
 
         if (status === 'unauthenticated') {
             toast.error('Please login');
             router.push('/auth/signin');
+            setHasCheckedAuth(true);
             return;
         }
 
-        if (session?.user?.role !== 'admin') {
+        const userRole = (session?.user as any)?.role;
+        if (status === 'authenticated' && userRole !== 'admin') {
             toast.error('Access denied. Admin only.');
             router.push('/');
+            setHasCheckedAuth(true);
             return;
         }
 
-        fetchReports();
+        if (status === 'authenticated' && userRole === 'admin') {
+            setHasCheckedAuth(true);
+            fetchReports();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [status, session]);
+    }, [status, session?.user]);
 
     const fetchReports = async () => {
         try {
