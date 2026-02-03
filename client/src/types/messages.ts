@@ -26,6 +26,13 @@ export interface DirectMessage {
     timestamp: string;
     type?: 'text' | 'image';
     imageUrl?: string;
+    replyTo?: {
+        _id?: string;
+        senderName: string; // Used for "Replying to X"
+        message: string;
+        type?: 'text' | 'image';
+        imageUrl?: string;
+    } | null;
 }
 
 export interface SendMessageData {
@@ -34,6 +41,7 @@ export interface SendMessageData {
     message: string;
     type?: 'text' | 'image';
     imageUrl?: string;
+    replyTo?: string; // ID of message replying to
 }
 
 export interface DMNotification {

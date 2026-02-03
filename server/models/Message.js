@@ -29,6 +29,10 @@ const messageSchema = new mongoose.Schema({
     imageUrl: {
         type: String
     },
+    replyTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message'
+    },
     timestamp: {
         type: Date,
         default: Date.now,

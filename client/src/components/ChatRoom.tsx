@@ -27,6 +27,12 @@ interface Message {
     timestamp: string;
     type?: 'text' | 'image' | 'system';
     imageUrl?: string;
+    replyTo?: {
+        senderName: string;
+        message: string;
+        type?: 'text' | 'image';
+        imageUrl?: string;
+    };
 }
 
 interface SquadMember {
@@ -60,6 +66,9 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
     const [mentionQuery, setMentionQuery] = useState('');
     const [mentionIndex, setMentionIndex] = useState(0);
     const [cursorPosition, setCursorPosition] = useState(0);
+
+    // Reply state
+    const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,6 +183,11 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
         typingTimeoutRef.current = setTimeout(() => {
             socket.emit('typing_squad', { tripId, isTyping: false });
         }, 2000);
+    };
+
+    const handleReply = (message: Message) => {
+        setReplyingTo(message);
+        inputRef.current?.focus();
     };
 
     // Filter squad members for mentions (exclude current user)
@@ -308,11 +322,13 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
             message: newMessage.trim(),
             senderName: session.user.name || 'Anonymous',
             senderProfilePicture: session.user.image,
-            type: 'text'
+            type: 'text',
+            replyTo: replyingTo ? replyingTo._id : undefined
         };
 
         socket.emit('send_message', messageData);
         setNewMessage('');
+        setReplyingTo(null);
         socket.emit('typing_squad', { tripId, isTyping: false });
     };
 
@@ -491,6 +507,21 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                             : 'bg-white dark:bg-dark-700/80 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tl-sm border border-gray-100 dark:border-gray-600 hover:shadow-md'
                                             }`}
                                     >
+                                        {/* Quoted Message */}
+                                        {msg.replyTo && (
+                                            <div
+                                                className={`mb-2 p-2 rounded-lg text-xs border-l-2 cursor-pointer ${isOwnMessage
+                                                    ? 'bg-white/10 border-white/50 text-white/90'
+                                                    : 'bg-gray-50 dark:bg-dark-800/50 border-primary-500 text-gray-500 dark:text-gray-400'
+                                                    }`}
+                                            >
+                                                <p className="font-bold mb-0.5">{msg.replyTo.senderName}</p>
+                                                <p className="truncate">
+                                                    {msg.replyTo.type === 'image' ? '📷 Image' : msg.replyTo.message}
+                                                </p>
+                                            </div>
+                                        )}
+
                                         {msg.type === 'image' && msg.imageUrl ? (
                                             <div className="-m-2 rounded-xl overflow-hidden cursor-pointer">
                                                 <Image
@@ -506,8 +537,20 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                         )}
                                     </div>
 
-                                    <div className={`text-[10px] mt-1 flex items-center opacity-0 group-hover:opacity-60 transition-opacity ${isOwnMessage ? 'mr-1' : 'ml-1'}`}>
-                                        <span className="text-gray-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    {/* Message Footer & Actions */}
+                                    <div className={`text-[10px] mt-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity ${isOwnMessage ? 'mr-1' : 'ml-1'}`}>
+                                        <span className="text-gray-400 mr-2">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+
+                                        {/* Reply Button */}
+                                        <button
+                                            onClick={() => handleReply(msg)}
+                                            className="text-gray-400 hover:text-primary-500 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-600"
+                                            title="Reply"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -591,6 +634,26 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                         </span>
                                     </button>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Replying To UI */}
+                        {replyingTo && (
+                            <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 p-3 bg-white dark:bg-dark-700 rounded-xl shadow-lg border-l-4 border-primary-500 flex items-center justify-between animate-fade-in-up z-40">
+                                <div className="flex-1 min-w-0 mr-2">
+                                    <p className="text-xs font-bold text-primary-600 dark:text-primary-400 mb-0.5">
+                                        Replying to {replyingTo.senderName}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                        {replyingTo.type === 'image' ? '📷 Image' : replyingTo.message}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setReplyingTo(null)}
+                                    className="p-1 hover:bg-gray-100 dark:hover:bg-dark-600 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+                                >
+                                    <X size={16} />
+                                </button>
                             </div>
                         )}
 

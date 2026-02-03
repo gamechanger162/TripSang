@@ -31,6 +31,10 @@ const directMessageSchema = new mongoose.Schema({
     imageUrl: {
         type: String
     },
+    replyTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'DirectMessage'
+    },
     read: {
         type: Boolean,
         default: false

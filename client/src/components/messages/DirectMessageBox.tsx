@@ -27,6 +27,8 @@ export default function DirectMessageBox({
     const [loading, setLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
+    const [replyingTo, setReplyingTo] = useState<DirectMessage | null>(null);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -46,14 +48,21 @@ export default function DirectMessageBox({
     // Auto-scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isTyping]);
+    }, [messages, isTyping, replyingTo]);
 
     const handleSendMessage = () => {
         if (messageInput.trim() && !loading) {
-            sendMessage(receiverId, messageInput, 'text');
+            sendMessage(receiverId, messageInput, 'text', undefined);
             setMessageInput('');
+            setReplyingTo(null);
             setIsTyping(false); // Stop typing indicator
         }
+    };
+
+    // Need to pass this down or use context, but MessageBubble is separate.
+    // We can pass onReply prop to MessageBubble if we modify it
+    const handleReply = (message: DirectMessage) => {
+        setReplyingTo(message);
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +146,11 @@ export default function DirectMessageBox({
                 ) : (
                     <>
                         {messages.map((message) => (
-                            <MessageBubble key={message._id} message={message} />
+                            <MessageBubble
+                                key={message._id}
+                                message={message}
+                                onReply={handleReply}
+                            />
                         ))}
                         {isTyping && (
                             <div className="flex justify-start mb-4 px-4">
@@ -163,7 +176,27 @@ export default function DirectMessageBox({
                     </p>
                 </div>
             ) : (
-                <div className="border-t border-gray-200 dark:border-dark-700 p-4 bg-white dark:bg-dark-800">
+                <div className="border-t border-gray-200 dark:border-dark-700 p-4 bg-white dark:bg-dark-800 relative">
+                    {/* Replying To UI */}
+                    {replyingTo && (
+                        <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 p-3 bg-white dark:bg-dark-700 rounded-xl shadow-lg border-l-4 border-primary-500 flex items-center justify-between animate-fade-in-up z-40">
+                            <div className="flex-1 min-w-0 mr-2">
+                                <p className="text-xs font-bold text-primary-600 dark:text-primary-400 mb-0.5">
+                                    Replying to {replyingTo.senderName}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    {replyingTo.type === 'image' ? '📷 Image' : replyingTo.message}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setReplyingTo(null)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-dark-600 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </button>
+                        </div>
+                    )}
+
                     <div className="flex items-end space-x-2">
                         {/* Image Upload Button */}
                         <div className="relative pb-1">

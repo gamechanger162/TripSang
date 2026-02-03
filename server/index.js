@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
     // Send Message Event
     socket.on('send_message', async (data) => {
         try {
-            const { tripId, message, type = 'text', imageUrl } = data;
+            const { tripId, message, type = 'text', imageUrl, replyTo } = data;
 
             if (!tripId || (!message && type === 'text')) return;
 
@@ -138,11 +138,16 @@ io.on('connection', (socket) => {
                 message: message || '', // Text might be empty for images
                 type,
                 imageUrl,
+                replyTo,
                 timestamp: new Date()
             });
 
+            // Populate replyTo if it exists
+            const populatedMessage = await Message.findById(savedMessage._id)
+                .populate('replyTo', 'senderName message type imageUrl');
+
             // Broadcast to everyone in room (including sender)
-            io.to(tripId).emit('receive_message', savedMessage);
+            io.to(tripId).emit('receive_message', populatedMessage);
 
         } catch (error) {
             console.error('Send message error:', error);
@@ -218,7 +223,7 @@ io.on('connection', (socket) => {
     // Send Direct Message Event
     socket.on('send_dm', async (data) => {
         try {
-            const { conversationId, receiverId, message, type = 'text', imageUrl } = data;
+            const { conversationId, receiverId, message, type = 'text', imageUrl, replyTo } = data;
 
             if (!conversationId || !receiverId || (!message && type === 'text')) {
                 return socket.emit('error', { message: 'Missing required fields' });
@@ -266,8 +271,13 @@ io.on('connection', (socket) => {
                 message: message || (type === 'image' ? 'Sent an image' : ''),
                 type,
                 imageUrl,
+                replyTo,
                 timestamp: new Date()
             });
+
+            // Populate replyTo if it exists
+            const populatedMessage = await DirectMessage.findById(savedMessage._id)
+                .populate('replyTo', 'message type imageUrl');
 
             // Update conversation lastMessage and increment unread for receiver
             conversation.lastMessage = {
@@ -288,6 +298,7 @@ io.on('connection', (socket) => {
                 message: savedMessage.message,
                 type: savedMessage.type,
                 imageUrl: savedMessage.imageUrl,
+                replyTo: populatedMessage.replyTo,
                 timestamp: savedMessage.timestamp,
                 read: false
             };

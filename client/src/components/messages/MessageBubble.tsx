@@ -7,9 +7,10 @@ import { linkifyText } from '@/utils/linkify';
 
 interface MessageBubbleProps {
     message: DirectMessage;
+    onReply?: (message: DirectMessage) => void;
 }
 
-export default function MessageBubble({ message }: MessageBubbleProps) {
+export default function MessageBubble({ message, onReply }: MessageBubbleProps) {
     const { data: session } = useSession();
     const isOwnMessage = message.sender === session?.user?.id;
 
@@ -32,6 +33,21 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                         : 'bg-white dark:bg-dark-700 text-gray-900 dark:text-white rounded-bl-none'
                         }`}
                 >
+                    {/* Quoted Message */}
+                    {message.replyTo && (
+                        <div
+                            className={`mb-2 p-2 rounded-lg text-xs border-l-2 cursor-pointer ${isOwnMessage
+                                ? 'bg-white/10 border-white/50 text-white/90'
+                                : 'bg-gray-50 dark:bg-dark-800/50 border-primary-500 text-gray-500 dark:text-gray-400'
+                                }`}
+                        >
+                            <p className="font-bold mb-0.5">{message.replyTo.senderName}</p>
+                            <p className="truncate">
+                                {message.replyTo.type === 'image' ? '📷 Image' : message.replyTo.message}
+                            </p>
+                        </div>
+                    )}
+
                     {message.type === 'image' && message.imageUrl ? (
                         <div className="mb-1 rounded-lg overflow-hidden">
                             <Image
@@ -58,6 +74,21 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                             </span>
                         )}
                     </div>
+                </div>
+
+                {/* Actions */}
+                <div className={`flex items-center mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {onReply && (
+                        <button
+                            onClick={() => onReply(message)}
+                            className="text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-600 transition-colors"
+                            title="Reply"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
