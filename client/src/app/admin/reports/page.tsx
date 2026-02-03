@@ -63,7 +63,8 @@ export default function AdminReportsPage() {
         }
 
         fetchReports();
-    }, [status, session, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, session]);
 
     const fetchReports = async () => {
         try {
