@@ -114,6 +114,20 @@ export function TripDetailsClient() {
                 }
             } catch (error: any) {
                 console.error('Error fetching trip:', error);
+
+                // Check for auth/premium errors
+                const errorMessage = error.message?.toLowerCase() || '';
+                if (errorMessage.includes('premium') || errorMessage.includes('subscription required')) {
+                    toast.error('Premium membership required to view full trip details');
+                    router.push('/payment/signup');
+                    return;
+                }
+                if (errorMessage.includes('login required') || errorMessage.includes('access denied')) {
+                    toast.error('Please login to view trip details');
+                    router.push(`/auth/signin?callbackUrl=/trips/${tripId}`);
+                    return;
+                }
+
                 toast.error(error.message || 'Failed to load trip');
                 router.push('/search');
             } finally {
