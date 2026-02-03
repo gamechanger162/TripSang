@@ -28,14 +28,18 @@ export default function AnnouncementsPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (status === 'unauthenticated' || (session?.user && session.user.role !== 'admin')) {
+        if (status === 'loading') return;
+
+        const userRole = (session?.user as any)?.role;
+        if (status === 'unauthenticated' || (status === 'authenticated' && userRole !== 'admin')) {
             router.push('/');
             return;
         }
-        if (status === 'authenticated') {
+        if (status === 'authenticated' && userRole === 'admin') {
             fetchAnnouncements();
         }
-    }, [status, session, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, session?.user]);
 
     const fetchAnnouncements = async () => {
         try {
@@ -254,15 +258,15 @@ export default function AnnouncementsPage() {
                                                 {announcement.title}
                                             </h3>
                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${announcement.type === 'info' ? 'bg-blue-100 text-blue-800' :
-                                                    announcement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                                                        announcement.type === 'success' ? 'bg-green-100 text-green-800' :
-                                                            'bg-red-100 text-red-800'
+                                                announcement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                                                    announcement.type === 'success' ? 'bg-green-100 text-green-800' :
+                                                        'bg-red-100 text-red-800'
                                                 }`}>
                                                 {announcement.type}
                                             </span>
                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${announcement.isActive
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-gray-100 text-gray-800'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {announcement.isActive ? 'Active' : 'Inactive'}
                                             </span>
@@ -285,8 +289,8 @@ export default function AnnouncementsPage() {
                                         <button
                                             onClick={() => handleToggle(announcement._id)}
                                             className={`px-3 py-1 text-sm rounded ${announcement.isActive
-                                                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                                                    : 'bg-green-600 hover:bg-green-700 text-white'
+                                                ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                                                : 'bg-green-600 hover:bg-green-700 text-white'
                                                 }`}
                                         >
                                             {announcement.isActive ? 'Deactivate' : 'Activate'}

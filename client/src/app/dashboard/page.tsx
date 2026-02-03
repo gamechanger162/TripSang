@@ -29,7 +29,8 @@ export default function UserDashboard() {
         if (status === 'unauthenticated') {
             router.push('/auth/signin');
         }
-    }, [status, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
 
     useEffect(() => {
         if (status === 'authenticated') {

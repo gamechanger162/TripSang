@@ -26,7 +26,8 @@ export default function VerifyPhonePage() {
             toast.error('Please login first');
             router.push('/auth/signin');
         }
-    }, [status, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
 
     // Cleanup
     useEffect(() => {

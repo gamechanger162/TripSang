@@ -90,7 +90,8 @@ export default function CreateTripPage() {
             router.push('/auth/signin?callbackUrl=/trips/create');
             return;
         }
-    }, [status, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
 
     // Fetch friends list
     useEffect(() => {

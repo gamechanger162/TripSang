@@ -42,7 +42,8 @@ export default function MessagesPage() {
         if (status === 'unauthenticated') {
             router.push('/auth/signin');
         }
-    }, [status, router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]);
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -181,8 +182,8 @@ export default function MessagesPage() {
                     <button
                         onClick={() => setActiveTab('dm')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'dm'
-                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
-                                : 'bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700'
+                            ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
+                            : 'bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700'
                             }`}
                     >
                         <MessageSquare className="w-4 h-4" />
@@ -196,8 +197,8 @@ export default function MessagesPage() {
                     <button
                         onClick={() => setActiveTab('squad')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'squad'
-                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
-                                : 'bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700'
+                            ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
+                            : 'bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700'
                             }`}
                     >
                         <Users className="w-4 h-4" />

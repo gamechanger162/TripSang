@@ -120,14 +120,18 @@ export default function AdminDashboardPage() {
             return;
         }
 
-        if (session?.user?.role !== 'admin') {
+        const userRole = (session?.user as any)?.role;
+        if (status === 'authenticated' && userRole !== 'admin') {
             toast.error('Access denied. Admin only.');
             router.push('/');
             return;
         }
 
-        setLoading(false);
-    }, [status, session, router]);
+        if (status === 'authenticated' && userRole === 'admin') {
+            setLoading(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, session?.user]);
 
     // Fetch config
     const fetchConfig = async () => {

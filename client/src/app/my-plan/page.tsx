@@ -12,6 +12,7 @@ export default function MyPlanPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [subscription, setSubscription] = useState<any>(null);
+    const [shouldRedirect, setShouldRedirect] = useState(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -22,28 +23,42 @@ export default function MyPlanPage() {
         if (status === 'authenticated') {
             fetchSubscription();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status]);
+
+    // Handle redirect for non-premium users after data is loaded
+    useEffect(() => {
+        if (!loading && subscription !== null) {
+            const isActive = subscription?.status === 'active';
+            const inTrialPeriod = subscription?.status === 'trial' && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
+
+            if (!isActive && !inTrialPeriod) {
+                setShouldRedirect(true);
+                router.push('/payment/signup');
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, subscription]);
 
     const fetchSubscription = async () => {
         try {
-            // Force fresh fetch by appending timestamp if API supported it, but userAPI.getProfile 
-            // likely hits an endpoint that we can't easily modify params for without seeing api.ts.
-            // Assuming getProfile hits /api/users/me, let's just rely on the fact we are calling it fresh here.
-
             // Force fresh fetch
             const response = await userAPI.getProfile(true);
             if (response.success && response.user) {
-                setSubscription(response.user.subscription);
+                setSubscription(response.user.subscription || { status: 'none' });
+            } else {
+                setSubscription({ status: 'none' });
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
             toast.error('Failed to load subscription details');
+            setSubscription({ status: 'none' });
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading) {
+    if (loading || shouldRedirect || status === 'loading') {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -52,20 +67,10 @@ export default function MyPlanPage() {
     }
 
     const isActive = subscription?.status === 'active';
-    const isTrial = subscription?.status === 'trial'; // unlikely given Razorpay structure but good to handle if we add manual logic
+    const isTrial = subscription?.status === 'trial';
 
     // Only consider it a trial if the status is explicitly 'trial'
     const inTrialPeriod = subscription?.status === 'trial' && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
-
-    // Redirect non-premium users directly to the plans page
-    if (!isActive && !inTrialPeriod) {
-        router.push('/payment/signup');
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8">
