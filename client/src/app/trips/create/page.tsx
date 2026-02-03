@@ -317,6 +317,20 @@ export default function CreateTripPage() {
             }
         } catch (error: any) {
             console.error('Error creating trip:', error);
+
+            // Check for premium-related errors and redirect
+            const errorMessage = error.message?.toLowerCase() || '';
+            if (errorMessage.includes('premium') || errorMessage.includes('subscription required')) {
+                toast.error('Premium membership required to create trips');
+                router.push('/payment/signup');
+                return;
+            }
+            if (errorMessage.includes('login required') || errorMessage.includes('access denied')) {
+                toast.error('Please login first');
+                router.push('/auth/signin?callbackUrl=/trips/create');
+                return;
+            }
+
             toast.error(error.message || 'Failed to create trip');
         } finally {
             setLoading(false);
