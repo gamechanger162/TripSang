@@ -535,3 +535,138 @@ export const grantPremium = async (req, res) => {
         });
     }
 };
+
+/**
+ * Get pending verification requests
+ * GET /api/admin/verify-requests
+ */
+export const getVerificationRequests = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+
+        const requests = await User.find({ verificationStatus: 'pending' })
+            .select('name email profilePicture idDocumentFront idDocumentBack idType verificationStatus createdAt') // Select specific fields
+            .sort({ createdAt: 1 }) // Oldest first
+            .skip(skip)
+            .limit(limit);
+
+        const total = await User.countDocuments({ verificationStatus: 'pending' });
+
+        res.status(200).json({
+            success: true,
+            requests,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalRequests: total,
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Get verification requests error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch verification requests'
+        });
+    }
+};
+
+/**
+ * Handle verification action (Approve/Reject)
+ * POST /api/admin/verify-action
+ */
+export const handleVerificationAction = async (req, res) => {
+    try {
+        const { userId, action, reason } = req.body;
+
+        if (!['approve', 'reject'].includes(action)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid action'
+            });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (action === 'approve') {
+            user.verificationStatus = 'verified';
+            user.addBadge('Verified Traveler'); // Add badge
+            user.rejectionReason = ''; // Clear rejection reason
+
+            // Notify user (In-app notification)
+            const io = req.app.get('io');
+            if (io) {
+                const { Notification } = await import('../models/index.js');
+                await Notification.create({
+                    recipient: user._id,
+                    title: 'Verification Approved! 🎉',
+                    message: 'Congratulations! Your identity has been verified. You now have the blue tick badge.',
+                    type: 'system',
+                    link: '/profile',
+                    sender: req.user._id
+                });
+                io.to(`user_${user._id}`).emit('new_notification', {
+                    title: 'Verification Approved!',
+                    message: 'Your identity has been verified.',
+                    type: 'system'
+                });
+            }
+
+        } else if (action === 'reject') {
+            user.verificationStatus = 'rejected';
+            user.rejectionReason = reason || 'Document authentication failed';
+            user.idDocumentFront = undefined; // Clear documents for privacy/security on rejection often good practice, or keep for audit? 
+            // Keeping for audit might be better, but privacy policy said "solely for verification". 
+            // Let's keep simpler logic for now: just mark rejected. 
+            // Actually, let's NOT delete the doc URL immediately so admin can see history or re-evaluate, 
+            // BUT for strict privacy we might want to. 
+            // For now, let's keep the URL but mark status rejected.
+
+            // Notify user
+            const io = req.app.get('io');
+            if (io) {
+                const { Notification } = await import('../models/index.js');
+                await Notification.create({
+                    recipient: user._id,
+                    title: 'Verification Rejected',
+                    message: `Your verification request was rejected. Reason: ${reason || 'Documents unclear'}. Please try again.`,
+                    type: 'system',
+                    link: '/verify/id',
+                    sender: req.user._id
+                });
+                io.to(`user_${user._id}`).emit('new_notification', {
+                    title: 'Verification Rejected',
+                    message: 'Your verification request was rejected.',
+                    type: 'system'
+                });
+            }
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: `User verification ${action}ed successfully`,
+            user: {
+                _id: user._id,
+                verificationStatus: user.verificationStatus
+            }
+        });
+
+    } catch (error) {
+        console.error('Handle verification action error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to process verification action'
+        });
+    }
+};
