@@ -67,6 +67,7 @@ import Navbar from '@/components/Navbar';
 import MobileNav from '@/components/MobileNav';
 import SiteBanner from '@/components/SiteBanner';
 import InstallPrompt from '@/components/InstallPrompt';
+import Footer from '@/components/Footer';
 
 export default function RootLayout({
     children,
@@ -122,6 +123,7 @@ export default function RootLayout({
                     <InstallPrompt />
                     <MobileNav />
                     <ToasterProvider />
+                    <Footer />
                 </Providers>
             </body>
         </html>
