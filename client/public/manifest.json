@@ -1,7 +1,7 @@
 {
     "name": "TripSang",
     "short_name": "TripSang",
-    "description": "Find Your Travel Squad - Connect with travelers, share costs, and experience the world together",
+    "description": "Find Your Travel Partners - Connect with travelers, share costs, and experience the world together",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f172a",

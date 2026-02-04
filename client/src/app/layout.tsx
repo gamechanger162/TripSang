@@ -7,7 +7,7 @@ const siteUrl = 'https://tripsang.com';
 export const metadata: Metadata = {
     metadataBase: new URL(siteUrl),
     title: {
-        default: 'Tripसंग - Find Your Travel Squad',
+        default: 'Tripसंग - Find Your Travel Partners',
         template: '%s | Tripसंग'
     },
     description: 'Connect with travelers, find your squad, share costs, and experience the world together. The ultimate social network for adventure seekers.',
@@ -25,21 +25,21 @@ export const metadata: Metadata = {
         locale: 'en_US',
         url: siteUrl,
         siteName: 'Tripसंग',
-        title: 'Tripसंग - Find Your Travel Squad',
-        description: 'Connect with travelers, find your squad, share costs, and experience the world together.',
+        title: 'Tripसंग - Find Your Travel Partners',
+        description: 'Connect with travelers, find your travel partners, share costs, and experience the world together.',
         images: [
             {
                 url: `${siteUrl}/og-image.png`,
                 width: 1200,
                 height: 630,
-                alt: 'Tripसंग - Find Your Travel Squad',
+                alt: 'Tripसंग - Find Your Travel Partners',
             },
         ],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Tripसंग - Find Your Travel Squad',
-        description: 'Connect with travelers, find your squad, share costs, and experience the world together.',
+        title: 'Tripसंग - Find Your Travel Partners',
+        description: 'Connect with travelers, find your travel partners, share costs, and experience the world together.',
         images: [`${siteUrl}/og-image.png`],
         creator: '@tripsang',
     },
@@ -100,7 +100,7 @@ export default function RootLayout({
                                         "https://twitter.com/tripsang",
                                         "https://facebook.com/tripsang"
                                     ],
-                                    "description": "The ultimate social network for travelers. Find your travel squad, share costs, and experience the world together."
+                                    "description": "The ultimate social network for travelers. Find your travel partners, share costs, and experience the world together."
                                 },
                                 {
                                     "@type": "WebSite",

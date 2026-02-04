@@ -73,7 +73,7 @@ export default function MyPlanPage() {
     const inTrialPeriod = subscription?.status === 'trial' && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8 text-gray-900 dark:text-white">
             <div className="max-w-2xl mx-auto space-y-6">
                 <h1 className="text-2xl font-bold px-2">My Subscription</h1>
 
@@ -88,7 +88,9 @@ export default function MyPlanPage() {
                                         {inTrialPeriod ? 'TRIAL' : 'ACTIVE'}
                                     </span>
                                 </h2>
-                                <p className="text-primary-100 text-sm mt-1">Monthly Membership</p>
+                                <p className="text-primary-100 text-sm mt-1">
+                                    {subscription?.subscriptionId ? 'Monthly Membership' : 'One-time Pass'}
+                                </p>
                             </div>
                             <Shield className="w-8 h-8 text-white/80" />
                         </div>
@@ -101,7 +103,7 @@ export default function MyPlanPage() {
                                 <Calendar className="w-5 h-5 text-primary-500 mt-0.5" />
                                 <div>
                                     <p className="text-xs text-gray-500 font-medium uppercase">Start Date</p>
-                                    <p className="font-semibold">
+                                    <p className="font-semibold text-gray-900 dark:text-gray-100">
                                         {subscription?.currentStart ? new Date(subscription.currentStart).toLocaleDateString() : 'N/A'}
                                     </p>
                                 </div>
@@ -110,7 +112,7 @@ export default function MyPlanPage() {
                                 <RotateCw className="w-5 h-5 text-green-500 mt-0.5" />
                                 <div>
                                     <p className="text-xs text-gray-500 font-medium uppercase">Renews On</p>
-                                    <p className="font-semibold">
+                                    <p className="font-semibold text-gray-900 dark:text-white">
                                         {subscription?.currentEnd ? new Date(subscription.currentEnd).toLocaleDateString() : 'N/A'}
                                     </p>
                                     {inTrialPeriod ? (

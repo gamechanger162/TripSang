@@ -10,7 +10,7 @@ export default function AboutUs() {
 
             <div className="prose dark:prose-invert max-w-none">
                 <section className="mb-12 text-center">
-                    <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <p className="text-xl text-gray-300 leading-relaxed">
                         Connecting travelers. Facilitating shared adventures. <br />
                         Discover, create, and join travel plans with like-minded explorers.
                     </p>
@@ -18,7 +18,7 @@ export default function AboutUs() {
 
                 <section className="mb-12 grid md:grid-cols-2 gap-8 items-center">
                     <div>
-                        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Our Mission</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-gray-100">Our Mission</h2>
                         <p className="mb-4">
                             At TripSang, we aim to redefine how people travel and connect. We believe that the best journeys are the ones shared with others.
                         </p>
@@ -26,32 +26,40 @@ export default function AboutUs() {
                             Whether you're a spontaneous backpacker looking for a buddy or a meticulous planner organizing a group expedition, TripSang is your platform to find your squad and create unforgettable memories.
                         </p>
                     </div>
-                    <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 dark:bg-dark-800 flex items-center justify-center">
-                        <span className="text-6xl">🌍</span>
+                    <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-dark-700 group">
+                        <Image
+                            src="/images/trending/world_travel_map.png"
+                            alt="Global Connectivity"
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                            <p className="text-white font-medium">Connecting 10,000+ Travelers Worldwide</p>
+                        </div>
                     </div>
                 </section>
 
                 <section className="mb-12">
-                    <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">What We Offer</h2>
+                    <h2 className="text-2xl font-bold mb-6 text-gray-100 text-center">What We Offer</h2>
                     <div className="grid md:grid-cols-3 gap-6">
                         <div className="p-6 bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-100 dark:border-dark-700">
                             <div className="text-3xl mb-4">🤝</div>
                             <h3 className="text-lg font-bold mb-2">Travel Matching</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-gray-400">
                                 Find travel partners who share your interests, budget, and travel style.
                             </p>
                         </div>
                         <div className="p-6 bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-100 dark:border-dark-700">
                             <div className="text-3xl mb-4">💬</div>
                             <h3 className="text-lg font-bold mb-2">Community Chat</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-gray-400">
                                 Connect with your squad before you depart using our built-in real-time chat features.
                             </p>
                         </div>
                         <div className="p-6 bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-100 dark:border-dark-700">
                             <div className="text-3xl mb-4">🛡️</div>
                             <h3 className="text-lg font-bold mb-2">Verified Profiles</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-gray-400">
                                 Travel with confidence knowing our community utilizes phone verification and reputation systems.
                             </p>
                         </div>
