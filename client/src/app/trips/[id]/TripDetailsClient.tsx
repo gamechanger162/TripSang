@@ -140,14 +140,22 @@ export function TripDetailsClient() {
         }
     }, [tripId, router]);
 
-    const handleJoinSquad = async () => {
+    const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+    // Initial check handler - opens modal
+    const handleJoinSquad = () => {
         if (!session) {
             toast.error('Please login to join');
             router.push('/auth/signin');
             return;
         }
+        setShowSafetyModal(true);
+    };
 
+    // Actual join action - called after safety modal confirmation
+    const executeJoinSquad = async () => {
         setJoining(true);
+        setShowSafetyModal(false);
 
         try {
             const response = await tripAPI.join(tripId);
@@ -998,6 +1006,90 @@ export function TripDetailsClient() {
                                 </svg>
                                 <span className="font-medium text-gray-700 dark:text-gray-300">Copy Link</span>
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Safety Tips Modal */}
+            {showSafetyModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all">
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <span className="text-3xl">🛡️</span> Safety First
+                                </h3>
+                                <button
+                                    onClick={() => setShowSafetyModal(false)}
+                                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 mb-8">
+                                <p className="text-gray-600 dark:text-gray-300 font-medium text-center mb-6">
+                                    Before you join this squad, please review these safety reminders to ensure a great experience.
+                                </p>
+
+                                <div className="space-y-4">
+                                    <div className="flex gap-4 p-4 bg-purple-50 dark:bg-purple-900/10 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                                        <div className="text-2xl">📱</div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">Verify Your Profile</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">Trust starts with verification. Ensure your profile is verified and look for verified badges on others.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                                        <div className="text-2xl">🤝</div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">Meet in Public</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">For the first meetup, always choose a public, well-lit location. Let someone know where you are.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 p-4 bg-green-50 dark:bg-green-900/10 rounded-xl border border-green-100 dark:border-green-900/30">
+                                        <div className="text-2xl">💰</div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">Money Safety</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">Be cautious with financial details. Never share passwords or send money to unverified sources.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                                        <div className="text-2xl">🛑</div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">Trust Your Instincts</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">If something feels off, it probably is. You have the right to leave any situation that feels unsafe.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={() => setShowSafetyModal(false)}
+                                    className="btn-outline flex-1 py-3"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={executeJoinSquad}
+                                    disabled={joining}
+                                    className="btn-primary flex-1 py-3 flex items-center justify-center gap-2"
+                                >
+                                    {joining ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Joining...
+                                        </>
+                                    ) : (
+                                        'I Understand, Join Squad'
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

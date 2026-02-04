@@ -74,20 +74,33 @@ export default function HomePage() {
     };
 
     // Marquee content
+    const [activeCategory, setActiveCategory] = useState('All');
+
+    // Categorized Trending Data
     const staticTrending = [
-        { name: "Rio Carnival", image: "/images/trending/rio_carnival.png" },
-        { name: "Venice", image: "/images/trending/venice_canals.png" },
-        { name: "Thailand", image: "/images/trending/thailand_beach.png" },
-        { name: "Gulmarg Snow", image: "/images/trending/snowy_mountains.png" },
-        { name: "Goa Party", image: "/images/trending/goa_party.png" },
-        { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&q=80" },
+        { name: "Bali, Indonesia", image: "/images/trending/bali_landscape.png", category: "Chill Places", description: "Beautiful beaches, yoga retreats, rice terraces, and affordable luxury." },
+        { name: "Rio Carnival", image: "/images/trending/rio_carnival.png", category: "Adventure", description: "Experience the world's biggest party with vibrant colors and samba." },
+        { name: "Venice", image: "/images/trending/venice_canals.png", category: "Chill Places", description: "Timeless canals and romantic gondola rides in the floating city." },
+        { name: "Thailand", image: "/images/trending/thailand_beach.png", category: "Chill Places", description: "Tropical paradise with stunning islands and vibrant night markets." },
+        { name: "Gulmarg", image: "/images/trending/snowy_mountains.png", category: "Adventure", description: "Premier skiing destination with breathtaking snow-capped peaks." },
+        { name: "Goa Party", image: "/images/trending/goa_party.png", category: "Solo-Friendly", description: "The ultimate beach party destination with a friendly vibe." },
+        { name: "Kerala", image: "/images/trending/kerala_backwaters.png", category: "Chill Places", description: "God's own country with serene backwaters and lush greenery." },
+        { name: "Manali", image: "/images/trending/manali_trek.png", category: "Adventure", description: "A high-altitude resort town for backpacking and trekking." },
+        { name: "Vietnam", image: "/images/trending/vietnam_street.png", category: "Solo-Friendly", description: "Rich history, bustling cities, and incredible street food." },
     ];
 
-    // Use fetched data if available, otherwise static
-    const displayItems = trendingDestinations.length > 0 ? trendingDestinations : staticTrending;
+    // Filter items based on active category
+    const filteredItems = activeCategory === 'All'
+        ? staticTrending
+        : staticTrending.filter(item => item.category === activeCategory);
 
-    // Duplicate for infinite scroll
-    const marqueeItems = [...displayItems, ...displayItems, ...displayItems];
+    // Use fetched data if available AND category is All (fetched data usually doesn't have local categories yet), otherwise use static
+    const displayItems = (trendingDestinations.length > 0 && activeCategory === 'All')
+        ? [...trendingDestinations, ...staticTrending] // Mix them for fullness
+        : filteredItems;
+
+    // Duplicate for infinite scroll (Marquee needs enough items)
+    const marqueeItems = [...displayItems, ...displayItems, ...displayItems].slice(0, 15); // Limit total for performance
 
     return (
         <div className="min-h-screen -mt-16 bg-black text-white overflow-x-hidden">
@@ -208,11 +221,78 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Trending Vibes Marquee - NEW & EXCITING */}
-            <section className="py-12 bg-black border-y border-white/5 relative z-10 overflow-hidden">
-                <div className="mb-8 text-center">
-                    <h3 className="text-sm font-bold text-primary-500 tracking-[0.2em] uppercase">Trending Locations</h3>
-                    <p className="text-gray-400 text-sm mt-2">Click to explore trips</p>
+            {/* The Process Section - HOW IT WORKS */}
+            <section className="py-20 bg-dark-900 border-b border-white/5 relative">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-black text-white mb-4">How It Works</h2>
+                        <p className="text-gray-400">Start your journey in 4 simple steps</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+                        {/* Connecting Line (Desktop) */}
+                        <div className="hidden md:block absolute top-[60px] left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary-900 via-primary-700 to-primary-900 z-0"></div>
+
+                        {/* Step 1 */}
+                        <div className="relative z-10 text-center group">
+                            <div className="w-24 h-24 mx-auto bg-dark-800 border-2 border-primary-900 rounded-full flex items-center justify-center mb-6 group-hover:border-primary-500 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all duration-300">
+                                <span className="text-3xl">👤</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">1. Log In</h3>
+                            <p className="text-gray-400 text-sm">Create your profile and verify your identity.</p>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="relative z-10 text-center group">
+                            <div className="w-24 h-24 mx-auto bg-dark-800 border-2 border-primary-900 rounded-full flex items-center justify-center mb-6 group-hover:border-primary-500 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all duration-300">
+                                <span className="text-3xl">🎁</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">2. Get Free Trial</h3>
+                            <p className="text-gray-400 text-sm">Enjoy a 30-day free trial of premium features.</p>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="relative z-10 text-center group">
+                            <div className="w-24 h-24 mx-auto bg-dark-800 border-2 border-primary-900 rounded-full flex items-center justify-center mb-6 group-hover:border-primary-500 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all duration-300">
+                                <span className="text-3xl">🗺️</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">3. Explore & Create</h3>
+                            <p className="text-gray-400 text-sm">Browse trending trips or start your own plan.</p>
+                        </div>
+
+                        {/* Step 4 */}
+                        <div className="relative z-10 text-center group">
+                            <div className="w-24 h-24 mx-auto bg-dark-800 border-2 border-primary-900 rounded-full flex items-center justify-center mb-6 group-hover:border-primary-500 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all duration-300">
+                                <span className="text-3xl">💬</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">4. Chat & Connect</h3>
+                            <p className="text-gray-400 text-sm">Meet your squad and travel together.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Trending Vibes Marquee - REDESIGNED */}
+            <section className="py-16 bg-black border-y border-white/5 relative z-10 overflow-hidden">
+                <div className="text-center mb-10">
+                    <h2 className="text-4xl font-bold text-white mb-6">Discover Popular Destinations</h2>
+                    <p className="text-gray-400 mb-8">People don't just travel. They tell stories.</p>
+
+                    {/* Category Filters */}
+                    <div className="flex flex-wrap justify-center gap-4 mb-8">
+                        {['All', 'Chill Places', 'Adventure', 'Solo-Friendly'].map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`px-6 py-2 rounded-full border transition-all duration-300 ${activeCategory === cat
+                                    ? 'bg-primary-600 border-primary-600 text-white shadow-lg scale-105'
+                                    : 'bg-transparent border-white/20 text-gray-400 hover:border-white/50 hover:text-white'
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex w-full whitespace-nowrap overflow-hidden pause-on-hover py-4">
@@ -221,27 +301,37 @@ export default function HomePage() {
                             <div
                                 key={`${item.name}-${idx}`}
                                 onClick={() => router.push(`/search?to=${encodeURIComponent(item.name)}`)}
-                                className="inline-block mx-4 w-64 h-80 relative group cursor-pointer overflow-hidden rounded-2xl border border-white/10 hover:border-primary-500/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary-500/20"
+                                className="inline-block mx-3 w-72 h-96 relative group cursor-pointer overflow-hidden rounded-2xl transition-all duration-500 transform hover:scale-105"
                             >
                                 <img
-                                    src={item.image || item.img || '/placeholder.jpg'} // Fallback
+                                    src={item.image || item.img || '/placeholder.jpg'}
                                     alt={item.name}
-                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     loading="lazy"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                                <div className="absolute bottom-0 left-0 w-full p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                    <h4 className="text-2xl font-bold font-display">{item.name}</h4>
-                                    {item.tripCount > 0 && (
-                                        <p className="text-xs text-gray-400 mt-1">{item.tripCount} trip{item.tripCount !== 1 ? 's' : ''} available</p>
-                                    )}
-                                    <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <span className="text-xs font-semibold bg-primary-600 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-primary-500 transition-colors">
-                                            EXPLORE
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                            </svg>
+                                {/* Overlay Gradient - Always visible at bottom, grows on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
+
+                                {/* Content Overlay */}
+                                <div className="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-primary-400">📍</span>
+                                        <h4 className="text-2xl font-bold text-white font-display shadow-black drop-shadow-md">{item.name}</h4>
+                                    </div>
+
+                                    {/* Description reveals on hover */}
+                                    <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-500 opacity-0 group-hover:opacity-100">
+                                        <p className="text-sm text-gray-300 whitespace-normal line-clamp-3 mb-3">
+                                            {item.description || "Experience the vibe of this amazing destination. Perfect for your next adventure."}
+                                        </p>
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider border-b border-primary-500 pb-0.5">
+                                            Explore Now
                                         </span>
+                                    </div>
+
+                                    {/* Always visible tagline/counter */}
+                                    <div className="mt-2 text-xs text-gray-400 font-medium opacity-100 group-hover:opacity-0 transition-opacity duration-300 absolute -bottom-6">
+                                        {item.tripCount > 0 ? `${item.tripCount} trips` : 'Trending Now'}
                                     </div>
                                 </div>
                             </div>
@@ -321,7 +411,7 @@ export default function HomePage() {
                             <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/10 relative overflow-hidden group hover:bg-gray-900/80 transition-all duration-300 h-full flex flex-col justify-center">
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 z-0"></div>
                                 <Image
-                                    src="https://images.unsplash.com/photo-1533105079780-92b9be482077?w=500&q=80"
+                                    src="/images/home/gallery_cover.png"
                                     fill
                                     alt="Gallery"
                                     className="object-cover absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity duration-500 scale-100 group-hover:scale-105"
@@ -383,10 +473,10 @@ export default function HomePage() {
                             {/* Floating Cards Effect */}
                             <div className="relative w-full aspect-square md:aspect-[4/3]">
                                 <div className="absolute top-0 right-0 w-2/3 h-5/6 bg-gray-800 rounded-2xl rotate-6 overflow-hidden border-4 border-white/5 opacity-60 transform translate-x-4">
-                                    <Image src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80" fill alt="Travel 1" className="object-cover" />
+                                    <Image src="/images/home/moment_hike.png" fill alt="Travel 1" className="object-cover" />
                                 </div>
                                 <div className="absolute top-10 right-12 w-2/3 h-5/6 bg-gray-800 rounded-2xl -rotate-3 overflow-hidden border-4 border-white/10 shadow-2xl z-10">
-                                    <Image src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=600&q=80" fill alt="Travel 2" className="object-cover" />
+                                    <Image src="/images/home/moment_bali.png" fill alt="Travel 2" className="object-cover" />
                                     <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-white/20">
                                         @Sarah in Bali 🌴
                                     </div>
@@ -402,7 +492,7 @@ export default function HomePage() {
             <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <Image
-                        src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1600&q=80"
+                        src="/images/home/footer_bg.png"
                         alt="Adventure awaits"
                         fill
                         className="object-cover brightness-50"
