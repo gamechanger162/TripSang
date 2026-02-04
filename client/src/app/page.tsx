@@ -85,6 +85,24 @@ export default function HomePage() {
         { name: "Jaisalmer", image: "/images/trending/jaipur_palace.png", category: "Adventure", description: "The Golden City of India, known for its desert safari and forts." },
         { name: "Ladakh", image: "/images/trending/ladakh_lake.png", category: "Adventure", description: "Rugged mountains, crystal clear lakes, and high-altitude adventure." },
         { name: "Tawang", image: "/images/trending/tawang_monastery.png", category: "Adventure", description: "Hidden gem of Arunachal Pradesh with majestic monasteries and snowy passes." },
+        { name: "Kyoto, Japan", image: "/images/trending/kyoto.png", category: "Chill Places", description: "Ancient temples, traditional tea houses, and sublime zen gardens." },
+        { name: "Santorini, Greece", image: "/images/trending/santorini.png", category: "Chill Places", description: "Iconic white buildings with blue domes overlooking the crystal clear Aegean Sea." },
+        { name: "Machu Picchu, Peru", image: "/images/trending/machu_picchu.png", category: "Adventure", description: "The Lost City of the Incas, hidden high in the Andes Mountains." },
+        { name: "Iceland", image: "/images/trending/iceland.png", category: "Adventure", description: "Land of fire and ice, featuring volcanoes, geysers, hot springs, and lava fields." },
+        { name: "Dubai, UAE", image: "/images/trending/dubai.png", category: "Chill Places", description: "Ultramodern architecture, luxury shopping, and lively nightlife scene." },
+        { name: "Paris, France", image: "/images/trending/paris.png", category: "Chill Places", description: "The City of Light, known for romance, gastronomy, and art." },
+        { name: "New York City, USA", image: "/images/trending/nyc.png", category: "Adventure", description: "The city that never sleeps, offering endless energy and iconic landmarks." },
+        { name: "Cape Town, South Africa", image: "/images/trending/capetown.png", category: "Adventure", description: "Stunning coastlines, Table Mountain hikes, and vibrant culture." },
+        { name: "Rome, Italy", image: "/images/trending/rome.png", category: "Chill Places", description: "Eternal City filled with ancient history, art, and incredible food." },
+        { name: "Istanbul, Turkey", image: "/images/trending/istanbul.png", category: "Chill Places", description: "Where East meets West, famous for its bazaars, mosques, and history." },
+        { name: "Sydney, Australia", image: "/images/trending/sydney.png", category: "Adventure", description: "Famous for its Opera House, Harbour Bridge, and beautiful beaches." },
+        { name: "Queenstown, New Zealand", image: "/images/trending/queenstown.png", category: "Adventure", description: "Adventure capital of the world, perfect for bungee jumping and skiing." },
+        { name: "Barcelona, Spain", image: "/images/trending/barcelona.png", category: "Chill Places", description: "Famous for Gaudí's architecture, beaches, and vibrant street life." },
+        { name: "Amsterdam, Netherlands", image: "/images/trending/amsterdam.png", category: "Chill Places", description: "Known for its artistic heritage, elaborate canal system, and narrow houses." },
+        { name: "Prague, Czech Republic", image: "/images/trending/prague.png", category: "Chill Places", description: "The City of a Hundred Spires, known for its Old Town Square and baroque buildings." },
+        { name: "Banff, Canada", image: "/images/trending/banff.png", category: "Adventure", description: "Stunning turquoise lakes, snow-capped peaks, and abundant wildlife." },
+        { name: "Maui, Hawaii", image: "/images/trending/maui.png", category: "Chill Places", description: "Famous for its beaches, the sacred Iao Valley, and migrating humpback whales." },
+        { name: "Cairo, Egypt", image: "/images/trending/cairo.png", category: "Adventure", description: "Home to the Giza Pyramids and the Great Sphinx, rich in ancient history." },
         { name: "Kaziranga", image: "/images/trending/kaziranga_rhino.png", category: "Adventure", description: "Home of the one-horned rhino and vibrant biodiversity in Assam." },
         { name: "Shillong", image: "/images/trending/meghalaya_rootbridge.png", category: "Chill Places", description: "Scotland of the East, known for its rolling hills and waterfalls." },
         { name: "Spiti Valley", image: "/images/trending/ladakh_lake.png", category: "Adventure", description: "Cold desert mountain valley famous for its stunning landscapes and monasteries." },
@@ -318,8 +336,7 @@ export default function HomePage() {
                         {marqueeItems.map((item, idx) => (
                             <div
                                 key={`${item.name}-${idx}`}
-                                onClick={() => router.push(`/search?to=${encodeURIComponent(item.name)}`)}
-                                className="inline-block mx-3 w-72 h-96 relative group cursor-pointer overflow-hidden rounded-2xl transition-all duration-500 transform hover:scale-105"
+                                className="inline-block mx-3 w-72 h-96 relative group cursor-default overflow-hidden rounded-2xl transition-all duration-500 transform hover:scale-105"
                             >
                                 <img
                                     src={item.image || item.img || '/placeholder.jpg'}
@@ -342,9 +359,6 @@ export default function HomePage() {
                                         <p className="text-sm text-gray-300 whitespace-normal line-clamp-3 mb-3">
                                             {item.description || "Experience the vibe of this amazing destination. Perfect for your next adventure."}
                                         </p>
-                                        <span className="text-xs font-bold text-white uppercase tracking-wider border-b border-primary-500 pb-0.5">
-                                            Explore Now
-                                        </span>
                                     </div>
 
                                     {/* Always visible tagline/counter */}
@@ -487,7 +501,7 @@ export default function HomePage() {
             </section>
 
             {/* New "Moments" Showcase Section */}
-            <section className="py-20 bg-black relative overflow-hidden z-0">
+            <section className="py-20 md:py-24 bg-black relative overflow-hidden z-0 mt-12 md:mt-0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col md:flex-row items-center gap-12">
                         <div className="md:w-1/2 relative">
