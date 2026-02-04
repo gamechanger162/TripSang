@@ -257,7 +257,7 @@ export default function HomePage() {
                                 <span className="text-3xl">👤</span>
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">1. Log In</h3>
-                            <p className="text-gray-400 text-sm">Create your profile and verify your identity.</p>
+                            <p className="text-gray-400 text-sm">Create your profile and verify with Aadhaar or PAN for trusted travel.</p>
                         </div>
 
                         {/* Step 2 */}
@@ -448,18 +448,37 @@ export default function HomePage() {
                                 </div>
                             </div>
 
-                            {/* Trust Block */}
-                            <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-6 border border-white/10 relative overflow-hidden group hover:border-gray-700 transition-colors duration-300">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            {/* Trust Block - Enhanced with ID Verification */}
+                            <div className="bg-gradient-to-br from-blue-900/50 to-indigo-900/50 backdrop-blur-sm rounded-3xl p-8 border border-blue-500/20 relative overflow-hidden group hover:border-blue-500/50 transition-all duration-300">
+                                <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl group-hover:bg-blue-600/30 transition-all duration-500" />
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-white">Travel with Verified Partners</h3>
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white">Verified Vibes</h3>
-                                        <p className="text-gray-400 text-xs">
-                                            Travel safely with verified profiles and reviews.
-                                        </p>
+                                    <p className="text-blue-100 mb-4 leading-relaxed">
+                                        Verify yourself with <strong className="text-white">Aadhaar or PAN</strong> and join a community of trusted travelers. Get the verified badge and travel confidently knowing your squad is authentic.
+                                    </p>
+                                    <div className="space-y-2 mb-4">
+                                        <div className="flex items-center gap-2 text-sm text-blue-200">
+                                            <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                            <span>Government ID verification (Aadhaar/PAN)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-blue-200">
+                                            <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                            <span>Verified traveler reviews & ratings</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-blue-200">
+                                            <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                            <span>Safe & secure travel community</span>
+                                        </div>
                                     </div>
+                                    <Link href="/verify/id" className="inline-flex items-center gap-2 text-blue-300 text-sm font-bold hover:text-blue-200 transition-colors">
+                                        Get Verified Now
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

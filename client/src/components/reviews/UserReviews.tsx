@@ -141,17 +141,17 @@ export default function UserReviews({ userId }: UserReviewsProps) {
             {/* Reviews List */}
             <div className="space-y-6">
                 {reviews.map((review) => (
-                    <div key={review._id} className="border-b border-gray-100 dark:border-gray-700 pb-6 last:border-0">
-                        <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 mr-3">
+                    <div key={review._id} className="border-b border-gray-100 dark:border-gray-700 pb-6 last:border-0 last:pb-0">
+                        <div className="flex items-start justify-between mb-3 gap-4">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0">
                                     {review.reviewer.profilePicture ? (
                                         <Image
                                             src={review.reviewer.profilePicture}
                                             alt={review.reviewer.name}
                                             width={40}
                                             height={40}
-                                            className="object-cover"
+                                            className="object-cover w-full h-full"
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold">
@@ -159,21 +159,23 @@ export default function UserReviews({ userId }: UserReviewsProps) {
                                         </div>
                                     )}
                                 </div>
-                                <div>
+                                <div className="flex-1 min-w-0">
                                     <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                                         {review.reviewer.name}
                                     </h4>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                        <span>Trip: {review.trip.title}</span>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 flex-wrap">
+                                        <span className="truncate">Trip: {review.trip.title}</span>
                                         <span>•</span>
                                         <span>{new Date(review.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                             </div>
-                            {renderStars(review.rating)}
+                            <div className="flex-shrink-0">
+                                {renderStars(review.rating)}
+                            </div>
                         </div>
                         {review.comment && (
-                            <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 leading-relaxed">
+                            <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 leading-relaxed ml-0 md:ml-13">
                                 "{review.comment}"
                             </p>
                         )}
