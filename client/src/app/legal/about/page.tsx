@@ -60,7 +60,7 @@ export default function AboutUs() {
                             <div className="text-3xl mb-4">🛡️</div>
                             <h3 className="text-lg font-bold mb-2">Verified Profiles</h3>
                             <p className="text-sm text-gray-400">
-                                Travel with confidence knowing our community utilizes phone verification and reputation systems.
+                                Travel with confidence. Our community utilizes Government ID verification (Aadhaar/PAN) to ensure real people and real connections.
                             </p>
                         </div>
                     </div>

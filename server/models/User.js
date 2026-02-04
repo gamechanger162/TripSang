@@ -35,6 +35,27 @@ const userSchema = new mongoose.Schema({
         },
         default: 'user'
     },
+    verificationStatus: {
+        type: String,
+        enum: ['unverified', 'pending', 'verified', 'rejected'],
+        default: 'unverified'
+    },
+    idType: {
+        type: String,
+        enum: ['aadhaar', 'pan'],
+    },
+    idDocumentFront: {
+        type: String, // URL to Cloudinary image
+        select: false // Protect user ID data
+    },
+    idDocumentBack: {
+        type: String, // For Aadhaar
+        select: false
+    },
+    rejectionReason: {
+        type: String,
+        default: ''
+    },
     mobileNumber: {
         type: String,
         trim: true,

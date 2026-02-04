@@ -16,6 +16,7 @@ export default function PrivacyPolicy() {
                     <ul className="list-disc pl-5 mt-2 space-y-2 text-gray-300">
                         <li><strong>Personal Data:</strong> Personally identifiable information, such as your name, email address, and demographic information that you voluntarily give to us when you register with the Website.</li>
                         <li><strong>Phone Number Verification:</strong> To ensure the safety and authenticity of our community, we may require phone number verification. This number is used for account security and verification purposes only.</li>
+                        <li><strong>Identity Documents:</strong> If you choose to verify your identity, we collect images of your Government ID (e.g., Aadhaar, PAN). These are securely stored and encrypted, used solely for verification, and never shared publicly.</li>
                         <li><strong>Derivative Data:</strong> Information our servers automatically collect when you access the Website, such as your IP address, browser type, your operating system, your access times, and the pages you have viewed directly before and after accessing the Website.</li>
                     </ul>
                 </section>

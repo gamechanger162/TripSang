@@ -174,3 +174,69 @@ export const getUserTrips = async (req, res) => {
         });
     }
 };
+
+/**
+ * @desc    Submit ID verification request
+ * @route   POST /api/users/verify-request
+ * @access  Private
+ */
+export const submitVerificationRequest = async (req, res) => {
+    try {
+        const { idType, frontUrl, backUrl } = req.body;
+
+        if (!idType || !frontUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'ID Type and Front Document are required'
+            });
+        }
+
+        if (idType === 'aadhaar' && !backUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'Aadhaar verification requires both front and back photos'
+            });
+        }
+
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (user.verificationStatus === 'verified') {
+            return res.status(400).json({
+                success: false,
+                message: 'User is already verified'
+            });
+        }
+
+        // Update user status
+        user.verificationStatus = 'pending';
+        user.idType = idType;
+        user.idDocumentFront = frontUrl;
+        if (backUrl) user.idDocumentBack = backUrl;
+
+        user.rejectionReason = ''; // Clear previous rejection reason if any
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Verification request submitted successfully',
+            user: {
+                _id: user._id,
+                verificationStatus: user.verificationStatus
+            }
+        });
+    } catch (error) {
+        console.error('Submit verification error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+};

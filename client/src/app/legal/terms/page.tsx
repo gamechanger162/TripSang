@@ -26,8 +26,8 @@ export default function TermsOfService() {
                 <section className="mb-8">
                     <h2 className="text-xl font-semibold mb-4 text-gray-100">3. User Registration & Security</h2>
                     <p className="text-gray-300">You may be required to register with the Website. You agree to keep your password confidential and will be responsible for all use of your account and password.</p>
-                    <p className="mt-2 text-indigo-400 font-medium">Phone Number Verification:</p>
-                    <p className="text-gray-300">To enhance security, we may implement phone number verification for account creation or access to specific features. You agree to provide a valid phone number if requested and authorize us to verify this number via SMS OTP.</p>
+                    <p className="mt-2 text-indigo-400 font-medium">Verify Identity:</p>
+                    <p className="text-gray-300">To build a trusted community, we require Government ID verification (Aadhaar, PAN, etc.) for creating trips or joining certain premium groups. You agree to provide accurate and authentic documents. Submitting fake or manipulated documents will result in an immediate permanent ban.</p>
                 </section>
 
                 <section className="mb-8">

@@ -26,7 +26,7 @@ export default function SafetyTips() {
                             <h3 className="text-xl font-bold text-white">Verify Your Profile</h3>
                         </div>
                         <p className="text-gray-400 text-sm">
-                            We encourage all users to verify their phone numbers. This helps build trust within the community. Look for other travelers who have verified profiles when planning a meetup.
+                            We encourage all users to verify their phone numbers and Government IDs. Verified profiles (blue tick) indicate that we have confirmed their identity. Prioritize traveling with verified members.
                         </p>
                     </div>
 

@@ -10,7 +10,9 @@ import {
     getPlatformStats,
     getAllTrips,
     deleteTrip,
-    grantPremium
+    grantPremium,
+    getVerificationRequests,
+    handleVerificationAction
 } from '../controllers/adminController.js';
 import {
     createAnnouncement,
@@ -142,5 +144,25 @@ router.delete('/announcements/:id', deleteAnnouncement);
  * @access  Private (Admin only)
  */
 router.patch('/announcements/:id/toggle', toggleAnnouncement);
+
+
+
+/**
+ * VERIFICATION ROUTES
+ */
+
+/**
+ * @route   GET /api/admin/verify-requests
+ * @desc    Get pending verification requests
+ * @access  Private (Admin only)
+ */
+router.get('/verify-requests', getVerificationRequests);
+
+/**
+ * @route   POST /api/admin/verify-action
+ * @desc    Approve or Reject verification
+ * @access  Private (Admin only)
+ */
+router.post('/verify-action', handleVerificationAction);
 
 export default router;

@@ -436,6 +436,25 @@ export const adminAPI = {
             body: JSON.stringify({ durationDays })
         });
     },
+
+    /**
+     * Get verification requests
+     * GET /api/admin/verify-requests
+     */
+    getVerificationRequests: async (page = 1, limit = 20) => {
+        return fetchWithAuth(`/api/admin/verify-requests?page=${page}&limit=${limit}`);
+    },
+
+    /**
+     * Approve/Reject verification
+     * POST /api/admin/verify-action
+     */
+    handleVerificationAction: async (userId: string, action: 'approve' | 'reject', reason?: string) => {
+        return fetchWithAuth('/api/admin/verify-action', {
+            method: 'POST',
+            body: JSON.stringify({ userId, action, reason })
+        });
+    },
 };
 
 // ========================================
@@ -693,6 +712,17 @@ export const userAPI = {
     updateProfile: async (data: any) => {
         return fetchWithAuth('/api/users/profile', {
             method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    },
+
+    /**
+     * Submit ID verification request
+     * POST /api/users/verify-request
+     */
+    submitVerificationRequest: async (data: { idType: 'aadhaar' | 'pan'; frontUrl: string; backUrl?: string }) => {
+        return fetchWithAuth('/api/users/verify-request', {
+            method: 'POST',
             body: JSON.stringify(data),
         });
     },

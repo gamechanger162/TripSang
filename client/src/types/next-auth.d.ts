@@ -8,6 +8,7 @@ declare module 'next-auth' {
             accessToken: string;
             isMobileVerified: boolean;
             mobileNumber?: string;
+            verificationStatus?: string;
         } & DefaultSession['user'];
     }
 
@@ -16,6 +17,7 @@ declare module 'next-auth' {
         role?: string;
         token?: string;
         isMobileVerified?: boolean;
+        verificationStatus?: string;
     }
 }
 
@@ -25,5 +27,6 @@ declare module 'next-auth/jwt' {
         role: string;
         accessToken: string;
         isMobileVerified: boolean;
+        verificationStatus?: string;
     }
 }

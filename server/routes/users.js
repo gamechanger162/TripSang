@@ -3,7 +3,8 @@ import {
     getUserProfile,
     getMyProfile,
     updateUserProfile,
-    getUserTrips
+    getUserTrips,
+    submitVerificationRequest
 } from '../controllers/userController.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -22,6 +23,13 @@ router.get('/me', authenticate, getMyProfile);
  * @access  Private
  */
 router.put('/profile', authenticate, updateUserProfile);
+
+/**
+ * @route   POST /api/users/verify-request
+ * @desc    Submit ID verification
+ * @access  Private
+ */
+router.post('/verify-request', authenticate, submitVerificationRequest);
 
 /**
  * @route   GET /api/users/trips
