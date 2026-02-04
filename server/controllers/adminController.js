@@ -1,4 +1,4 @@
-import { User, GlobalConfig, Trip, Payment } from '../models/index.js';
+import { User, GlobalConfig, Trip, Payment, Notification } from '../models/index.js';
 
 /**
  * Get Global Configuration
@@ -599,13 +599,14 @@ export const handleVerificationAction = async (req, res) => {
 
         if (action === 'approve') {
             user.verificationStatus = 'verified';
-            user.addBadge('Verified Traveler'); // Add badge
-            user.rejectionReason = ''; // Clear rejection reason
+            // Manually add badge to avoid race condition with addBadge method
+            if (!user.badges.includes('Verified Traveler')) {
+                user.badges.push('Verified Traveler');
+            }
+            user.rejectionReason = '';
 
             // Notify user (In-app notification)
-            const io = req.app.get('io');
-            if (io) {
-                const { Notification } = await import('../models/index.js');
+            try {
                 await Notification.create({
                     recipient: user._id,
                     title: 'Verification Approved! 🎉',
@@ -614,27 +615,32 @@ export const handleVerificationAction = async (req, res) => {
                     link: '/profile',
                     sender: req.user._id
                 });
-                io.to(`user_${user._id}`).emit('new_notification', {
-                    title: 'Verification Approved!',
-                    message: 'Your identity has been verified.',
-                    type: 'system'
-                });
+
+                const io = req.app.get('io');
+                if (io) {
+                    io.to(`user_${user._id}`).emit('new_notification', {
+                        title: 'Verification Approved!',
+                        message: 'Your identity has been verified.',
+                        type: 'system'
+                    });
+                }
+            } catch (notifError) {
+                console.error('Notification creation error:', notifError);
+                // Continue even if notification fails
             }
 
         } else if (action === 'reject') {
             user.verificationStatus = 'rejected';
             user.rejectionReason = reason || 'Document authentication failed';
-            user.idDocumentFront = undefined; // Clear documents for privacy/security on rejection often good practice, or keep for audit? 
-            // Keeping for audit might be better, but privacy policy said "solely for verification". 
-            // Let's keep simpler logic for now: just mark rejected. 
-            // Actually, let's NOT delete the doc URL immediately so admin can see history or re-evaluate, 
-            // BUT for strict privacy we might want to. 
+            user.idDocumentFront = undefined; // Clear documents for privacy/security on rejection often good practice, or keep for audit?
+            // Keeping for audit might be better, but privacy policy said "solely for verification".
+            // Let's keep simpler logic for now: just mark rejected.
+            // Actually, let's NOT delete the doc URL immediately so admin can see history or re-evaluate,
+            // BUT for strict privacy we might want to.
             // For now, let's keep the URL but mark status rejected.
 
             // Notify user
-            const io = req.app.get('io');
-            if (io) {
-                const { Notification } = await import('../models/index.js');
+            try {
                 await Notification.create({
                     recipient: user._id,
                     title: 'Verification Rejected',
@@ -643,11 +649,18 @@ export const handleVerificationAction = async (req, res) => {
                     link: '/verify/id',
                     sender: req.user._id
                 });
-                io.to(`user_${user._id}`).emit('new_notification', {
-                    title: 'Verification Rejected',
-                    message: 'Your verification request was rejected.',
-                    type: 'system'
-                });
+
+                const io = req.app.get('io');
+                if (io) {
+                    io.to(`user_${user._id}`).emit('new_notification', {
+                        title: 'Verification Rejected',
+                        message: 'Your verification request was rejected.',
+                        type: 'system'
+                    });
+                }
+            } catch (notifError) {
+                console.error('Notification creation error:', notifError);
+                // Continue even if notification fails
             }
         }
 

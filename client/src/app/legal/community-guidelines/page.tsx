@@ -31,6 +31,9 @@ export default function CommunityGuidelines() {
                             <p className="text-gray-300">
                                 Be your authentic self. Don't catfish, impersonate others, or pretend to be someone you're not. Share honest travel plans, real stories, and genuine intentions. Trust is the foundation of a good travel squad.
                             </p>
+                            <p className="text-gray-300 mt-2">
+                                <strong className="text-primary-400">Pro Tip:</strong> Get your profile verified with a Government ID (Aadhaar/PAN) to show the community you're the real deal. Fake IDs or identity theft results in an instant permanent ban.
+                            </p>
                         </div>
                     </section>
 

@@ -64,6 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         token: data.token,
                         isMobileVerified: data.user.isMobileVerified,
                         profilePicture: data.user.profilePicture,
+                        verificationStatus: data.user.verificationStatus,
                     };
                 } catch (error: any) {
                     throw new Error(error.message || 'Authentication failed');
@@ -132,6 +133,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                             user.token = loginData.token;
                             user.role = loginData.user.role;
                             user.isMobileVerified = loginData.user.isMobileVerified;
+                            user.verificationStatus = loginData.user.verificationStatus;
                         }
                     }
 
@@ -152,6 +154,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.role = user.role || 'user';
                 token.accessToken = user.token;
                 token.isMobileVerified = user.isMobileVerified || false;
+                token.verificationStatus = user.verificationStatus || 'unverified';
             }
 
             return token;
@@ -163,6 +166,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.role = token.role as string;
                 session.user.accessToken = token.accessToken as string;
                 session.user.isMobileVerified = token.isMobileVerified as boolean;
+                session.user.verificationStatus = token.verificationStatus as string;
             }
 
             return session;

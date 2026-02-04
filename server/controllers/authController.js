@@ -200,7 +200,8 @@ export const login = async (req, res) => {
             bio: user.bio,
             location: user.location,
             createdAt: user.createdAt,
-            gender: user.gender
+            gender: user.gender,
+            verificationStatus: user.verificationStatus
         };
 
         res.status(200).json({
@@ -301,7 +302,8 @@ export const googleLogin = async (req, res) => {
                 role: user.role,
                 isMobileVerified: user.isMobileVerified,
                 profilePicture: user.profilePicture,
-                gender: user.gender
+                gender: user.gender,
+                verificationStatus: user.verificationStatus
             }
         });
     } catch (error) {

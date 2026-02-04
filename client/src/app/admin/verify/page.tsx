@@ -17,30 +17,34 @@ export default function AdminVerificationDashboard() {
     const [rejectingId, setRejectingId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (status === 'unauthenticated') {
-            router.push('/auth/signin');
-        } else if (status === 'authenticated' && session?.user?.role !== 'admin') {
-            router.push('/dashboard');
-            toast.error('Access denied');
-        } else if (status === 'authenticated' && session?.user?.role === 'admin') {
-            fetchRequests();
-        }
-    }, [status, session, router]);
-
-    const fetchRequests = async () => {
-        try {
-            setLoading(true);
-            const response = await adminAPI.getVerificationRequests();
-            if (response.success) {
-                setRequests(response.requests);
+        const init = async () => {
+            if (status === 'unauthenticated') {
+                router.push('/auth/signin');
+            } else if (status === 'authenticated') {
+                if (session?.user?.role !== 'admin') {
+                    router.push('/dashboard');
+                    toast.error('Access denied');
+                } else {
+                    // Only fetch if we haven't loaded yet or if forced
+                    try {
+                        // Don't set loading true here implies we keep initial state
+                        // But let's just fetch
+                        const response = await adminAPI.getVerificationRequests();
+                        if (response.success) {
+                            setRequests(response.requests);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching requests:', error);
+                        toast.error('Failed to load verification requests');
+                    } finally {
+                        setLoading(false);
+                    }
+                }
             }
-        } catch (error) {
-            console.error('Error fetching requests:', error);
-            toast.error('Failed to load verification requests');
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+
+        init();
+    }, [status, session?.user?.role, router]);
 
     const handleAction = async (userId: string, action: 'approve' | 'reject', reason?: string) => {
         try {

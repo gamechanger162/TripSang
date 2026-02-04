@@ -9,7 +9,7 @@ import { messageAPI, notificationAPI, friendAPI } from '@/lib/api';
 import { io } from 'socket.io-client';
 
 export default function Navbar() {
-    const { data: session, status } = useSession();
+    const { data: session, status, update } = useSession();
     const router = useRouter();
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
@@ -103,11 +103,22 @@ export default function Navbar() {
                 console.log('🔔 Notification Socket connected');
             });
 
-            newSocket.on('new_notification', (data: any) => {
+            newSocket.on('new_notification', async (data: any) => {
                 console.log('🔔 New Notification received:', data);
                 setUnreadNotifCount(prev => prev + 1);
                 // Prepend to list if loaded
                 setNotifications(prev => [data, ...prev]);
+
+                // Auto-refresh session if verification status changed
+                if (data.type === 'system' && (data.title?.includes('Verification Approved') || data.title?.includes('Verification Rejected'))) {
+                    console.log('🔄 Verification status changed, refreshing session...');
+                    try {
+                        await update();
+                        console.log('✅ Session refreshed successfully');
+                    } catch (error) {
+                        console.error('Failed to refresh session:', error);
+                    }
+                }
             });
 
             return () => {
