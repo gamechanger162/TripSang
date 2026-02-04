@@ -83,12 +83,30 @@ export const getOrCreateConversation = async (req, res) => {
         const conversation = await Conversation.findOrCreate(currentUserId, userId);
 
         // Get recent messages
-        const messages = await DirectMessage.find({
+        let messages = await DirectMessage.find({
             conversationId: conversation._id
         })
             .sort({ timestamp: 1 })
             .limit(50)
+            .populate({
+                path: 'replyTo',
+                select: 'sender message type imageUrl',
+                populate: { path: 'sender', select: 'name' }
+            })
             .lean();
+
+        // Transform messages to include senderName in replyTo validation
+        messages = messages.map(msg => {
+            if (msg.replyTo) {
+                // Check if replyTo is fully populated (it might have been deleted)
+                if (msg.replyTo.sender) {
+                    msg.replyTo.senderName = msg.replyTo.sender.name;
+                } else {
+                    msg.replyTo.senderName = 'Unknown';
+                }
+            }
+            return msg;
+        });
 
         res.status(200).json({
             success: true,
@@ -145,11 +163,28 @@ export const getMessageHistory = async (req, res) => {
         const total = await DirectMessage.countDocuments({ conversationId });
 
         // Get paginated messages
-        const messages = await DirectMessage.find({ conversationId })
+        let messages = await DirectMessage.find({ conversationId })
             .sort({ timestamp: -1 })
             .skip(skip)
             .limit(limit)
+            .populate({
+                path: 'replyTo',
+                select: 'sender message type imageUrl',
+                populate: { path: 'sender', select: 'name' }
+            })
             .lean();
+
+        // Transform messages
+        messages = messages.map(msg => {
+            if (msg.replyTo) {
+                if (msg.replyTo.sender) {
+                    msg.replyTo.senderName = msg.replyTo.sender.name;
+                } else {
+                    msg.replyTo.senderName = 'Unknown';
+                }
+            }
+            return msg;
+        });
 
         // Reverse to show oldest first
         messages.reverse();

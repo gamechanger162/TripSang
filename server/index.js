@@ -110,7 +110,8 @@ io.on('connection', (socket) => {
             // Fetch chat history
             const history = await Message.find({ tripId })
                 .sort({ timestamp: 1 })
-                .limit(50); // Limit to last 50 messages
+                .limit(50)
+                .populate('replyTo', 'senderName message type imageUrl'); // Limit to last 50 messages
 
             // Send history to user
             socket.emit('message_history', history);
@@ -277,7 +278,11 @@ io.on('connection', (socket) => {
 
             // Populate replyTo if it exists
             const populatedMessage = await DirectMessage.findById(savedMessage._id)
-                .populate('replyTo', 'message type imageUrl');
+                .populate({
+                    path: 'replyTo',
+                    select: 'sender message type imageUrl',
+                    populate: { path: 'sender', select: 'name' }
+                });
 
             // Update conversation lastMessage and increment unread for receiver
             conversation.lastMessage = {
@@ -287,6 +292,18 @@ io.on('connection', (socket) => {
             };
             conversation.incrementUnread(receiverId);
             await conversation.save();
+
+            // Format replyTo for frontend (flatten sender.name to senderName)
+            let formattedReplyTo = null;
+            if (populatedMessage.replyTo) {
+                formattedReplyTo = {
+                    _id: populatedMessage.replyTo._id,
+                    message: populatedMessage.replyTo.message,
+                    type: populatedMessage.replyTo.type,
+                    imageUrl: populatedMessage.replyTo.imageUrl,
+                    senderName: populatedMessage.replyTo.sender ? populatedMessage.replyTo.sender.name : 'Unknown'
+                };
+            }
 
             // Prepare message object for emit
             const messageData = {
@@ -298,7 +315,7 @@ io.on('connection', (socket) => {
                 message: savedMessage.message,
                 type: savedMessage.type,
                 imageUrl: savedMessage.imageUrl,
-                replyTo: populatedMessage.replyTo,
+                replyTo: formattedReplyTo,
                 timestamp: savedMessage.timestamp,
                 read: false
             };
