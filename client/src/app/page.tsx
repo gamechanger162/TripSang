@@ -77,13 +77,31 @@ export default function HomePage() {
     const [activeCategory, setActiveCategory] = useState('All');
 
     // Categorized Trending Data
+    // Categorized Trending Data
+    // Categorized Trending Data
     const staticTrending = [
         { name: "Bali, Indonesia", image: "/images/trending/bali_landscape.png", category: "Chill Places", description: "Beautiful beaches, yoga retreats, rice terraces, and affordable luxury." },
+        { name: "Jaipur, India", image: "/images/trending/jaipur_palace.png", category: "Chill Places", description: "The Pink City, famous for its majestic palaces and vibrant culture." },
+        { name: "Jaisalmer", image: "/images/trending/jaipur_palace.png", category: "Adventure", description: "The Golden City of India, known for its desert safari and forts." },
+        { name: "Ladakh", image: "/images/trending/ladakh_lake.png", category: "Adventure", description: "Rugged mountains, crystal clear lakes, and high-altitude adventure." },
+        { name: "Tawang", image: "/images/trending/tawang_monastery.png", category: "Adventure", description: "Hidden gem of Arunachal Pradesh with majestic monasteries and snowy passes." },
+        { name: "Kaziranga", image: "/images/trending/kaziranga_rhino.png", category: "Adventure", description: "Home of the one-horned rhino and vibrant biodiversity in Assam." },
+        { name: "Shillong", image: "/images/trending/meghalaya_rootbridge.png", category: "Chill Places", description: "Scotland of the East, known for its rolling hills and waterfalls." },
+        { name: "Spiti Valley", image: "/images/trending/ladakh_lake.png", category: "Adventure", description: "Cold desert mountain valley famous for its stunning landscapes and monasteries." },
         { name: "Rio Carnival", image: "/images/trending/rio_carnival.png", category: "Adventure", description: "Experience the world's biggest party with vibrant colors and samba." },
+        { name: "Kasol", image: "/images/trending/manali_trek.png", category: "Chill Places", description: "Mini Israel of India, sitting by the Parvati river with varied trekking trails." },
+        { name: "Gokarna", image: "/images/trending/andaman_beach.png", category: "Solo-Friendly", description: "Peaceful beaches and temples, perfect for a solo spiritual retreat." },
+        { name: "Pondicherry", image: "/images/trending/pondicherry_street.png", category: "Chill Places", description: "French colonial charm, serene beaches, and peaceful vibes." },
         { name: "Venice", image: "/images/trending/venice_canals.png", category: "Chill Places", description: "Timeless canals and romantic gondola rides in the floating city." },
+        { name: "Meghalaya", image: "/images/trending/meghalaya_rootbridge.png", category: "Adventure", description: "Abode of Clouds, living root bridges, and mesmerizing waterfalls." },
+        { name: "Coorg", image: "/images/trending/kerala_backwaters.png", category: "Chill Places", description: "The Scotland of India, known for its coffee plantations and misty hills." },
+        { name: "Munnar", image: "/images/trending/kerala_backwaters.png", category: "Chill Places", description: "Famous hill station with tea gardens, misty peaks, and serene vibes." },
         { name: "Thailand", image: "/images/trending/thailand_beach.png", category: "Chill Places", description: "Tropical paradise with stunning islands and vibrant night markets." },
+        { name: "Rishikesh", image: "/images/trending/rishikesh_rafting.png", category: "Adventure", description: "Yoga capital of the world and thrill of white water rafting." },
+        { name: "Varkala", image: "/images/trending/bali_landscape.png", category: "Solo-Friendly", description: "A beautiful coastal town with cliffs adjacent to the Arabian Sea." },
         { name: "Gulmarg", image: "/images/trending/snowy_mountains.png", category: "Adventure", description: "Premier skiing destination with breathtaking snow-capped peaks." },
         { name: "Goa Party", image: "/images/trending/goa_party.png", category: "Solo-Friendly", description: "The ultimate beach party destination with a friendly vibe." },
+        { name: "Andaman", image: "/images/trending/andaman_beach.png", category: "Chill Places", description: "Pristine white sand beaches and turquoise blue waters." },
         { name: "Kerala", image: "/images/trending/kerala_backwaters.png", category: "Chill Places", description: "God's own country with serene backwaters and lush greenery." },
         { name: "Manali", image: "/images/trending/manali_trek.png", category: "Adventure", description: "A high-altitude resort town for backpacking and trekking." },
         { name: "Vietnam", image: "/images/trending/vietnam_street.png", category: "Solo-Friendly", description: "Rich history, bustling cities, and incredible street food." },
