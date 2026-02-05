@@ -91,6 +91,11 @@ export const register = async (req, res) => {
             subscription: user.subscription
         };
 
+        // Send welcome email (async, don't wait)
+        import('../utils/email.js').then(({ sendWelcomeEmail }) => {
+            sendWelcomeEmail(user.email, user.name);
+        }).catch(err => console.error('Failed to load email util:', err));
+
         res.status(201).json({
             success: true,
             message: 'User registered successfully.',

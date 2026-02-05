@@ -9,6 +9,7 @@ import helmet from 'helmet';
 // Rate limiting middleware
 import { apiLimiter, authLimiter, uploadLimiter, createLimiter } from './middleware/rateLimit.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { sendPushNotification } from './utils/push.js';
 
 
 const app = express();
@@ -327,7 +328,6 @@ io.on('connection', (socket) => {
             // Broadcast to conversation room (both sender and receiver if online)
             io.to(`dm_${conversationId}`).emit('receive_dm', messageData);
 
-            // Send notification to receiver's user room (if not already in conversation)
             io.to(`user_${receiverId}`).emit('new_dm_notification', {
                 conversationId,
                 senderName: socket.user.name,
@@ -335,6 +335,14 @@ io.on('connection', (socket) => {
                 preview: type === 'image' ? '📷 Sent an image' : message.substring(0, 50),
                 timestamp: new Date()
             });
+
+            // Send Push Notification
+            const pushPayload = {
+                title: `New message from ${socket.user.name}`,
+                body: type === 'image' ? '📷 Sent an image' : message,
+                url: `/messages/${socket.user._id}`
+            };
+            sendPushNotification(receiverId, pushPayload).catch(err => console.error('Push failed:', err));
 
             console.log(`📨 DM sent from ${socket.user.name} in conversation ${conversationId}`);
         } catch (error) {

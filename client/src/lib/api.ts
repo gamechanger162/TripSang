@@ -802,6 +802,14 @@ export const notificationAPI = {
         });
     },
 
+    // Subscribe to Push Notifications
+    subscribe: async (subscription: any) => {
+        return fetchWithAuth('/api/notifications/subscribe', {
+            method: 'POST',
+            body: JSON.stringify(subscription)
+        });
+    },
+
     // Mark all as read
     markAllRead: async () => {
         return fetchWithAuth('/api/notifications/read-all', {

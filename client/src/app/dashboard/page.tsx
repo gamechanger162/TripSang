@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { reviewAPI, userAPI } from '@/lib/api';
 import ReviewModal from '@/components/reviews/ReviewModal';
 import toast from 'react-hot-toast';
+import PushNotificationManager from '@/components/common/PushNotificationManager';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -121,6 +122,11 @@ export default function UserDashboard() {
                             Create New Trip
                         </Link>
                     </div>
+                </div>
+
+                {/* Push Notifications */}
+                <div className="mb-6">
+                    <PushNotificationManager />
                 </div>
 
                 {/* Content Grid */}

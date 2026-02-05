@@ -145,7 +145,17 @@ const userSchema = new mongoose.Schema({
         currentEnd: Date,
         trialEnds: Date,
         razorpayCustomerId: String
-    }
+    },
+    // Push Notifications
+    pushSubscriptions: [{
+        endpoint: String,
+        keys: {
+            p256dh: String,
+            auth: String
+        },
+        userAgent: String,
+        createdAt: { type: Date, default: Date.now }
+    }]
 }, {
     timestamps: true, // Adds createdAt and updatedAt
     toJSON: { virtuals: true },

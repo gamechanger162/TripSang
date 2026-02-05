@@ -122,4 +122,37 @@ router.delete('/:id', authenticate, async (req, res) => {
     }
 });
 
+// ... existing code ...
+
+/**
+ * @desc    Subscribe to push notifications
+ * @route   POST /api/notifications/subscribe
+ * @access  Private
+ */
+router.post('/subscribe', authenticate, async (req, res) => {
+    try {
+        const subscription = req.body;
+        const user = await import('../models/User.js').then(m => m.default.findById(req.user._id));
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Add subscription if it doesn't exist
+        const alreadySubscribed = user.pushSubscriptions.some(
+            sub => sub.endpoint === subscription.endpoint
+        );
+
+        if (!alreadySubscribed) {
+            user.pushSubscriptions.push(subscription);
+            await user.save();
+        }
+
+        res.status(201).json({ success: true, message: 'Subscribed to notifications' });
+    } catch (error) {
+        console.error('Subscribe error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 export default router;
