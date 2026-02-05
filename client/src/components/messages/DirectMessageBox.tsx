@@ -176,7 +176,7 @@ export default function DirectMessageBox({
                     </p>
                 </div>
             ) : (
-                <div className="border-t border-gray-700 p-4 bg-gray-800 relative">
+                <div className="border-t border-gray-700 p-2 sm:p-4 bg-gray-800 relative">
                     {/* Replying To UI */}
                     {replyingTo && (
                         <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 p-3 bg-white dark:bg-dark-700 rounded-xl shadow-lg border-l-4 border-primary-500 flex items-center justify-between animate-fade-in-up z-40">

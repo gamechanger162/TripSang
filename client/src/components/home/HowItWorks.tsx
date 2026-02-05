@@ -32,17 +32,17 @@ export default function HowItWorks() {
                     <p className="text-gray-400">Start your journey in 4 simple steps</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 relative">
                     {/* Connecting Line (Desktop) */}
                     <div className="hidden md:block absolute top-[60px] left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary-900 via-primary-700 to-primary-900 z-0"></div>
 
                     {steps.map((step, index) => (
-                        <div key={index} className="relative z-10 text-center group">
-                            <div className="w-24 h-24 mx-auto bg-dark-800 border-2 border-primary-900 rounded-full flex items-center justify-center mb-6 group-hover:border-primary-500 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all duration-300">
-                                <span className="text-3xl">{step.icon}</span>
+                        <div key={index} className="relative z-10 text-center group p-2">
+                            <div className="w-16 h-16 md:w-24 md:h-24 mx-auto bg-dark-800 border-2 border-primary-900 rounded-full flex items-center justify-center mb-3 md:mb-6 group-hover:border-primary-500 group-hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all duration-300">
+                                <span className="text-2xl md:text-3xl">{step.icon}</span>
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
-                            <p className="text-gray-400 text-sm">{step.description}</p>
+                            <h3 className="text-base md:text-xl font-bold text-white mb-1 md:mb-2">{step.title}</h3>
+                            <p className="text-gray-400 text-xs md:text-sm leading-tight">{step.description}</p>
                         </div>
                     ))}
                 </div>
