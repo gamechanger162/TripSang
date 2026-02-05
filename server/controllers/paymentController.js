@@ -102,12 +102,7 @@ export const createSubscription = async (req, res) => {
 
         const user = await User.findById(userId);
 
-        if (user.subscription.status === 'active') {
-            return res.status(400).json({
-                success: false,
-                message: 'You already have an active subscription.'
-            });
-        }
+        // Allow users to purchase even if they have an active subscription (plan stacking)
 
         const planId = process.env.RAZORPAY_PLAN_ID;
         if (!planId) {
@@ -182,15 +177,31 @@ export const verifySubscription = async (req, res) => {
         // Fetch subscription details to get start/end
         const subDetails = await getRazorpay().subscriptions.fetch(razorpay_subscription_id);
 
+        // Calculate subscription period (usually 30 days for monthly)
+        const subStartTimestamp = subDetails.current_start || subDetails.start_at;
+        const subEndTimestamp = subDetails.current_end || (subStartTimestamp + 30 * 24 * 60 * 60);
+        const periodDays = Math.round((subEndTimestamp - subStartTimestamp) / (24 * 60 * 60));
+
+        // Plan stacking: If user already has active subscription with remaining time, add days to it
+        const now = new Date();
+        let newEndDate;
+
+        if (user.subscription.status === 'active' && user.subscription.currentEnd && new Date(user.subscription.currentEnd) > now) {
+            // Add the subscription period to existing end date
+            newEndDate = new Date(user.subscription.currentEnd);
+            newEndDate.setDate(newEndDate.getDate() + (periodDays || 30));
+        } else {
+            // Fresh subscription
+            newEndDate = new Date(subEndTimestamp * 1000);
+        }
+
         user.subscription = {
-            status: 'active', // It's active (even if in trial period from Razorpay perspective it's 'created' or 'authenticated', but for us they have access)
+            status: 'active',
             planId: subDetails.plan_id,
             subscriptionId: razorpay_subscription_id,
-            currentStart: new Date(subDetails.current_start * 1000), // This might be null if future start? Check Razorpay docs. 
-            // If future start, usually current_start is null or start_at.
-            // Let's use start_at for trial logic.
-            currentEnd: new Date(subDetails.current_end * 1000 || (subDetails.start_at * 1000)),
-            trialEnds: new Date(subDetails.start_at * 1000)
+            currentStart: new Date(subStartTimestamp * 1000),
+            currentEnd: newEndDate,
+            trialEnds: user.subscription.trialEnds // Keep existing trial history
         };
 
         if (!user.badges.includes('Premium')) {

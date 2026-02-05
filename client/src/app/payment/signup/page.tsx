@@ -55,10 +55,8 @@ export default function SignupPaymentPage() {
             }
         } catch (error: any) {
             console.error('Payment check failed:', error);
-            if (error.message?.includes('already have')) {
-                toast.success('You are already subscribed!');
-                router.push('/dashboard');
-            } else {
+            // Don't redirect - let users stay on the page to buy additional passes
+            if (!error.message?.includes('already have')) {
                 toast.error('Failed to initialize subscription');
             }
         } finally {

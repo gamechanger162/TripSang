@@ -73,7 +73,7 @@ export default function HeroSection({
                 <div className="mb-8 animate-fade-in-up">
                     <div className="flex justify-center gap-3 mb-6">
                         <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium text-primary-300">
-                            🚀 The Future of Group Travel
+                            The Future of Group Travel
                         </span>
                         <span className="inline-block py-1 px-3 rounded-full bg-green-500/20 backdrop-blur-md border border-green-500/30 text-sm font-bold text-green-400">
                             ✨ 30-Day Free Trial

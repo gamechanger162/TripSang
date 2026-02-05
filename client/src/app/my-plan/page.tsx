@@ -239,7 +239,7 @@ export default function MyPlanPage() {
                         Need to cancel? Check your email for the Razorpay management link or contact support.
                     </p>
                     <button
-                        onClick={() => window.location.href = 'mailto:support@tripsang.com'}
+                        onClick={() => window.location.href = '/support'}
                         className="text-sm text-primary-400 hover:text-primary-300 font-medium"
                     >
                         Contact Support →

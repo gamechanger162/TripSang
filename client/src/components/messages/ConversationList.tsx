@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Conversation } from '@/types/messages';
+import { MessageCircle, Sparkles } from 'lucide-react';
 
 interface ConversationListProps {
     conversations: Conversation[];
@@ -33,14 +34,14 @@ export default function ConversationList({ conversations, loading }: Conversatio
 
     if (loading) {
         return (
-            <div className="space-y-2">
+            <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
-                    <div key={i} className="card animate-pulse">
-                        <div className="flex items-center space-x-3 p-4">
-                            <div className="w-12 h-12 bg-gray-200 dark:bg-dark-700 rounded-full" />
-                            <div className="flex-1 space-y-2">
-                                <div className="h-4 bg-gray-200 dark:bg-dark-700 rounded w-1/3" />
-                                <div className="h-3 bg-gray-200 dark:bg-dark-700 rounded w-2/3" />
+                    <div key={i} className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-white/5 animate-pulse">
+                        <div className="flex items-center gap-4 p-5">
+                            <div className="w-14 h-14 bg-gray-700/50 rounded-full" />
+                            <div className="flex-1 space-y-3">
+                                <div className="h-4 bg-gray-700/50 rounded-full w-1/3" />
+                                <div className="h-3 bg-gray-700/30 rounded-full w-2/3" />
                             </div>
                         </div>
                     </div>
@@ -51,68 +52,76 @@ export default function ConversationList({ conversations, loading }: Conversatio
 
     if (conversations.length === 0) {
         return (
-            <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                    </svg>
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-800/40 via-gray-900/60 to-black/40 backdrop-blur-2xl border border-white/10 p-12 text-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.08),transparent_50%)]" />
+                <div className="relative">
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20 flex items-center justify-center border border-white/10 shadow-lg shadow-violet-500/10">
+                        <MessageCircle className="w-10 h-10 text-violet-400/80" />
+                    </div>
+                    <h3 className="text-xl font-semibold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-3">
+                        No conversations yet
+                    </h3>
+                    <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed">
+                        Start a conversation by messaging someone from a trip!
+                    </p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    No conversations yet
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Start a conversation by messaging someone from a trip!
-                </p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-2">
-            {conversations.map((conversation) => (
+        <div className="space-y-3">
+            {conversations.map((conversation, index) => (
                 <Link
                     key={conversation._id}
                     href={`/messages/${conversation.otherUser._id}`}
-                    className="block"
+                    className="block group"
+                    style={{ animationDelay: `${index * 50}ms` }}
                 >
-                    <div className="card hover:shadow-lg transition-all duration-200 hover:scale-[1.01] cursor-pointer">
-                        <div className="flex items-center space-x-3 p-4">
-                            {/* Avatar */}
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800/40 via-gray-900/60 to-gray-800/40 backdrop-blur-xl border border-white/5 hover:border-violet-500/30 transition-all duration-500 hover:shadow-xl hover:shadow-violet-500/10 hover:-translate-y-0.5">
+                        {/* Animated gradient overlay on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-violet-600/0 via-purple-600/0 to-violet-600/0 group-hover:from-violet-600/5 group-hover:via-purple-600/10 group-hover:to-violet-600/5 transition-all duration-500" />
+
+                        {/* Glow effect for unread */}
+                        {conversation.unreadCount > 0 && (
+                            <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-violet-400 to-purple-500 rounded-full blur-sm" />
+                        )}
+
+                        <div className="relative flex items-center gap-4 p-5">
+                            {/* Premium Avatar */}
                             <div className="relative flex-shrink-0">
-                                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
-                                    {conversation.otherUser.profilePicture ? (
-                                        <Image
-                                            src={conversation.otherUser.profilePicture}
-                                            alt={conversation.otherUser.name}
-                                            width={48}
-                                            height={48}
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                                            {conversation.otherUser.name[0].toUpperCase()}
-                                        </span>
-                                    )}
+                                <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-violet-500/50 via-purple-500/50 to-pink-500/50 group-hover:from-violet-400 group-hover:via-purple-500 group-hover:to-pink-500 transition-all duration-500 shadow-lg shadow-violet-500/20">
+                                    <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center overflow-hidden">
+                                        {conversation.otherUser.profilePicture ? (
+                                            <Image
+                                                src={conversation.otherUser.profilePicture}
+                                                alt={conversation.otherUser.name}
+                                                width={54}
+                                                height={54}
+                                                className="object-cover w-full h-full"
+                                            />
+                                        ) : (
+                                            <span className="text-xl font-bold bg-gradient-to-br from-violet-400 to-purple-500 bg-clip-text text-transparent">
+                                                {conversation.otherUser.name[0].toUpperCase()}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 {/* Online indicator */}
                                 {conversation.otherUser.isOnline && (
-                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-dark-800 rounded-full" />
+                                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-400 border-2 border-gray-900 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
                                 )}
                             </div>
 
                             {/* Content */}
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
-                                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <h3 className="font-semibold text-white group-hover:text-violet-200 transition-colors truncate">
                                         {conversation.otherUser.name}
                                     </h3>
                                     {conversation.lastMessage && (
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">
+                                        <span className="text-[11px] text-gray-500 flex-shrink-0 ml-3 font-medium tracking-wide">
                                             {formatTimestamp(conversation.lastMessage.timestamp)}
                                         </span>
                                     )}
@@ -120,8 +129,8 @@ export default function ConversationList({ conversations, loading }: Conversatio
                                 <div className="flex items-center justify-between">
                                     <p
                                         className={`text-sm truncate ${conversation.unreadCount > 0
-                                                ? 'font-semibold text-gray-900 dark:text-white'
-                                                : 'text-gray-600 dark:text-gray-400'
+                                            ? 'font-medium text-gray-200'
+                                            : 'text-gray-400'
                                             }`}
                                     >
                                         {conversation.lastMessage ? (
@@ -132,15 +141,23 @@ export default function ConversationList({ conversations, loading }: Conversatio
                                                 {conversation.lastMessage.text}
                                             </>
                                         ) : (
-                                            <span className="text-gray-400 italic">No messages yet</span>
+                                            <span className="text-gray-500 italic">Start chatting...</span>
                                         )}
                                     </p>
                                     {conversation.unreadCount > 0 && (
-                                        <span className="flex-shrink-0 ml-2 w-5 h-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                                        <span className="flex-shrink-0 ml-3 px-2.5 py-1 text-[10px] font-bold bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-full shadow-lg shadow-violet-500/30 flex items-center gap-1">
+                                            <Sparkles className="w-2.5 h-2.5" />
                                             {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
                                         </span>
                                     )}
                                 </div>
+                            </div>
+
+                            {/* Arrow indicator */}
+                            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
                             </div>
                         </div>
                     </div>
