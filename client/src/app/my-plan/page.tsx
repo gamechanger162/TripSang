@@ -84,7 +84,7 @@ export default function MyPlanPage() {
     const daysRemaining = getDaysRemaining();
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 pt-24">
             <div className="max-w-3xl mx-auto space-y-8">
 
                 {/* Header */}
@@ -114,8 +114,8 @@ export default function MyPlanPage() {
                                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                         TripSang Premium
                                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${inTrialPeriod
-                                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                                : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                            : 'bg-green-500/20 text-green-400 border border-green-500/30'
                                             }`}>
                                             {inTrialPeriod ? 'FREE TRIAL' : 'ACTIVE'}
                                         </span>

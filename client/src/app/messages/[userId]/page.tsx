@@ -106,7 +106,7 @@ export default function ChatPage() {
 
     if (status === 'loading' || loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
+            <div className="min-h-screen flex items-center justify-center bg-gray-900">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
             </div>
         );
@@ -114,7 +114,7 @@ export default function ChatPage() {
 
     if (!otherUser) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
+            <div className="min-h-screen flex items-center justify-center bg-gray-900">
                 <div className="text-center">
                     <p className="text-gray-600 dark:text-gray-400 mb-4">User not found</p>
                     <Link href="/messages" className="btn-primary">
@@ -126,9 +126,9 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-gray-50 dark:bg-dark-900">
+        <div className="min-h-screen flex flex-col bg-gray-900 pt-16">
             {/* Header */}
-            <div className="bg-white dark:bg-dark-800 shadow-sm border-b border-gray-200 dark:border-dark-700">
+            <div className="bg-gray-800 shadow-sm border-b border-gray-700 flex-shrink-0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
