@@ -84,7 +84,7 @@ export default function MyPlanPage() {
     const daysRemaining = getDaysRemaining();
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 pt-24">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8 pt-24 pb-32">
             <div className="max-w-3xl mx-auto space-y-8">
 
                 {/* Header */}
@@ -130,7 +130,7 @@ export default function MyPlanPage() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="relative p-6 grid grid-cols-2 gap-4">
+                    <div className="relative p-6 grid grid-cols-2 gap-6">
                         {/* Days Remaining */}
                         <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
                             <div className="flex items-center gap-3 mb-2">
@@ -220,7 +220,7 @@ export default function MyPlanPage() {
                 </div>
 
                 {/* Premium Benefits */}
-                <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl border border-white/10 p-6">
+                <div className="bg-gray-800/80 backdrop-blur-xl rounded-3xl border border-white/10 p-6 shadow-xl">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                         <Crown className="w-5 h-5 text-primary-400" />
                         Your Premium Benefits
