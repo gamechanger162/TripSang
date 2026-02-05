@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { uploadAPI } from '@/lib/api';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { X, Map as MapIcon } from 'lucide-react';
+import { X, Map as MapIcon, Pin } from 'lucide-react';
 import { linkifyText } from '@/utils/linkify';
 import Link from 'next/link';
 
@@ -69,6 +69,15 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
 
     // Reply state
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+
+    // Pinned message state
+    const [pinnedMessage, setPinnedMessage] = useState<{
+        messageId: string;
+        message: string;
+        senderName: string;
+        type?: string;
+        imageUrl?: string;
+    } | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -162,6 +171,24 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
             });
         });
 
+        // Listen for pinned message events
+        newSocket.on('message_pinned', (data: {
+            messageId: string;
+            message: string;
+            senderName: string;
+            type?: string;
+            imageUrl?: string;
+            pinnedBy: string;
+        }) => {
+            setPinnedMessage(data);
+            toast.success(`${data.pinnedBy} pinned a message`);
+        });
+
+        newSocket.on('message_unpinned', (data: { unpinnedBy: string }) => {
+            setPinnedMessage(null);
+            toast.success(`${data.unpinnedBy} unpinned the message`);
+        });
+
         setSocket(newSocket);
 
         // Cleanup on unmount
@@ -188,6 +215,16 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
     const handleReply = (message: Message) => {
         setReplyingTo(message);
         inputRef.current?.focus();
+    };
+
+    const handlePinMessage = (message: Message) => {
+        if (!socket || !message._id) return;
+        socket.emit('pin_message', { tripId, messageId: message._id });
+    };
+
+    const handleUnpinMessage = () => {
+        if (!socket) return;
+        socket.emit('unpin_message', { tripId });
     };
 
     // Filter squad members for mentions (exclude current user)
@@ -473,6 +510,30 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                 {/* Decorative background pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
+                {/* Pinned Message Banner */}
+                {pinnedMessage && (
+                    <div className="sticky top-0 z-10 mx-auto max-w-md bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/30 border border-amber-200 dark:border-amber-700/50 rounded-xl p-3 shadow-lg backdrop-blur-sm">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Pin size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">{pinnedMessage.senderName}</p>
+                                    <p className="text-sm text-amber-900 dark:text-amber-100 truncate">
+                                        {pinnedMessage.type === 'image' ? '📷 Image' : pinnedMessage.message}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleUnpinMessage}
+                                className="p-1 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800/50 rounded-full transition-colors flex-shrink-0"
+                                title="Unpin message"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-400 relative z-10">
                         <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-4 shadow-inner">
@@ -557,6 +618,7 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                                     alt="Shared image"
                                                     width={300}
                                                     height={225}
+                                                    unoptimized
                                                     className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
@@ -578,6 +640,18 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                             </svg>
+                                        </button>
+
+                                        {/* Pin Button */}
+                                        <button
+                                            onClick={() => handlePinMessage(msg)}
+                                            className={`transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-600 ${pinnedMessage?.messageId === msg._id
+                                                ? 'text-amber-500'
+                                                : 'text-gray-400 hover:text-amber-500'
+                                                }`}
+                                            title={pinnedMessage?.messageId === msg._id ? 'Pinned' : 'Pin message'}
+                                        >
+                                            <Pin size={14} />
                                         </button>
                                     </div>
                                 </div>

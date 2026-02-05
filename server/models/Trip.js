@@ -169,7 +169,13 @@ const tripSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
-    }]
+    }],
+    // Pinned Message for Squad Chat
+    pinnedMessage: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message',
+        default: null
+    }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

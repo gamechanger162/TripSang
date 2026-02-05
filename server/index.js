@@ -171,7 +171,87 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ========== MESSAGE PINNING EVENTS ==========
+    socket.on('pin_message', async ({ tripId, messageId }) => {
+        try {
+            if (!tripId || !messageId) return;
 
+            const Trip = mongoose.model('Trip');
+            const trip = await Trip.findById(tripId);
+
+            if (!trip) {
+                return socket.emit('error', { message: 'Trip not found' });
+            }
+
+            // Check if user is squad member or creator
+            const isSquadMember = trip.squadMembers.some(m => m.toString() === socket.user._id.toString());
+            const isCreator = trip.creator.toString() === socket.user._id.toString();
+
+            if (!isSquadMember && !isCreator) {
+                return socket.emit('error', { message: 'Only squad members can pin messages' });
+            }
+
+            // Get the message to pin
+            const pinnedMsg = await Message.findById(messageId);
+            if (!pinnedMsg) {
+                return socket.emit('error', { message: 'Message not found' });
+            }
+
+            // Update trip with pinned message
+            trip.pinnedMessage = messageId;
+            await trip.save();
+
+            // Broadcast to all in room
+            io.to(tripId).emit('message_pinned', {
+                messageId,
+                message: pinnedMsg.message,
+                senderName: pinnedMsg.senderName,
+                type: pinnedMsg.type,
+                imageUrl: pinnedMsg.imageUrl,
+                pinnedBy: socket.user.name
+            });
+
+            console.log(`📌 Message pinned in trip ${tripId} by ${socket.user.name}`);
+        } catch (error) {
+            console.error('Pin message error:', error);
+            socket.emit('error', { message: 'Failed to pin message' });
+        }
+    });
+
+    socket.on('unpin_message', async ({ tripId }) => {
+        try {
+            if (!tripId) return;
+
+            const Trip = mongoose.model('Trip');
+            const trip = await Trip.findById(tripId);
+
+            if (!trip) {
+                return socket.emit('error', { message: 'Trip not found' });
+            }
+
+            // Check if user is squad member or creator
+            const isSquadMember = trip.squadMembers.some(m => m.toString() === socket.user._id.toString());
+            const isCreator = trip.creator.toString() === socket.user._id.toString();
+
+            if (!isSquadMember && !isCreator) {
+                return socket.emit('error', { message: 'Only squad members can unpin messages' });
+            }
+
+            // Clear pinned message
+            trip.pinnedMessage = null;
+            await trip.save();
+
+            // Broadcast to all in room
+            io.to(tripId).emit('message_unpinned', {
+                unpinnedBy: socket.user.name
+            });
+
+            console.log(`📌 Message unpinned in trip ${tripId} by ${socket.user.name}`);
+        } catch (error) {
+            console.error('Unpin message error:', error);
+            socket.emit('error', { message: 'Failed to unpin message' });
+        }
+    });
 
     // ========== COLLABORATIVE MAP EVENTS ==========
     socket.on('map_action', async ({ tripId, waypoints }) => {
