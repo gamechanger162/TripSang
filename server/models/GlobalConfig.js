@@ -35,7 +35,7 @@ const globalConfigSchema = new mongoose.Schema({
     // Paid Signup Configuration
     enablePaidSignup: {
         type: Boolean,
-        default: false,
+        default: true,
         description: 'Enable/disable signup fee requirement'
     },
     signupFee: {
