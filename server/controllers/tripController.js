@@ -817,58 +817,28 @@ export const getTrendingDestinations = async (req, res) => {
 
         const seasonalData = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
 
-        // Enriched Mapping Helper
-        const getImageForCity = (cityName) => {
-            // Check in our database first
-            for (const season in ALL_DESTINATIONS) {
-                const found = ALL_DESTINATIONS[season].find(d => d.name === cityName);
-                if (found) return found.image;
-            }
-            // Generic fallbacks
-            if (['Bali', 'Thailand', 'Vietnam', 'Maldives'].includes(cityName)) return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80";
-            if (['Dubai', 'Abu Dhabi'].includes(cityName)) return "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80";
-            if (['London', 'Paris', 'Europe'].includes(cityName)) return "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80";
-            return "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80"; // Default travel image
-        };
-
-        // Merge RSS + Seasonal
+        // Build final trending list from seasonal data + global mix
         let finalTrending = [];
 
-        // 1. Add RSS found items (Real world news)
-        rssData.forEach(item => {
-            finalTrending.push({
-                name: item.name,
-                image: getImageForCity(item.name),
-                type: 'trending_news'
-            });
-        });
-
-        // 2. Fill the rest with Seasonal Data
-        seasonalData.forEach(item => {
-            // Avoid duplicates
-            if (!finalTrending.find(t => t.name === item.name)) {
-                finalTrending.push({ ...item, type: 'seasonal' });
-            }
-        });
-
-        // 3. Add Global Mix if needed
+        // Add Global Mix first
         const globalMix = [
             { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", type: 'global' },
             { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80", type: 'global' },
         ];
 
-        // Shuffle/Rotate based on date
-        const dayOfMonth = new Date().getDate();
+        finalTrending = [...globalMix];
 
-        // If we found NO rss items, fallback to pure seasonal + global
-        if (rssData.length === 0) {
-            finalTrending = [...globalMix, ...seasonalData];
-        }
+        // Add Seasonal Data (avoid duplicates)
+        seasonalData.forEach(item => {
+            if (!finalTrending.find(t => t.name === item.name)) {
+                finalTrending.push({ ...item, type: 'seasonal' });
+            }
+        });
 
         res.status(200).json({
             success: true,
             destinations: finalTrending.slice(0, 10), // Limit to top 10
-            source: rssData.length > 0 ? "live_news_feed" : "seasonal_curated"
+            source: "seasonal_curated"
         });
 
     } catch (error) {

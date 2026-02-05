@@ -5,10 +5,10 @@ import rateLimit from 'express-rate-limit';
  * Protects against brute force and DDoS attacks
  */
 
-// General API rate limiter - 100 requests per 15 minutes
+// General API rate limiter - 500 requests per 15 minutes
 export const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 500, // Limit each IP to 500 requests per windowMs
     message: {
         success: false,
         message: 'Too many requests from this IP, please try again after 15 minutes'
@@ -17,10 +17,10 @@ export const apiLimiter = rateLimit({
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-// Strict rate limiter for authentication routes - 5 requests per 15 minutes
+// Strict rate limiter for authentication routes - 20 requests per 15 minutes
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 requests per windowMs
+    max: 20, // Limit each IP to 20 requests per windowMs
     message: {
         success: false,
         message: 'Too many login attempts from this IP, please try again after 15 minutes'
