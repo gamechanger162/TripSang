@@ -52,7 +52,14 @@ export default function DirectMessageBox({
 
     const handleSendMessage = () => {
         if (messageInput.trim() && !loading) {
-            sendMessage(receiverId, messageInput, 'text', undefined);
+            const replyToData = replyingTo ? {
+                messageId: replyingTo._id,
+                senderName: replyingTo.senderName || 'Unknown',
+                message: replyingTo.message,
+                type: replyingTo.type
+            } : undefined;
+
+            sendMessage(receiverId, messageInput, 'text', undefined, replyToData);
             setMessageInput('');
             setReplyingTo(null);
             setIsTyping(false); // Stop typing indicator

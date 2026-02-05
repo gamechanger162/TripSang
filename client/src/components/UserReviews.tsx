@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { reviewAPI } from '@/lib/api';
 
+import Link from 'next/link';
+
 interface UserReviewsProps {
     userId: string;
 }
@@ -57,8 +59,8 @@ export default function UserReviews({ userId }: UserReviewsProps) {
                                     <svg
                                         key={star}
                                         className={`w-5 h-5 ${star <= Math.round(stats.averageRating)
-                                                ? 'text-yellow-400 fill-current'
-                                                : 'text-gray-300'
+                                            ? 'text-yellow-400 fill-current'
+                                            : 'text-gray-300'
                                             }`}
                                         fill="none"
                                         stroke="currentColor"
@@ -133,22 +135,28 @@ export default function UserReviews({ userId }: UserReviewsProps) {
                             className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
                         >
                             <div className="flex items-start gap-3">
-                                {/* Reviewer Avatar */}
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center flex-shrink-0">
+                                {/* Reviewer Avatar - Clickable */}
+                                <Link
+                                    href={`/profile/${review.reviewer?._id}`}
+                                    className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-primary-500 hover:ring-offset-2 transition-all cursor-pointer"
+                                >
                                     {review.reviewer?.profilePicture ? (
                                         <img src={review.reviewer.profilePicture} alt={review.reviewer.name} className="w-full h-full rounded-full object-cover" />
                                     ) : (
                                         <span className="text-white font-semibold">{review.reviewer?.name?.[0]}</span>
                                     )}
-                                </div>
+                                </Link>
 
                                 <div className="flex-1">
                                     {/* Reviewer Info */}
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">
+                                            <Link
+                                                href={`/profile/${review.reviewer?._id}`}
+                                                className="font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
+                                            >
                                                 {review.reviewer?.name}
-                                            </p>
+                                            </Link>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                                 {review.trip?.title} • {new Date(review.createdAt).toLocaleDateString()}
                                             </p>

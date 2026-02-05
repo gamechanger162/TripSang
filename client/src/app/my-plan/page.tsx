@@ -233,13 +233,31 @@ export default function MyPlanPage() {
                     </div>
                 </div>
 
+                {/* Extend Subscription Section */}
+                <div className="bg-gradient-to-br from-primary-900/30 to-purple-900/30 backdrop-blur-xl rounded-3xl border border-primary-500/30 p-4 md:p-6 shadow-xl">
+                    <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-primary-400" />
+                        Need More Time?
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                        Extend your premium access by purchasing additional passes. Days will be added to your current subscription.
+                    </p>
+                    <button
+                        onClick={() => router.push('/payment/signup')}
+                        className="w-full py-3 bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 hover:from-primary-500 hover:via-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+                    >
+                        <RotateCw className="w-5 h-5" />
+                        Extend Subscription
+                    </button>
+                </div>
+
                 {/* Help Section */}
                 <div className="text-center space-y-2">
                     <p className="text-sm text-gray-500">
                         Need to cancel? Check your email for the Razorpay management link or contact support.
                     </p>
                     <button
-                        onClick={() => window.location.href = '/support'}
+                        onClick={() => window.location.href = '/help-support'}
                         className="text-sm text-primary-400 hover:text-primary-300 font-medium"
                     >
                         Contact Support →

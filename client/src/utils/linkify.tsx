@@ -16,6 +16,15 @@ export const isPremiumUser = (user: any): boolean => {
 };
 
 /**
+ * Check if a user is verified (has completed ID verification)
+ * @param user - User object with verificationStatus field
+ * @returns boolean indicating if user is verified
+ */
+export const isVerifiedUser = (user: any): boolean => {
+    return user?.verificationStatus === 'verified';
+};
+
+/**
  * Converts plain text URLs into clickable links
  * @param text - The text containing potential URLs
  * @returns JSX with linkified URLs

@@ -367,18 +367,46 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
 
     if (!isSquadMember) {
         return (
-            <div className="card text-center py-12 bg-gray-50 dark:bg-dark-800 border-dashed border-2 border-gray-300 dark:border-gray-700">
-                <div className="w-16 h-16 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-800/60 via-gray-900/80 to-black/60 backdrop-blur-2xl border border-white/10 p-10 text-center">
+                {/* Background decorations */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.15),transparent_50%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.1),transparent_50%)]" />
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+
+                <div className="relative">
+                    {/* Lock icon with premium styling */}
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center border border-white/10 shadow-2xl shadow-violet-500/20 rotate-3 hover:rotate-0 transition-transform duration-300">
+                        <svg className="w-10 h-10 text-violet-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+
+                    <h3 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-3">
+                        Join Squad to Access Chat
+                    </h3>
+                    <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed mb-8">
+                        Connect with other travelers, share plans, and get excited together by joining this trip!
+                    </p>
+
+                    {/* Join Squad Button */}
+                    <button
+                        onClick={() => {
+                            // Scroll to the join button section on the trip page
+                            const joinBtn = document.querySelector('[data-join-squad]');
+                            if (joinBtn) {
+                                joinBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                (joinBtn as HTMLElement).classList.add('ring-4', 'ring-violet-500/50');
+                                setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-violet-500/50'), 2000);
+                            }
+                        }}
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 text-white rounded-2xl font-semibold hover:from-violet-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:-translate-y-1 group"
+                    >
+                        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        Join This Squad
+                    </button>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Join Squad to Access Chat
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
-                    Connect with other travelers, share plans, and get excited together by joining this trip!
-                </p>
             </div>
         );
     }

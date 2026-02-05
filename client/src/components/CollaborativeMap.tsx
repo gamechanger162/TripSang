@@ -276,36 +276,35 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                 <MapEvents onMapClick={handleMapClick} />
             </MapContainer>
 
-            {/* Map Controls */}
-            <div className="absolute bottom-4 left-4 z-[400] flex gap-2">
-                {!isReadOnly && (
-                    <button
-                        onClick={handleUndo}
-                        disabled={waypoints.length === 0}
-                        className="bg-white dark:bg-dark-700 text-gray-700 dark:text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 font-medium transition-colors"
-                    >
-                        Undo Last Stop
-                    </button>
-                )}
-
-                {/* Share Buttons - Always visible */}
+            {/* Map Controls - Top Right */}
+            <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
+                {/* Share Buttons */}
                 <button
                     onClick={handleOpenGoogleMaps}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2.5 rounded-xl shadow-xl hover:from-blue-500 hover:to-blue-600 font-medium transition-all flex items-center gap-2 hover:-translate-y-0.5"
                     title="Open in Google Maps"
                 >
                     <ExternalLink size={18} />
-                    Open in Google Maps
+                    Open in Maps
                 </button>
 
                 <button
                     onClick={handleShareGoogleMaps}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 font-medium transition-colors flex items-center gap-2"
+                    className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 py-2.5 rounded-xl shadow-xl hover:from-emerald-500 hover:to-green-500 font-medium transition-all flex items-center gap-2 hover:-translate-y-0.5"
                     title="Copy Google Maps link"
                 >
                     <Share2 size={18} />
                     Share Link
                 </button>
+
+                {!isReadOnly && waypoints.length > 0 && (
+                    <button
+                        onClick={handleUndo}
+                        className="bg-white/90 dark:bg-dark-700/90 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl shadow-xl hover:bg-white dark:hover:bg-dark-600 font-medium transition-all backdrop-blur-sm border border-gray-200 dark:border-gray-600"
+                    >
+                        ↩ Undo Stop
+                    </button>
+                )}
             </div>
         </div>
     );
