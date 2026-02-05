@@ -212,7 +212,7 @@ export default function EditProfilePage() {
                                     name="name"
                                     value={formData.name}
                                     onChange={handleInputChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-2.5 border"
+                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                     required
                                 />
                             </div>
@@ -226,7 +226,7 @@ export default function EditProfilePage() {
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleInputChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-2.5 border"
+                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                 >
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
@@ -246,7 +246,7 @@ export default function EditProfilePage() {
                                         rows={4}
                                         value={formData.bio}
                                         onChange={handleInputChange}
-                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-3 border"
+                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-3 border"
                                         placeholder="Tell us a bit about yourself..."
                                         maxLength={500}
                                     />
@@ -266,7 +266,7 @@ export default function EditProfilePage() {
                                     name="mobileNumber"
                                     value={formData.mobileNumber}
                                     onChange={handleInputChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-2.5 border"
+                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                     placeholder="+91..."
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
@@ -284,7 +284,7 @@ export default function EditProfilePage() {
                                             name="city"
                                             value={formData.location.city}
                                             onChange={handleInputChange}
-                                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white p-2.5 border"
+                                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-2.5 border"
                                         />
                                     </div>
                                     <div>
@@ -294,7 +294,7 @@ export default function EditProfilePage() {
                                             name="country"
                                             value={formData.location.country}
                                             onChange={handleInputChange}
-                                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white p-2.5 border"
+                                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-2.5 border"
                                         />
                                     </div>
                                 </div>
@@ -314,7 +314,7 @@ export default function EditProfilePage() {
                                                 name="social_instagram"
                                                 value={formData.socialLinks.instagram}
                                                 onChange={handleInputChange}
-                                                className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-2.5 border"
+                                                className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                             />
                                         </div>
                                     </div>
@@ -329,7 +329,7 @@ export default function EditProfilePage() {
                                                 name="social_twitter"
                                                 value={formData.socialLinks.twitter}
                                                 onChange={handleInputChange}
-                                                className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-2.5 border"
+                                                className="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                             />
                                         </div>
                                     </div>
@@ -340,7 +340,7 @@ export default function EditProfilePage() {
                                             name="social_facebook"
                                             value={formData.socialLinks.facebook}
                                             onChange={handleInputChange}
-                                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm p-2.5 border"
+                                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                             placeholder="https://facebook.com/..."
                                         />
                                     </div>
