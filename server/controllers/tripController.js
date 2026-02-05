@@ -759,54 +759,50 @@ export const getTripByCode = async (req, res) => {
 
 export const getTrendingDestinations = async (req, res) => {
     try {
-        // --- Simplified Logic: Reliability First ---
-        // Removed dynamic RSS fetching to prevent external image issues.
-        // Now relying 100% on high-quality, local seasonal assets.
+        // --- Using Local Images for Reliability ---
+        // All images are stored locally in /images/trending/ 
+        // This ensures fast, reliable loading on all devices including mobile
 
-        // --- Seasonal Fallback Data (Reliable & Beautiful) ---
-        // Updated for FEBRUARY 2026 Trends (Rio Carnival, Venice, Warm Thailand)
         const month = new Date().getMonth(); // 0-11
 
-        // Dynamic "Live" list based on current global trends
+        // Seasonal destinations with LOCAL images only
         const ALL_DESTINATIONS = {
             // Winter/Early Spring (Feb - March): Carnival, Snow, & Sun
             winter: [
-                { name: "Rio de Janeiro", image: "/images/trending/rio_carnival.png" }, // Carnival
-                { name: "Venice", image: "/images/trending/venice_canals.png" }, // Carnival
-                { name: "Thailand", image: "/images/trending/thailand_beach.png" }, // Warm
-                { name: "Gulmarg", image: "/images/trending/snowy_mountains.png" }, // Snow
-                { name: "Goa", image: "/images/trending/goa_party.png" }, // Party
-                { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&q=80" }, // Backwaters
-                { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea90b792d50?w=600&q=80" }, // Shopping/Sun
-                { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" } // Spiritual
+                { name: "Rio de Janeiro", image: "/images/trending/rio_carnival.png" },
+                { name: "Venice", image: "/images/trending/venice_canals.png" },
+                { name: "Thailand", image: "/images/trending/thailand_beach.png" },
+                { name: "Gulmarg", image: "/images/trending/snowy_mountains.png" },
+                { name: "Goa", image: "/images/trending/goa_party.png" },
+                { name: "Kerala", image: "/images/trending/kerala_backwaters.png" },
+                { name: "Dubai", image: "/images/trending/dubai.png" },
+                { name: "Jaisalmer", image: "/images/trending/jaisalmer_fort_desert.png" }
             ],
             summer: [ // April - June
-                { name: "Ladakh", image: "https://images.unsplash.com/photo-1581793434113-1463ee08709a?w=600&q=80" },
-                { name: "Manali", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&q=80" },
-                { name: "Spiti Valley", image: "https://images.unsplash.com/photo-1599824425744-8c886b45391d?w=600&q=80" },
-                { name: "Rishikesh", image: "https://images.unsplash.com/photo-1506665531195-35661e984842?w=600&q=80" },
-                { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80" },
-                { name: "Ooty", image: "https://images.unsplash.com/photo-1548685913-fe65775c742c?w=600&q=80" }
+                { name: "Ladakh", image: "/images/trending/ladakh_lake.png" },
+                { name: "Manali", image: "/images/trending/manali_trek.png" },
+                { name: "Spiti Valley", image: "/images/trending/spiti_valley.png" },
+                { name: "Rishikesh", image: "/images/trending/rishikesh_rafting.png" },
+                { name: "Bali", image: "/images/trending/bali_landscape.png" },
+                { name: "Meghalaya", image: "/images/trending/meghalaya_rootbridge.png" }
             ],
             monsoon: [ // July - September
-                { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1605373307525-2e65d8365851?w=600&q=80" },
-                { name: "Lonavala", image: "https://images.unsplash.com/photo-1563290740-410e78263305?w=600&q=80" },
-                { name: "Coorg", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" },
-                { name: "Shillong", image: "https://images.unsplash.com/photo-1589136777351-94328825c14d?w=600&q=80" },
-                { name: "Udaipur", image: "https://images.unsplash.com/photo-1594494193025-p1934988f5c3?w=600&q=80" },
-                { name: "Wayanad", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&q=80" },
-                { name: "Alleppey", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=600&q=80" },
-                { name: "Kodaikanal", image: "https://images.unsplash.com/photo-1571474004502-c184717b9383?w=600&q=80" }
+                { name: "Coorg", image: "/images/trending/coorg_hills.png" },
+                { name: "Shillong", image: "/images/trending/shillong_hills.png" },
+                { name: "Munnar", image: "/images/trending/munnar_tea.png" },
+                { name: "Kaziranga", image: "/images/trending/kaziranga_rhino.png" },
+                { name: "Andaman", image: "/images/trending/andaman_beach.png" },
+                { name: "Gokarna", image: "/images/trending/gokarna_beach.png" }
             ],
-            winter: [ // October - March
-                { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&q=80" },
-                { name: "Jaisalmer", image: "https://images.unsplash.com/photo-1577085773196-1c88d89cb218?w=600&q=80" },
-                { name: "Auli", image: "https://images.unsplash.com/photo-1536431311719-398b670a9481?w=600&q=80" }, // Reusing generic mountain if specific missing
-                { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1504705759706-c5ee7158f8bb?w=600&q=80" },
-                { name: "Andaman", image: "https://images.unsplash.com/photo-1594968817658-29219e27c191?w=600&q=80" },
-                { name: "Varanasi", image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=600&q=80" },
-                { name: "Hampi", image: "https://images.unsplash.com/photo-1620766165457-a8085a948178?w=600&q=80" },
-                { name: "Pondicherry", image: "https://images.unsplash.com/photo-1622301075908-040776b7bd2f?w=600&q=80" }
+            autumn: [ // October - January
+                { name: "Goa", image: "/images/trending/goa_party.png" },
+                { name: "Jaisalmer", image: "/images/trending/jaisalmer_fort_desert.png" },
+                { name: "Andaman", image: "/images/trending/andaman_beach.png" },
+                { name: "Pondicherry", image: "/images/trending/pondicherry_street.png" },
+                { name: "Varkala", image: "/images/trending/varkala_cliff.png" },
+                { name: "Kasol", image: "/images/trending/kasol_parvati.png" },
+                { name: "Vietnam", image: "/images/trending/vietnam_street.png" },
+                { name: "Iceland", image: "/images/trending/iceland.png" }
             ]
         };
 
@@ -814,16 +810,17 @@ export const getTrendingDestinations = async (req, res) => {
         let currentSeason = 'winter';
         if (month >= 3 && month <= 5) currentSeason = 'summer';
         else if (month >= 6 && month <= 8) currentSeason = 'monsoon';
+        else if (month >= 9 && month <= 11) currentSeason = 'autumn';
 
         const seasonalData = ALL_DESTINATIONS[currentSeason] || ALL_DESTINATIONS['winter'];
 
         // Build final trending list from seasonal data + global mix
         let finalTrending = [];
 
-        // Add Global Mix first
+        // Add Global Mix first (always popular destinations)
         const globalMix = [
-            { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", type: 'global' },
-            { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea904ac6605?w=600&q=80", type: 'global' },
+            { name: "Bali", image: "/images/trending/bali_landscape.png", type: 'global' },
+            { name: "Dubai", image: "/images/trending/dubai.png", type: 'global' },
         ];
 
         finalTrending = [...globalMix];
@@ -838,7 +835,7 @@ export const getTrendingDestinations = async (req, res) => {
         res.status(200).json({
             success: true,
             destinations: finalTrending.slice(0, 10), // Limit to top 10
-            source: "seasonal_curated"
+            source: "local_curated"
         });
 
     } catch (error) {
