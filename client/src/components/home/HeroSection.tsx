@@ -71,9 +71,14 @@ export default function HeroSection({
 
             <div className="relative z-20 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-16">
                 <div className="mb-8 animate-fade-in-up">
-                    <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium text-primary-300 mb-6">
-                        🚀 The Future of Group Travel
-                    </span>
+                    <div className="flex justify-center gap-3 mb-6">
+                        <span className="inline-block py-1 px-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-medium text-primary-300">
+                            🚀 The Future of Group Travel
+                        </span>
+                        <span className="inline-block py-1 px-3 rounded-full bg-green-500/20 backdrop-blur-md border border-green-500/30 text-sm font-bold text-green-400">
+                            ✨ 30-Day Free Trial
+                        </span>
+                    </div>
                     <div className="flex justify-center mb-4">
                         <Image
                             src="/logo-text.png"
@@ -87,6 +92,9 @@ export default function HeroSection({
                     <p className="text-xl md:text-2xl text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
                         Don't just travel. <span className="text-white font-semibold">Belong.</span> <br />
                         Find your squad, split costs, and create stories that last forever.
+                    </p>
+                    <p className="text-sm text-primary-400 mt-3 font-medium">
+                        Sign up today and get 30 days of Premium access — absolutely free!
                     </p>
                 </div>
 

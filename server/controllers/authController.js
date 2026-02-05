@@ -54,21 +54,17 @@ export const register = async (req, res) => {
             userData.profilePicture = profilePicture;
         }
 
-        /* 
-        // Auto-trial removed as per new requirements. Users must manually activate trial.
-        if (config.enablePaidSignup) {
-            const trialEndDate = new Date();
-            trialEndDate.setDate(trialEndDate.getDate() + 30);
+        // Auto-trial: All new users get 30-day free trial automatically
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
 
-            // Initialize subscription as trial
-            userData.subscription = {
-                status: 'trial',
-                trialEnds: trialEndDate,
-                currentStart: new Date(),
-                currentEnd: trialEndDate
-            };
-        } 
-        */
+        // Initialize subscription as trial
+        userData.subscription = {
+            status: 'trial',
+            trialEnds: trialEndDate,
+            currentStart: new Date(),
+            currentEnd: trialEndDate
+        };
 
         // If registering via Google, mark email as verified
         if (authProvider === 'google') {
@@ -79,10 +75,6 @@ export const register = async (req, res) => {
 
         // Generate token
         const token = generateToken({ userId: user._id });
-
-        // Payment requirement is always false now as we give free trial
-        let requiresPayment = false;
-        let paymentDetails = null;
 
         // Return user data (excluding password)
         const userResponse = {
@@ -95,7 +87,8 @@ export const register = async (req, res) => {
             isEmailVerified: user.isEmailVerified,
             badges: user.badges,
             createdAt: user.createdAt,
-            gender: user.gender
+            gender: user.gender,
+            subscription: user.subscription
         };
 
         res.status(201).json({
@@ -103,8 +96,8 @@ export const register = async (req, res) => {
             message: 'User registered successfully.',
             token,
             user: userResponse,
-            requiresPayment,
-            paymentDetails
+            trialActivated: true,
+            trialEndsAt: trialEndDate.toISOString()
         });
 
     } catch (error) {

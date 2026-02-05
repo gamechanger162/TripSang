@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { userAPI } from '@/lib/api';
-import { Check, Shield, Calendar, CreditCard, RotateCw } from 'lucide-react';
+import { Shield, Calendar, CreditCard, RotateCw, Crown, Sparkles, Zap, Users, HeadphonesIcon, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function MyPlanPage() {
@@ -72,87 +72,145 @@ export default function MyPlanPage() {
     // Only consider it a trial if the status is explicitly 'trial'
     const inTrialPeriod = subscription?.status === 'trial' && subscription?.trialEnds && new Date(subscription.trialEnds) > new Date();
 
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-900 px-4 py-8 text-gray-900 dark:text-white">
-            <div className="max-w-2xl mx-auto space-y-6">
-                <h1 className="text-2xl font-bold px-2">My Subscription</h1>
+    // Calculate days remaining
+    const getDaysRemaining = () => {
+        if (!subscription?.currentEnd) return 0;
+        const end = new Date(subscription.currentEnd);
+        const now = new Date();
+        const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return Math.max(0, diff);
+    };
 
-                {/* Status Card */}
-                <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-lg border border-gray-100 dark:border-dark-700 overflow-hidden">
-                    <div className="bg-gradient-to-r from-primary-600 to-purple-600 p-6 text-white">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    TripSang Premium
-                                    <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs font-medium">
-                                        {inTrialPeriod ? 'TRIAL' : 'ACTIVE'}
-                                    </span>
-                                </h2>
-                                <p className="text-primary-100 text-sm mt-1">
-                                    {subscription?.subscriptionId ? 'Monthly Membership' : 'One-time Pass'}
-                                </p>
+    const daysRemaining = getDaysRemaining();
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4 py-8">
+            <div className="max-w-3xl mx-auto space-y-8">
+
+                {/* Header */}
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-500/20 rounded-full text-primary-400 text-sm font-medium">
+                        <Crown className="w-4 h-4" />
+                        Premium Member
+                    </div>
+                    <h1 className="text-3xl font-bold text-white">My Subscription</h1>
+                    <p className="text-gray-400">Manage your TripSang Premium membership</p>
+                </div>
+
+                {/* Main Status Card */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl">
+                    {/* Decorative Background */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+
+                    {/* Header Section */}
+                    <div className="relative p-6 pb-4 border-b border-white/5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
+                                    <Shield className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                        TripSang Premium
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${inTrialPeriod
+                                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                                : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                            }`}>
+                                            {inTrialPeriod ? 'FREE TRIAL' : 'ACTIVE'}
+                                        </span>
+                                    </h2>
+                                    <p className="text-gray-400 text-sm mt-0.5">
+                                        {subscription?.subscriptionId ? 'Monthly Subscription' : inTrialPeriod ? '30-Day Free Trial' : 'Premium Pass'}
+                                    </p>
+                                </div>
                             </div>
-                            <Shield className="w-8 h-8 text-white/80" />
+                            <Sparkles className="w-8 h-8 text-primary-400/50" />
                         </div>
                     </div>
 
-                    <div className="p-6 space-y-6">
-                        {/* Dates */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-dark-900 rounded-lg">
-                                <Calendar className="w-5 h-5 text-primary-500 mt-0.5" />
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium uppercase">Start Date</p>
-                                    <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                        {subscription?.currentStart ? new Date(subscription.currentStart).toLocaleDateString() : 'N/A'}
-                                    </p>
+                    {/* Stats Grid */}
+                    <div className="relative p-6 grid grid-cols-2 gap-4">
+                        {/* Days Remaining */}
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
+                                    <Calendar className="w-5 h-5 text-primary-400" />
                                 </div>
+                                <span className="text-gray-400 text-sm">Days Remaining</span>
                             </div>
-                            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-dark-900 rounded-lg">
-                                <RotateCw className="w-5 h-5 text-green-500 mt-0.5" />
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium uppercase">Renews On</p>
-                                    <p className="font-semibold text-gray-900 dark:text-white">
-                                        {subscription?.currentEnd ? new Date(subscription.currentEnd).toLocaleDateString() : 'N/A'}
-                                    </p>
-                                    {inTrialPeriod ? (
-                                        <span className="text-xs text-orange-500 font-medium block mt-1">
-                                            Free trial ends on this date.
-                                            <br />
-                                            <button
-                                                onClick={() => router.push('/payment/signup')}
-                                                className="text-primary-600 hover:text-primary-700 underline mt-1"
-                                            >
-                                                Subscribe now to avoid interruption
-                                            </button>
-                                        </span>
-                                    ) : subscription?.subscriptionId ? (
-                                        <span className="text-xs text-green-500 font-medium block mt-1">
-                                            Auto-renews via Razorpay
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-blue-500 font-medium block mt-1">
-                                            One-time Pass (Does not auto-renew)
-                                        </span>
-                                    )}
+                            <p className="text-3xl font-bold text-white">{daysRemaining}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Expires {subscription?.currentEnd ? new Date(subscription.currentEnd).toLocaleDateString() : 'N/A'}
+                            </p>
+                        </div>
+
+                        {/* Billing */}
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                                    <RotateCw className="w-5 h-5 text-green-400" />
+                                </div>
+                                <span className="text-gray-400 text-sm">Next Billing</span>
+                            </div>
+                            <p className="text-xl font-bold text-white">
+                                {inTrialPeriod ? 'No charge' : subscription?.subscriptionId ? '₹20/mo' : 'One-time'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {inTrialPeriod
+                                    ? 'Trial - No payment required'
+                                    : subscription?.subscriptionId
+                                        ? 'Auto-renews via Razorpay'
+                                        : 'Non-recurring purchase'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Trial Upgrade CTA */}
+                    {inTrialPeriod && (
+                        <div className="relative px-6 pb-6">
+                            <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-2xl p-4 border border-amber-500/20">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                            <Zap className="w-5 h-5 text-amber-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-amber-400 font-semibold text-sm">Trial ends in {daysRemaining} days</p>
+                                            <p className="text-gray-400 text-xs">Subscribe now to continue after trial</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => router.push('/payment/signup')}
+                                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/20"
+                                    >
+                                        Upgrade Now
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    )}
 
-                        {/* Payment Method */}
-                        <div className="flex items-center gap-3 p-4 border border-gray-100 dark:border-dark-700 rounded-xl">
-                            <CreditCard className="w-6 h-6 text-gray-400" />
+                    {/* Payment Method */}
+                    <div className="relative px-6 pb-6">
+                        <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <div className="w-12 h-12 rounded-xl bg-gray-700/50 flex items-center justify-center">
+                                <CreditCard className="w-6 h-6 text-gray-400" />
+                            </div>
                             <div className="flex-1">
-                                <p className="font-medium">Payment Method</p>
-                                <p className="text-sm text-gray-500">
-                                    {inTrialPeriod ? 'No payment method added yet' :
-                                        subscription?.subscriptionId ? 'Managed via Razorpay Subscription' : 'Prepaid One-Time Pass'}
+                                <p className="font-medium text-white">Payment Method</p>
+                                <p className="text-sm text-gray-400">
+                                    {inTrialPeriod
+                                        ? 'No payment method added yet'
+                                        : subscription?.subscriptionId
+                                            ? 'Managed via Razorpay'
+                                            : 'Prepaid Pass'}
                                 </p>
                             </div>
                             {inTrialPeriod && (
                                 <button
                                     onClick={() => router.push('/payment/signup')}
-                                    className="text-xs btn-outline py-1 px-3"
+                                    className="px-4 py-2 text-sm font-medium text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 rounded-xl transition-colors"
                                 >
                                     Add Method
                                 </button>
@@ -161,33 +219,48 @@ export default function MyPlanPage() {
                     </div>
                 </div>
 
-                {/* Features List */}
-                <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm">
-                    <h3 className="font-bold mb-4">Your Premium Benefits</h3>
-                    <ul className="space-y-3">
-                        <FeatureRow text="Unlimited Trip Creation" />
-                        <FeatureRow text="Verified Premium Badge" />
-                        <FeatureRow text="Access to Exclusive Squads" />
-                        <FeatureRow text="Priority Support" />
-                    </ul>
+                {/* Premium Benefits */}
+                <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl border border-white/10 p-6">
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <Crown className="w-5 h-5 text-primary-400" />
+                        Your Premium Benefits
+                    </h3>
+                    <div className="grid gap-3">
+                        <BenefitRow icon={<Zap className="w-5 h-5" />} title="Unlimited Trip Creation" description="Create as many trips as you want" />
+                        <BenefitRow icon={<Shield className="w-5 h-5" />} title="Verified Premium Badge" description="Stand out with an exclusive badge on your profile" />
+                        <BenefitRow icon={<Users className="w-5 h-5" />} title="Access to Exclusive Squads" description="Join premium-only travel groups" />
+                        <BenefitRow icon={<HeadphonesIcon className="w-5 h-5" />} title="Priority Support" description="Get faster responses from our support team" />
+                    </div>
                 </div>
 
-                {/* Cancel Info */}
-                <p className="text-center text-xs text-gray-400">
-                    To cancel your subscription, please contact support or check your email for the Razorpay management link.
-                </p>
+                {/* Help Section */}
+                <div className="text-center space-y-2">
+                    <p className="text-sm text-gray-500">
+                        Need to cancel? Check your email for the Razorpay management link or contact support.
+                    </p>
+                    <button
+                        onClick={() => window.location.href = 'mailto:support@tripsang.com'}
+                        className="text-sm text-primary-400 hover:text-primary-300 font-medium"
+                    >
+                        Contact Support →
+                    </button>
+                </div>
             </div>
         </div>
     );
 }
 
-function FeatureRow({ text }: { text: string }) {
+function BenefitRow({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
     return (
-        <li className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-            <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                <Check className="w-3 h-3 text-green-600" />
+        <div className="flex items-center gap-4 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 flex-shrink-0">
+                {icon}
             </div>
-            {text}
-        </li>
+            <div className="flex-1 min-w-0">
+                <p className="font-medium text-white text-sm">{title}</p>
+                <p className="text-xs text-gray-400 truncate">{description}</p>
+            </div>
+            <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+        </div>
     );
 }

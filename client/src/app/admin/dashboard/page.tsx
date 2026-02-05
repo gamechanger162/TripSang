@@ -999,98 +999,22 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Paid Signup Settings */}
+                        {/* Subscription Info - All new users automatically get 30-day free trial */}
                         <div className="card">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                                Monthly Subscription
-                            </h2>
-
-                            {/* Enable Subscription Toggle */}
-                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200 dark:border-dark-700">
-                                <div>
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                                        Enable Monthly Subscription
-                                    </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        Require users to subscribe to access premium features. First month free trial enabled.
-                                    </p>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.enablePaidSignup}
-                                        onChange={(e) =>
-                                            setConfig({ ...config, enablePaidSignup: e.target.checked })
-                                        }
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600" />
-                                </label>
-                            </div>
-
-                            {/* Info Box */}
-                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800 mb-6">
+                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800">
                                 <div className="flex gap-3">
                                     <div className="flex-shrink-0">
-                                        <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                        <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                         </svg>
                                     </div>
-                                    <div className="text-sm text-blue-700 dark:text-blue-200">
+                                    <div className="text-sm text-green-700 dark:text-green-200">
+                                        <p className="font-semibold mb-1">Auto Free Trial Enabled</p>
                                         <p>
-                                            <strong>Note:</strong> The subscription price and billing cycle are managed by the Razorpay Plan ID configured in your server environment variables (`RAZORPAY_PLAN_ID`).
-                                            To change the price, you must create a new Plan in Razorpay and update the environment variable.
+                                            All new users automatically receive a <strong>30-day free trial</strong> upon registration.
+                                            After the trial period, users can choose to subscribe for continued access.
                                         </p>
                                     </div>
-                                </div>
-                            </div>
-
-                            {/* Hidden/Disabled Fee Inputs (kept for schema compatibility but hidden from UI mainly) */}
-                            <div className="hidden">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        One Month Premium Price (Paise)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={config.oneMonthPremiumPrice || 3000}
-                                        onChange={(e) =>
-                                            setConfig({ ...config, oneMonthPremiumPrice: parseFloat(e.target.value) || 0 })
-                                        }
-                                        className="input-field"
-                                        min="100"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">3000 paise = ₹30.00</p>
-                                </div>
-                                <div className="mt-4">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Legacy Fee
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={config.signupFee}
-                                        onChange={(e) =>
-                                            setConfig({ ...config, signupFee: parseFloat(e.target.value) || 0 })
-                                        }
-                                        className="input-field"
-                                        min="0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Currency
-                                    </label>
-                                    <select
-                                        value={config.signupFeeCurrency}
-                                        onChange={(e) =>
-                                            setConfig({ ...config, signupFeeCurrency: e.target.value })
-                                        }
-                                        className="input-field"
-                                    >
-                                        <option value="INR">INR (₹)</option>
-                                        <option value="USD">USD ($)</option>
-                                        <option value="EUR">EUR (€)</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>

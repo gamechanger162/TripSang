@@ -147,6 +147,9 @@ export default function SignUpPage() {
         }
     };
 
+    const [showTrialDialog, setShowTrialDialog] = useState(false);
+    const [trialEndsDate, setTrialEndsDate] = useState<string>('');
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -176,8 +179,6 @@ export default function SignUpPage() {
             });
 
             if (registerResponse.success) {
-                toast.success('Account created! Signing you in...');
-
                 // 2. Auto Login via NextAuth
                 const result = await signIn('credentials', {
                     email: formData.email,
@@ -189,8 +190,15 @@ export default function SignUpPage() {
                     toast.error('Login failed. Please sign in manually.');
                     router.push('/auth/signin');
                 } else {
-                    router.push('/payment/signup');
-                    router.refresh();
+                    // Show trial welcome dialog
+                    if (registerResponse.trialActivated && registerResponse.trialEndsAt) {
+                        setTrialEndsDate(new Date(registerResponse.trialEndsAt).toLocaleDateString());
+                        setShowTrialDialog(true);
+                    } else {
+                        toast.success('Account created! Welcome to TripSang!');
+                        router.push('/');
+                        router.refresh();
+                    }
                 }
             }
         } catch (error: any) {
@@ -415,6 +423,71 @@ export default function SignUpPage() {
                     </p>
                 </div>
             </div>
+
+            {/* Trial Welcome Dialog */}
+            {showTrialDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-8 max-w-md mx-4 shadow-2xl border border-white/10 animate-fadeIn">
+                        {/* Celebration Icon */}
+                        <div className="flex justify-center mb-6">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-primary-500 to-purple-500 flex items-center justify-center animate-pulse">
+                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-2xl font-bold text-center text-white mb-2">
+                            Welcome to TripSang! 🎉
+                        </h2>
+
+                        {/* Subtitle */}
+                        <p className="text-center text-gray-300 mb-6">
+                            Your account has been created successfully!
+                        </p>
+
+                        {/* Trial Badge */}
+                        <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl p-4 mb-6 border border-green-500/30">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="text-green-400 font-bold text-lg">30-Day Free Trial Activated!</p>
+                                    <p className="text-gray-400 text-sm">Enjoy all premium features until {trialEndsDate}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Features */}
+                        <ul className="space-y-3 mb-6">
+                            {['Unlimited Trip Creation', 'Premium Badge on Profile', 'Access to Exclusive Squads', 'Priority Support'].map((feature, i) => (
+                                <li key={i} className="flex items-center gap-3 text-gray-300 text-sm">
+                                    <svg className="w-5 h-5 text-primary-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    {feature}
+                                </li>
+                            ))}
+                        </ul>
+
+                        {/* CTA Button */}
+                        <button
+                            onClick={() => {
+                                setShowTrialDialog(false);
+                                router.push('/');
+                                router.refresh();
+                            }}
+                            className="w-full py-3 px-6 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-primary-500/25"
+                        >
+                            Start Exploring →
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

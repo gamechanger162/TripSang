@@ -36,14 +36,17 @@ export default function CallToAction() {
             {/* Footer CTA */}
             <section className="py-24 bg-black text-center border-t border-white/10">
                 <div className="max-w-2xl mx-auto px-4">
-                    <p className="text-primary-500 font-mono text-sm mb-4">JOIN 10,000+ TRAVELERS</p>
-                    <h3 className="text-3xl font-bold text-white mb-8">Ready to make memories?</h3>
+                    <span className="inline-block py-1 px-4 rounded-full bg-green-500/20 border border-green-500/30 text-sm font-bold text-green-400 mb-4">
+                        ✨ Start with 30 Days Free
+                    </span>
+                    <h3 className="text-3xl font-bold text-white mb-4">Ready to make memories?</h3>
+                    <p className="text-gray-400 mb-8">Join 10,000+ travelers. No credit card required to start.</p>
                     <div className="flex justify-center gap-4">
                         <Link href="/search" className="btn-outline border-white/30 text-white hover:bg-white hover:text-black hover:border-white">
                             Browse Trips
                         </Link>
                         <Link href="/auth/signup" className="btn-primary">
-                            Create Account
+                            Start Free Trial →
                         </Link>
                     </div>
                 </div>

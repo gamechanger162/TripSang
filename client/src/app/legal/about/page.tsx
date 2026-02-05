@@ -66,8 +66,8 @@ export default function AboutUs() {
                     </div>
                 </section>
 
-                <section className="text-center mt-12 py-8 bg-primary-50 dark:bg-primary-900/10 rounded-2xl">
-                    <h2 className="text-2xl font-bold mb-4">Ready to start your adventure?</h2>
+                <section className="text-center mt-12 py-8 bg-gradient-to-r from-primary-600/20 to-purple-600/20 rounded-2xl border border-white/10">
+                    <h2 className="text-2xl font-bold mb-4 text-white">Ready to start your adventure?</h2>
                     <Link
                         href="/trips/create"
                         className="inline-block bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-8 rounded-full transition-colors"
