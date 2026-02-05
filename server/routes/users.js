@@ -4,7 +4,8 @@ import {
     getMyProfile,
     updateUserProfile,
     getUserTrips,
-    submitVerificationRequest
+    submitVerificationRequest,
+    deleteMyAccount
 } from '../controllers/userController.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -16,6 +17,13 @@ const router = express.Router();
  * @access  Private
  */
 router.get('/me', authenticate, getMyProfile);
+
+/**
+ * @route   DELETE /api/users/me
+ * @desc    Delete own account permanently
+ * @access  Private
+ */
+router.delete('/me', authenticate, deleteMyAccount);
 
 /**
  * @route   PUT /api/users/profile

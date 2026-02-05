@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { Skeleton, TextSkeleton, AvatarSkeleton, CardSkeleton } from '../ui/LoadingSkeleton';
 
 describe('LoadingSkeleton Components', () => {

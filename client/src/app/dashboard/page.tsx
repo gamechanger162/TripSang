@@ -8,6 +8,7 @@ import { reviewAPI, userAPI } from '@/lib/api';
 import ReviewModal from '@/components/reviews/ReviewModal';
 import toast from 'react-hot-toast';
 import PushNotificationManager from '@/components/common/PushNotificationManager';
+import DeleteAccountButton from '@/components/common/DeleteAccountButton';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -190,6 +191,9 @@ export default function UserDashboard() {
                                     <Link href={`/profile/${session.user.id}`} className="font-medium text-gray-600 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200 block">
                                         View public profile
                                     </Link>
+                                </div>
+                                <div className="pt-3 border-t border-gray-200 dark:border-gray-600 mt-3">
+                                    <DeleteAccountButton />
                                 </div>
                             </div>
                         </div>

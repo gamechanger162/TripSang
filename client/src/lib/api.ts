@@ -733,6 +733,16 @@ export const userAPI = {
      */
     getTrips: async () => {
         return fetchWithAuth('/api/users/trips');
+    },
+
+    /**
+     * Delete current user's account permanently
+     * DELETE /api/users/me
+     */
+    deleteAccount: async () => {
+        return fetchWithAuth('/api/users/me', {
+            method: 'DELETE'
+        });
     }
 };
 

@@ -1,5 +1,9 @@
 import User from '../models/User.js';
 import Trip from '../models/Trip.js';
+import Message from '../models/Message.js';
+import Conversation from '../models/Conversation.js';
+import Notification from '../models/Notification.js';
+import Review from '../models/Review.js';
 
 /**
  * @desc    Get user profile by ID
@@ -232,6 +236,58 @@ export const submitVerificationRequest = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error'
+        });
+    }
+};
+
+/**
+ * @desc    Delete own account permanently
+ * @route   DELETE /api/users/me
+ * @access  Private
+ */
+export const deleteMyAccount = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // 1. Delete user's created trips
+        await Trip.deleteMany({ creator: userId });
+
+        // 2. Remove user from trips they joined
+        await Trip.updateMany(
+            { squadMembers: userId },
+            { $pull: { squadMembers: userId } }
+        );
+
+        // 3. Delete user's messages
+        await Message.deleteMany({ sender: userId });
+
+        // 4. Delete user's conversations
+        await Conversation.deleteMany({
+            participants: userId
+        });
+
+        // 5. Delete user's notifications
+        await Notification.deleteMany({
+            $or: [{ recipient: userId }, { sender: userId }]
+        });
+
+        // 6. Delete user's reviews (given and received)
+        await Review.deleteMany({
+            $or: [{ reviewer: userId }, { reviewee: userId }]
+        });
+
+        // 7. Finally, delete the user
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete account'
         });
     }
 };
