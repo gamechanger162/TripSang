@@ -75,8 +75,10 @@ export default function PushNotificationManager() {
             console.error('Push error:', error);
             if (error.message === 'Permission denied') {
                 toast.error('You denied notifications. Please enable them in browser settings.');
+            } else if (error.message === 'VAPID Public Key missing') {
+                toast.error('Configuration Error: VAPID Key missing');
             } else {
-                toast.error('Failed to enable notifications.');
+                toast.error(`Failed: ${error.message || 'Unknown error'}`);
             }
         } finally {
             setIsLoading(false);

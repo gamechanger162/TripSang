@@ -14,9 +14,7 @@ export default function IDVerificationPage() {
     // State
     const [idType, setIdType] = useState<'aadhaar' | 'pan' | null>(null);
     const [frontFile, setFrontFile] = useState<File | null>(null);
-    const [backFile, setBackFile] = useState<File | null>(null);
     const [frontPreview, setFrontPreview] = useState<string | null>(null);
-    const [backPreview, setBackPreview] = useState<string | null>(null);
 
     // Processing State
     const [isScanning, setIsScanning] = useState(false);
@@ -49,9 +47,6 @@ export default function IDVerificationPage() {
             if (side === 'front') {
                 setFrontFile(selectedFile);
                 setFrontPreview(URL.createObjectURL(selectedFile));
-            } else {
-                setBackFile(selectedFile);
-                setBackPreview(URL.createObjectURL(selectedFile));
             }
             // Reset scan result on new file
             setScanResult(null);
@@ -106,10 +101,7 @@ export default function IDVerificationPage() {
     const handleSubmit = async () => {
         if (!idType) return;
         if (!frontFile) return;
-        if (idType === 'aadhaar' && !backFile) {
-            toast.error('Please upload back side of Aadhaar');
-            return;
-        }
+
         if (!scanResult?.success) {
             toast.error('Please scan the document first');
             return;
@@ -123,19 +115,10 @@ export default function IDVerificationPage() {
             const frontRes = await uploadAPI.uploadFile(frontFile);
             if (!frontRes.success) throw new Error('Front image upload failed');
 
-            // 2. Upload Back (if needed)
-            let backUrl = undefined;
-            if (idType === 'aadhaar' && backFile) {
-                const backRes = await uploadAPI.uploadFile(backFile);
-                if (!backRes.success) throw new Error('Back image upload failed');
-                backUrl = backRes.url;
-            }
-
-            // 3. Submit to Backend
+            // 2. Submit to Backend
             const verifyRes = await userAPI.submitVerificationRequest({
                 idType,
-                frontUrl: frontRes.url,
-                backUrl
+                frontUrl: frontRes.url
             });
 
             if (verifyRes.success) {
@@ -156,9 +139,7 @@ export default function IDVerificationPage() {
     const resetSelection = () => {
         setIdType(null);
         setFrontFile(null);
-        setBackFile(null);
         setFrontPreview(null);
-        setBackPreview(null);
         setScanResult(null);
     };
 
@@ -204,7 +185,7 @@ export default function IDVerificationPage() {
                                 >
                                     <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🆔</div>
                                     <h4 className="text-lg font-bold text-gray-900 dark:text-white">Aadhaar Card</h4>
-                                    <p className="text-sm text-gray-500 text-center mt-2">Requires Front & Back Photos</p>
+                                    <p className="text-sm text-gray-500 text-center mt-2">Requires Front Photo Only</p>
                                 </button>
 
                                 <button
@@ -250,39 +231,7 @@ export default function IDVerificationPage() {
                                     </div>
                                 </div>
 
-                                {/* Back Side Upload (Only for Aadhaar) */}
-                                {idType === 'aadhaar' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Back Side of Aadhaar
-                                        </label>
-                                        <div
-                                            onClick={() => backInputRef.current?.click()}
-                                            className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg h-48 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 cursor-pointer overflow-hidden relative"
-                                        >
-                                            <input
-                                                type="file" ref={backInputRef} className="hidden" accept="image/*"
-                                                onChange={(e) => handleFileChange(e, 'back')}
-                                            />
-                                            {backPreview ? (
-                                                <div className="w-full h-full relative group">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={backPreview} alt="Back Preview" className="w-full h-full object-contain" />
-                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                                        Click to change
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="text-center p-4">
-                                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                    </svg>
-                                                    <span className="mt-2 block text-sm font-medium text-gray-600">Upload Back</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+
 
                                 {/* Scan & Submit Actions */}
                                 <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">

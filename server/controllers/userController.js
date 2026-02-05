@@ -191,12 +191,7 @@ export const submitVerificationRequest = async (req, res) => {
             });
         }
 
-        if (idType === 'aadhaar' && !backUrl) {
-            return res.status(400).json({
-                success: false,
-                message: 'Aadhaar verification requires both front and back photos'
-            });
-        }
+
 
         const user = await User.findById(req.user._id);
 
