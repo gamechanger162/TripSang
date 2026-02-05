@@ -6,6 +6,10 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 
+// Rate limiting middleware
+import { apiLimiter, authLimiter, uploadLimiter, createLimiter } from './middleware/rateLimit.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+
 
 const app = express();
 const httpServer = createServer(app);
@@ -394,21 +398,21 @@ import memoryRoutes from './routes/memories.js';
 import reportRoutes from './routes/reports.js';
 import supportRoutes from './routes/support.js';
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/trips', tripRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/announcements', announcementRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/friends', friendRoutes);
-app.use('/api/memories', memoryRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/support', supportRoutes);
+// API Routes with Rate Limiting
+app.use('/api/auth', authLimiter, authRoutes);  // Strict limit for auth
+app.use('/api/admin', apiLimiter, adminRoutes);
+app.use('/api/trips', apiLimiter, tripRoutes);
+app.use('/api/payments', apiLimiter, paymentRoutes);
+app.use('/api/reviews', createLimiter, reviewRoutes);  // Rate limit reviews
+app.use('/api/announcements', apiLimiter, announcementRoutes);
+app.use('/api/messages', apiLimiter, messageRoutes);
+app.use('/api/upload', uploadLimiter, uploadRoutes);  // Strict limit for uploads
+app.use('/api/users', apiLimiter, userRoutes);
+app.use('/api/notifications', apiLimiter, notificationRoutes);
+app.use('/api/friends', apiLimiter, friendRoutes);
+app.use('/api/memories', createLimiter, memoryRoutes);  // Rate limit memory creation
+app.use('/api/reports', createLimiter, reportRoutes);  // Rate limit reports
+app.use('/api/support', apiLimiter, supportRoutes);
 
 // Keep-Alive Mechanism for Render Free Tier
 const PING_INTERVAL = 14 * 60 * 1000; // 14 minutes (render sleeps after 15)
@@ -424,24 +428,11 @@ if (process.env.NODE_ENV === 'production') {
     }, PING_INTERVAL);
 }
 
-// 404 Handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route not found'
-    });
-});
+// 404 Handler - use imported handler
+app.use(notFoundHandler);
 
-// Error Handler
-app.use((err, req, res, next) => {
-    console.error('❌ Error:', err.stack);
-
-    res.status(err.status || 500).json({
-        success: false,
-        message: err.message || 'Internal Server Error',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
-});
+// Global Error Handler - use imported handler
+app.use(errorHandler);
 
 // Start Server
 const PORT = process.env.PORT || 5000;

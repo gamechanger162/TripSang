@@ -166,13 +166,16 @@ export default function TripCard({ trip }: TripCardProps) {
                 {/* Cover Image */}
                 <div className="relative h-48 w-full overflow-hidden rounded-lg mb-4">
                     {trip.coverPhoto ? (
-                        <img
+                        <Image
                             src={trip.coverPhoto}
                             alt={trip.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.nextElementSibling?.classList.remove('hidden');
                             }}
                         />
                     ) : null}
