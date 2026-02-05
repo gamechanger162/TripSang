@@ -543,16 +543,7 @@ export const createOrder = async (req, res) => {
 
         const user = await User.findById(userId);
 
-        // Allow purchasing one-time even if they had a trial, but not if they are already active with a SUB
-        // Standard User can buy this to activate.
-        if (user.subscription.status === 'active') {
-            // If active via sub, don't allow? Or extend?
-            // For simplicity, block if active.
-            return res.status(400).json({
-                success: false,
-                message: 'You already have an active subscription.'
-            });
-        }
+        // Allow purchasing even if user has active subscription - days will be added
 
         const amount = 3000; // ₹30.00
         const currency = 'INR';
@@ -624,10 +615,20 @@ export const verifyOrder = async (req, res) => {
         // Signature valid, update user
         const user = await User.findById(userId);
 
-        // One Time Payment gives 30 days
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + 30);
+        // Calculate new end date - ADD 30 days to existing plan if active
+        const now = new Date();
+        let startDate = now;
+        let endDate = new Date();
+
+        // If user already has an active plan with time remaining, add 30 days to it
+        if (user.subscription.status === 'active' && user.subscription.currentEnd && new Date(user.subscription.currentEnd) > now) {
+            // Add 30 days to existing end date
+            endDate = new Date(user.subscription.currentEnd);
+            endDate.setDate(endDate.getDate() + 30);
+        } else {
+            // Fresh start - 30 days from today
+            endDate.setDate(endDate.getDate() + 30);
+        }
 
         user.subscription = {
             status: 'active',
@@ -645,18 +646,16 @@ export const verifyOrder = async (req, res) => {
 
         // Fetch Payment Details from Razorpay to get the actual amount captured
         // This ensures our revenue stats are accurate
-        let capturedAmount = 0;
+        let capturedAmount = 30; // Default fallback amount (₹30)
         try {
             const paymentDetails = await getRazorpay().payments.fetch(razorpay_payment_id);
-            if (paymentDetails && paymentDetails.status === 'captured') {
-                capturedAmount = paymentDetails.amount / 100; // Convert paise to main currency unit
+            // Handle both 'captured' and 'authorized' statuses
+            if (paymentDetails && (paymentDetails.status === 'captured' || paymentDetails.status === 'authorized')) {
+                capturedAmount = paymentDetails.amount / 100; // Convert paise to rupees
             }
         } catch (err) {
             console.error('Failed to fetch payment details during verification:', err);
-            // Fallback to configured price if fetch fails, though arguably we should fail? 
-            // Let's rely on config if fetch fails, or 0.
-            const config = await GlobalConfig.getInstance();
-            capturedAmount = config.oneMonthPremiumPrice ? config.oneMonthPremiumPrice / 100 : 30;
+            // Use default fallback amount (30)
         }
 
         await Payment.create({

@@ -210,41 +210,6 @@ export default function SignupPaymentPage() {
                 {/* Right Side: Payment Options */}
                 <div className="space-y-6">
 
-                    {/* Free Trial Option - Always show for reviewer/testing visibility if needed, or stick to eligibility logic. 
-                        For "Reviewer can't find it", it implies they logged in with an account that used it or logic is failing.
-                        Let's force show it if subscriptionDetails is loaded, but handle error if clicked and not eligible. 
-                    */}
-                    <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700 relative overflow-hidden">
-                        {(subscriptionDetails?.isTrialEligible) && (
-                            <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                                BEST WAY TO START
-                            </div>
-                        )}
-                        <h3 className="text-lg font-bold">30-Day Free Trial</h3>
-                        <p className="text-sm text-gray-500 mb-4">Experience Premium for free. No card required.</p>
-                        <button
-                            onClick={async () => {
-                                setProcessing(true);
-                                try {
-                                    const res = await paymentAPI.startTrial();
-                                    if (res.success) {
-                                        toast.success('Trial Activated!');
-                                        router.push('/dashboard');
-                                    } else {
-                                        toast.error(res.message || 'Trial not available');
-                                    }
-                                } catch (err: any) {
-                                    toast.error(err.message || 'Trial failed');
-                                } finally {
-                                    setProcessing(false);
-                                }
-                            }}
-                            disabled={processing || !subscriptionDetails?.isTrialEligible}
-                            className={`w-full btn-outline py-2.5 text-primary-600 border-primary-600 hover:bg-primary-50 ${!subscriptionDetails?.isTrialEligible ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            Start Free Trial
-                        </button>
-                    </div>
 
                     {/* Monthly Subscription (Recurring) */}
                     <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-lg border-2 border-primary-500 relative">
