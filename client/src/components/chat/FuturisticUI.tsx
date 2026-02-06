@@ -60,7 +60,7 @@ export function AnimatedMeshBackground({ className = '' }: { className?: string 
 
             {/* Animated mesh blobs */}
             <motion.div
-                className="absolute w-[600px] h-[600px] rounded-full opacity-30"
+                className="absolute w-[600px] h-[600px] rounded-full opacity-30 will-change-transform"
                 style={{
                     background: 'radial-gradient(circle, #008080 0%, transparent 70%)',
                     filter: 'blur(80px)',
@@ -73,7 +73,7 @@ export function AnimatedMeshBackground({ className = '' }: { className?: string 
                 transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
             />
             <motion.div
-                className="absolute right-0 bottom-0 w-[500px] h-[500px] rounded-full opacity-25"
+                className="absolute right-0 bottom-0 w-[500px] h-[500px] rounded-full opacity-25 will-change-transform"
                 style={{
                     background: 'radial-gradient(circle, #FF8C00 0%, transparent 70%)',
                     filter: 'blur(80px)',
@@ -86,7 +86,7 @@ export function AnimatedMeshBackground({ className = '' }: { className?: string 
                 transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
             />
             <motion.div
-                className="absolute left-1/3 top-1/4 w-[400px] h-[400px] rounded-full opacity-20"
+                className="absolute left-1/3 top-1/4 w-[400px] h-[400px] rounded-full opacity-20 will-change-transform"
                 style={{
                     background: 'radial-gradient(circle, #00CED1 0%, transparent 70%)',
                     filter: 'blur(60px)',

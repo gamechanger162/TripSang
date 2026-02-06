@@ -68,6 +68,7 @@ import MobileNav from '@/components/MobileNav';
 import SiteBanner from '@/components/SiteBanner';
 import InstallPrompt from '@/components/InstallPrompt';
 import Footer from '@/components/Footer';
+import SmoothScrolling from '@/components/SmoothScrolling';
 
 export default function RootLayout({
     children,
@@ -117,13 +118,15 @@ export default function RootLayout({
                     }}
                 />
                 <Providers>
-                    <Navbar />
-                    <SiteBanner />
-                    {children}
-                    <InstallPrompt />
-                    <MobileNav />
-                    <ToasterProvider />
-                    <Footer />
+                    <SmoothScrolling>
+                        <Navbar />
+                        <SiteBanner />
+                        {children}
+                        <InstallPrompt />
+                        <MobileNav />
+                        <ToasterProvider />
+                        <Footer />
+                    </SmoothScrolling>
                 </Providers>
             </body>
         </html>
