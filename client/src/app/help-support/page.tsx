@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, MessageSquare, Phone, ChevronDown, ChevronUp, Search, ExternalLink } from 'lucide-react';
+import { Mail, MessageSquare, ChevronDown, ChevronUp, Search, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HelpSupportPage() {
@@ -62,7 +62,7 @@ export default function HelpSupportPage() {
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 mb-16">
+                <div className="grid md:grid-cols-2 gap-8 mb-16">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow text-center group">
                         <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                             <MessageSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -82,17 +82,6 @@ export default function HelpSupportPage() {
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Send us an email and we'll get back to you.</p>
                         <a href="mailto:support@tripsang.com" className="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline">
                             support@tripsang.com
-                        </a>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow text-center group">
-                        <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                            <Phone className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Call Us</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Mon-Fri from 9am to 6pm IST.</p>
-                        <a href="tel:+919876543210" className="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline">
-                            +91 987 654 3210
                         </a>
                     </div>
                 </div>

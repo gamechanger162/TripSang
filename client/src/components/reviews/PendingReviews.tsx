@@ -144,21 +144,21 @@ export default function PendingReviews() {
                             className="relative p-4 bg-gray-50 dark:bg-dark-700 rounded-xl group hover:bg-orange-50 dark:hover:bg-dark-600 transition-all cursor-pointer border border-transparent hover:border-orange-200 hover:shadow-md"
                             onClick={() => setSelectedReview(item)}
                         >
-                            {/* Skip/Dismiss Buttons */}
-                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Skip/Dismiss Buttons - Always visible */}
+                            <div className="absolute top-2 right-2 flex gap-1">
                                 <button
                                     onClick={(e) => handleRemindLater(e, item)}
-                                    className="p-1 rounded-full bg-white dark:bg-dark-800 shadow-sm text-gray-400 hover:text-amber-500 transition-colors"
+                                    className="p-1.5 rounded-full bg-white dark:bg-dark-800 shadow-sm text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                                     title="Remind me later"
                                 >
-                                    <Clock size={14} />
+                                    <Clock size={16} />
                                 </button>
                                 <button
                                     onClick={(e) => handleSkip(e, item)}
-                                    className="p-1 rounded-full bg-white dark:bg-dark-800 shadow-sm text-gray-400 hover:text-red-500 transition-colors"
+                                    className="p-1.5 rounded-full bg-white dark:bg-dark-800 shadow-sm text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                     title="Skip this review"
                                 >
-                                    <X size={14} />
+                                    <X size={16} />
                                 </button>
                             </div>
 

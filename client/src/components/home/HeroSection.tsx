@@ -24,14 +24,12 @@ export default function HeroSection({
     const router = useRouter();
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
-    const [date, setDate] = useState('');
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         const params = new URLSearchParams();
         if (from) params.append('startPoint', from);
         if (to) params.append('endPoint', to);
-        if (date) params.append('startDate', date);
         router.push(`/search?${params.toString()}`);
     };
 
@@ -129,7 +127,7 @@ export default function HeroSection({
                 <div className="animate-slide-up animation-delay-400">
                     <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
                         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 md:p-6 shadow-[0_0_40px_-10px_rgba(0,0,0,0.5)]">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div className="text-left md:col-span-1">
                                     <label className="text-xs font-bold text-gray-400 tracking-wider uppercase ml-1 block mb-2">From</label>
                                     <CityAutocomplete
@@ -143,25 +141,15 @@ export default function HeroSection({
                                     />
                                 </div>
                                 <div className="text-left md:col-span-1">
-                                    <label className="text-xs font-bold text-gray-400 tracking-wider uppercase ml-1 block mb-2">To</label>
+                                    <label className="text-xs font-bold text-gray-400 tracking-wider uppercase ml-1 block mb-2">Destination</label>
                                     <CityAutocomplete
                                         id="to"
                                         name="to"
                                         value={to}
                                         onChange={setTo}
-                                        placeholder="Destination"
+                                        placeholder="Where to?"
                                         className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 transition-colors"
                                         cities={INDIAN_CITIES}
-                                    />
-                                </div>
-                                <div className="text-left md:col-span-1">
-                                    <label className="text-xs font-bold text-gray-400 tracking-wider uppercase ml-1 block mb-2">When</label>
-                                    <input
-                                        type="date"
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 transition-colors [color-scheme:dark]"
                                     />
                                 </div>
                                 <div className="md:col-span-1">
