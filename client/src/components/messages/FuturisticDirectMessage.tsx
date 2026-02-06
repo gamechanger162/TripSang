@@ -213,6 +213,7 @@ export default function FuturisticDirectMessage({
                                     isOwn={isOwnMessage}
                                     senderId={msg.sender}
                                     senderName={msg.senderName}
+                                    senderProfilePicture={!isOwnMessage ? receiverImage : undefined}
                                     message={msg.message}
                                     timestamp={msg.timestamp}
                                     type={msg.type as any}

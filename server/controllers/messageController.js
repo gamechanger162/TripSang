@@ -82,12 +82,13 @@ export const getOrCreateConversation = async (req, res) => {
         // Find or create conversation
         const conversation = await Conversation.findOrCreate(currentUserId, userId);
 
-        // Get recent messages
+        // Get recent messages with sender populated
         let messages = await DirectMessage.find({
             conversationId: conversation._id
         })
             .sort({ timestamp: 1 })
             .limit(50)
+            .populate('sender', 'name')
             .populate({
                 path: 'replyTo',
                 select: 'sender message type imageUrl',
@@ -95,12 +96,19 @@ export const getOrCreateConversation = async (req, res) => {
             })
             .lean();
 
-        // Transform messages to include senderName in replyTo validation
+        // Transform messages to include senderName for both message and replyTo
         messages = messages.map(msg => {
+            // Add senderName from populated sender
+            if (msg.sender && typeof msg.sender === 'object') {
+                msg.senderName = msg.sender.name || 'Unknown';
+                msg.sender = msg.sender._id; // Flatten back to ID for consistency
+            } else {
+                msg.senderName = 'Unknown';
+            }
+            // Handle replyTo senderName
             if (msg.replyTo) {
-                // Check if replyTo is fully populated (it might have been deleted)
-                if (msg.replyTo.sender) {
-                    msg.replyTo.senderName = msg.replyTo.sender.name;
+                if (msg.replyTo.sender && typeof msg.replyTo.sender === 'object') {
+                    msg.replyTo.senderName = msg.replyTo.sender.name || 'Unknown';
                 } else {
                     msg.replyTo.senderName = 'Unknown';
                 }
@@ -162,11 +170,12 @@ export const getMessageHistory = async (req, res) => {
         // Get total count
         const total = await DirectMessage.countDocuments({ conversationId });
 
-        // Get paginated messages
+        // Get paginated messages with sender populated
         let messages = await DirectMessage.find({ conversationId })
             .sort({ timestamp: -1 })
             .skip(skip)
             .limit(limit)
+            .populate('sender', 'name')
             .populate({
                 path: 'replyTo',
                 select: 'sender message type imageUrl',
@@ -174,11 +183,19 @@ export const getMessageHistory = async (req, res) => {
             })
             .lean();
 
-        // Transform messages
+        // Transform messages to include senderName for both message and replyTo
         messages = messages.map(msg => {
+            // Add senderName from populated sender
+            if (msg.sender && typeof msg.sender === 'object') {
+                msg.senderName = msg.sender.name || 'Unknown';
+                msg.sender = msg.sender._id; // Flatten back to ID for consistency
+            } else {
+                msg.senderName = 'Unknown';
+            }
+            // Handle replyTo senderName
             if (msg.replyTo) {
-                if (msg.replyTo.sender) {
-                    msg.replyTo.senderName = msg.replyTo.sender.name;
+                if (msg.replyTo.sender && typeof msg.replyTo.sender === 'object') {
+                    msg.replyTo.senderName = msg.replyTo.sender.name || 'Unknown';
                 } else {
                     msg.replyTo.senderName = 'Unknown';
                 }

@@ -143,7 +143,7 @@ export default function ChatPage() {
                             </Link>
 
                             {/* User info - Clickable to view profile */}
-                            <Link href={`/profile/${userId}`} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                            <Link href={`/profile/${otherUser._id}`} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
                                     {otherUser.profilePicture ? (
                                         <Image
@@ -183,9 +183,9 @@ export default function ChatPage() {
 
                             {/* Dropdown menu */}
                             {showMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg border border-gray-200 dark:border-dark-700 py-1 z-50">
+                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg border border-gray-200 dark:border-dark-700 py-1 z-[100]">
                                     <Link
-                                        href={`/profile/${userId}`}
+                                        href={`/profile/${otherUser._id}`}
                                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700"
                                         onClick={() => setShowMenu(false)}
                                     >

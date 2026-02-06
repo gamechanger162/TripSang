@@ -121,6 +121,18 @@ io.on('connection', (socket) => {
             // Send history to user
             socket.emit('message_history', history);
 
+            // Fetch and send pinned message if exists
+            const trip = await Trip.findById(tripId).populate('pinnedMessage');
+            if (trip && trip.pinnedMessage) {
+                socket.emit('message_pinned', {
+                    messageId: trip.pinnedMessage._id,
+                    senderName: trip.pinnedMessage.senderName,
+                    message: trip.pinnedMessage.message,
+                    type: trip.pinnedMessage.type,
+                    imageUrl: trip.pinnedMessage.imageUrl
+                });
+            }
+
             // Notify others in room
             socket.to(tripId).emit('user_joined', { userName: socket.user.name });
 
@@ -350,6 +362,16 @@ io.on('connection', (socket) => {
             }
 
             // Save message to database
+            // Extract replyTo messageId - handle both object format and string format
+            let replyToId = null;
+            if (replyTo) {
+                if (typeof replyTo === 'object' && replyTo.messageId) {
+                    replyToId = replyTo.messageId;
+                } else if (typeof replyTo === 'string') {
+                    replyToId = replyTo;
+                }
+            }
+
             const savedMessage = await DirectMessage.create({
                 conversationId,
                 sender: socket.user._id,
@@ -357,7 +379,7 @@ io.on('connection', (socket) => {
                 message: message || (type === 'image' ? 'Sent an image' : ''),
                 type,
                 imageUrl,
-                replyTo,
+                replyTo: replyToId || undefined,
                 timestamp: new Date()
             });
 

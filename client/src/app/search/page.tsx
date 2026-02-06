@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import TripCard from '@/components/TripCard';
 import FilterModal, { FilterOptions } from '@/components/FilterModal';
 import GoogleAd from '@/components/GoogleAd';
+import CityAutocomplete from '@/components/CityAutocomplete';
+import { INDIAN_CITIES } from '@/data/cities';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import ExcitingBackground from '@/components/ExcitingBackground';
@@ -14,6 +16,7 @@ export const dynamic = 'force-dynamic';
 
 function SearchPageContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [trips, setTrips] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
@@ -33,6 +36,24 @@ function SearchPageContent() {
     const startPoint = searchParams.get('startPoint') || '';
     const endPoint = searchParams.get('endPoint') || '';
     const startDate = searchParams.get('startDate') || '';
+
+    // Local search state (for the input fields)
+    const [searchFrom, setSearchFrom] = useState(startPoint);
+    const [searchTo, setSearchTo] = useState(endPoint);
+
+    // Update local state when URL params change
+    useEffect(() => {
+        setSearchFrom(startPoint);
+        setSearchTo(endPoint);
+    }, [startPoint, endPoint]);
+
+    // Handle destination search
+    const handleDestinationSearch = () => {
+        const params = new URLSearchParams();
+        if (searchFrom) params.append('startPoint', searchFrom);
+        if (searchTo) params.append('endPoint', searchTo);
+        router.push(`/search?${params.toString()}`);
+    };
 
     // Fetch trips
     const fetchTrips = async (page = 1) => {
@@ -89,9 +110,7 @@ function SearchPageContent() {
     useEffect(() => {
         fetchTrips();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters]);
-
-    const router = useRouter();
+    }, [filters, startPoint, endPoint]);
 
     const handleApplyFilters = (newFilters: FilterOptions) => {
         setFilters(newFilters);
@@ -133,6 +152,40 @@ function SearchPageContent() {
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                     {loading ? 'Loading...' : `${pagination.totalTrips} trips found`}
                                 </p>
+                            </div>
+
+                            {/* Destination Search Bar */}
+                            <div className="flex flex-wrap md:flex-nowrap items-end gap-2 flex-1 max-w-2xl">
+                                <div className="flex-1 min-w-[140px]">
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">From</label>
+                                    <CityAutocomplete
+                                        id="search-from"
+                                        name="searchFrom"
+                                        value={searchFrom}
+                                        onChange={setSearchFrom}
+                                        placeholder="Any city"
+                                        cities={INDIAN_CITIES}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-[140px]">
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Destination</label>
+                                    <CityAutocomplete
+                                        id="search-to"
+                                        name="searchTo"
+                                        value={searchTo}
+                                        onChange={setSearchTo}
+                                        placeholder="Any city"
+                                        cities={INDIAN_CITIES}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleDestinationSearch}
+                                    className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                                >
+                                    Search
+                                </button>
                             </div>
 
                             {/* Search by Code */}

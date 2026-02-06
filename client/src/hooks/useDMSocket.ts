@@ -98,6 +98,7 @@ export const useDMSocket = (conversationId?: string): UseDMSocketReturn => {
         replyTo?: { messageId: string; senderName: string; message: string; type?: 'text' | 'image' }
     ) => {
         if (socket && conversationId) {
+            console.log('📤 Sending DM:', { conversationId, receiverId, message: message.substring(0, 20), type, hasReplyTo: !!replyTo });
             socket.emit('send_dm', {
                 conversationId,
                 receiverId,
@@ -106,6 +107,8 @@ export const useDMSocket = (conversationId?: string): UseDMSocketReturn => {
                 imageUrl,
                 replyTo
             });
+        } else {
+            console.error('❌ Cannot send DM: socket not connected or no conversationId', { hasSocket: !!socket, conversationId });
         }
     };
 
