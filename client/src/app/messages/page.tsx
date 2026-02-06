@@ -138,8 +138,13 @@ export default function MessagesPage() {
             setLoadingTrips(true);
             const response = await userAPI.getTrips();
             if (response.success) {
-                // The API returns trips where user is creator OR squad member
-                setTrips(response.trips || []);
+                // Sort trips by most recent message
+                const sortedTrips = (response.trips || []).sort((a: Trip, b: Trip) => {
+                    const aTime = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+                    const bTime = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+                    return bTime - aTime;
+                });
+                setTrips(sortedTrips);
             }
         } catch (error: any) {
             console.error('Error fetching trips:', error);

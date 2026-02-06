@@ -142,10 +142,10 @@ export default function ShareMemoryModal({ onClose, onSuccess }: ShareMemoryModa
                             <select
                                 value={selectedTripId}
                                 onChange={(e) => setSelectedTripId(e.target.value)}
-                                className="w-full p-3 border border-gray-200 dark:border-dark-700 rounded-xl bg-gray-50 dark:bg-dark-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
+                                className="w-full p-3 border border-gray-200 dark:border-dark-700 rounded-xl bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
                             >
                                 {trips.map(trip => (
-                                    <option key={trip._id} value={trip._id}>
+                                    <option key={trip._id} value={trip._id} className="text-gray-900 dark:text-white bg-white dark:bg-dark-800">
                                         {trip.title}
                                     </option>
                                 ))}
@@ -162,7 +162,7 @@ export default function ShareMemoryModal({ onClose, onSuccess }: ShareMemoryModa
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="What's on your mind?"
-                        className="w-full h-32 p-3 bg-gray-50 dark:bg-dark-900 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 border border-transparent transition-all"
+                        className="w-full h-32 p-3 bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 border border-transparent transition-all"
                     />
 
                     {/* Photo Previews */}

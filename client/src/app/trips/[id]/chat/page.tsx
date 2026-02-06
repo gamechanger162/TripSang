@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { tripAPI } from '@/lib/api';
-import ChatRoom from '@/components/ChatRoom';
+import FuturisticSquadChat from '@/components/FuturisticSquadChat';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -162,8 +162,8 @@ export default function TripChatPage() {
             </div>
 
             {/* Chat Room - Full height */}
-            <div className="max-w-4xl mx-auto">
-                <ChatRoom
+            <div className="w-full px-4 sm:px-6 lg:px-8">
+                <FuturisticSquadChat
                     tripId={tripId}
                     isSquadMember={isSquadMember}
                     squadMembers={trip.squadMembers}

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { messageAPI } from '@/lib/api';
 import { DirectMessage } from '@/types/messages';
-import DirectMessageBox from '@/components/messages/DirectMessageBox';
+import FuturisticDirectMessage from '@/components/messages/FuturisticDirectMessage';
 import toast from 'react-hot-toast';
 
 export default function ChatPage() {
@@ -234,10 +234,11 @@ export default function ChatPage() {
             <div className="flex-1 overflow-hidden">
                 <div className="max-w-7xl mx-auto h-full">
                     {conversationId && (
-                        <DirectMessageBox
+                        <FuturisticDirectMessage
                             conversationId={conversationId}
                             receiverId={userId}
                             receiverName={otherUser.name}
+                            receiverImage={otherUser.profilePicture}
                             initialMessages={messages}
                             isBlocked={!blockStatus?.canMessage}
                         />

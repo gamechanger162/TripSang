@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { tripAPI } from '@/lib/api';
-import ChatRoom from '@/components/ChatRoom';
+import FuturisticSquadChat from '@/components/FuturisticSquadChat';
 import TripMemories from '@/components/TripMemories';
 import GoogleAd from '@/components/GoogleAd';
 import EditTripModal from '@/components/EditTripModal';
@@ -552,7 +552,7 @@ export function TripDetailsClient() {
                         <GoogleAd className="min-h-[250px]" />
 
                         {/* Chat Room */}
-                        <ChatRoom
+                        <FuturisticSquadChat
                             tripId={tripId}
                             isSquadMember={isSquadMember}
                             squadMembers={trip.squadMembers}

@@ -251,7 +251,7 @@ export default function UserDashboard() {
                         {/* Upcoming Trips */}
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
                             <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">My Trips</h3>
+                                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Upcoming Trips</h3>
                                 {!loadingTrips && (
                                     <span className="bg-primary-100 text-primary-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300">
                                         {upcomingTrips.length} Upcoming
@@ -293,7 +293,7 @@ export default function UserDashboard() {
                                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">You haven't joined any trips yet.</p>
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No upcoming trips yet.</p>
                                         <div className="mt-6">
                                             <Link
                                                 href="/search"
@@ -306,6 +306,63 @@ export default function UserDashboard() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Trip History */}
+                        {!loadingTrips && pastTrips.length > 0 && (
+                            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Trip History
+                                    </h3>
+                                    <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                                        {pastTrips.length} Past
+                                    </span>
+                                </div>
+                                <div className="p-6">
+                                    <div className="space-y-3">
+                                        {pastTrips.slice(0, 5).map((trip) => (
+                                            <div key={trip._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
+                                                        {trip.coverPhoto ? (
+                                                            <img src={trip.coverPhoto} alt={trip.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <Link href={`/trips/${trip._id}`} className="font-medium text-gray-900 dark:text-white hover:text-primary-600 text-sm">
+                                                            {trip.title}
+                                                        </Link>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span className={`px-2 py-0.5 text-xs rounded-full ${trip.creator._id === session.user.id
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                    }`}>
+                                                    {trip.creator._id === session.user.id ? 'Created' : 'Joined'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {pastTrips.length > 5 && (
+                                            <div className="text-center pt-2">
+                                                <Link href="/my-trips?tab=history" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                                    View all {pastTrips.length} past trips →
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

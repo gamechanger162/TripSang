@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 import { X, Map as MapIcon, Pin } from 'lucide-react';
 import { linkifyText } from '@/utils/linkify';
 import Link from 'next/link';
+import ImageViewer from './ImageViewer';
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('./CollaborativeMap'), {
@@ -78,6 +79,9 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
         type?: string;
         imageUrl?: string;
     } | null>(null);
+
+    // Image viewer state
+    const [viewingImage, setViewingImage] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -612,7 +616,10 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                         )}
 
                                         {msg.type === 'image' && msg.imageUrl ? (
-                                            <div className="-m-2 rounded-xl overflow-hidden cursor-pointer">
+                                            <div
+                                                className="-m-2 rounded-xl overflow-hidden cursor-pointer"
+                                                onClick={() => setViewingImage(msg.imageUrl!)}
+                                            >
                                                 <Image
                                                     src={msg.imageUrl}
                                                     alt="Shared image"
@@ -797,6 +804,14 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                     </button>
                 </form>
             </div>
+
+            {/* Image Viewer Modal */}
+            <ImageViewer
+                imageUrl={viewingImage || ''}
+                isOpen={!!viewingImage}
+                onClose={() => setViewingImage(null)}
+                alt="Chat image"
+            />
         </div>
     );
 }

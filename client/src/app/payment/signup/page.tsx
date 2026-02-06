@@ -215,7 +215,7 @@ export default function SignupPaymentPage() {
                             POPULAR
                         </div>
                         <div className="flex justify-between items-center mb-2 mt-2">
-                            <h3 className="text-xl font-bold">Monthly</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Monthly</h3>
                             <div>
                                 <span className="text-3xl font-bold text-gray-900 dark:text-white">₹20</span>
                                 <span className="text-sm text-gray-500">/mo</span>
@@ -235,7 +235,7 @@ export default function SignupPaymentPage() {
                     {/* One Time Pass */}
                     <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700">
                         <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-xl font-bold">1 Month Pass</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">1 Month Pass</h3>
                             <div>
                                 <span className="text-3xl font-bold text-gray-900 dark:text-white">₹30</span>
                             </div>
@@ -245,7 +245,7 @@ export default function SignupPaymentPage() {
                         <button
                             onClick={handleOneTimePayment}
                             disabled={processing || !isRazorpayLoaded}
-                            className="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-dark-700 font-semibold"
+                            className="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-dark-700 font-semibold transition-colors"
                         >
                             Buy 1 Month Pass
                         </button>

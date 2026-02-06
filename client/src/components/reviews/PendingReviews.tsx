@@ -1,16 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { reviewAPI } from '@/lib/api';
 import { PendingReview } from '@/types/reviews';
 import Image from 'next/image';
 import ReviewModal from './ReviewModal';
 import Link from 'next/link';
+import { ChevronLeft, ChevronRight, X, Clock } from 'lucide-react';
 
 export default function PendingReviews() {
     const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
+    const [skippedReviews, setSkippedReviews] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [selectedReview, setSelectedReview] = useState<PendingReview | null>(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const fetchPendingReviews = async () => {
         try {
@@ -27,10 +31,14 @@ export default function PendingReviews() {
 
     useEffect(() => {
         fetchPendingReviews();
+        // Load skipped reviews from localStorage
+        const saved = localStorage.getItem('skippedReviews');
+        if (saved) {
+            setSkippedReviews(new Set(JSON.parse(saved)));
+        }
     }, []);
 
     const handleReviewSubmitted = () => {
-        // Remove the reviewed item from the list
         if (selectedReview) {
             setPendingReviews(prev =>
                 prev.filter(r =>
@@ -42,6 +50,40 @@ export default function PendingReviews() {
         setSelectedReview(null);
     };
 
+    const handleSkip = (e: React.MouseEvent, item: PendingReview) => {
+        e.stopPropagation();
+        const key = `${item.trip._id}-${item.traveler._id}`;
+        const newSkipped = new Set(skippedReviews);
+        newSkipped.add(key);
+        setSkippedReviews(newSkipped);
+        localStorage.setItem('skippedReviews', JSON.stringify([...newSkipped]));
+    };
+
+    const handleRemindLater = (e: React.MouseEvent, item: PendingReview) => {
+        e.stopPropagation();
+        // Just hide for this session (no localStorage)
+        const key = `${item.trip._id}-${item.traveler._id}`;
+        const newSkipped = new Set(skippedReviews);
+        newSkipped.add(key);
+        setSkippedReviews(newSkipped);
+    };
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const scrollAmount = 280; // Approximate card width
+            container.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    // Filter out skipped reviews
+    const visibleReviews = pendingReviews.filter(
+        item => !skippedReviews.has(`${item.trip._id}-${item.traveler._id}`)
+    );
+
     if (loading) {
         return (
             <div className="animate-pulse space-y-4">
@@ -50,7 +92,7 @@ export default function PendingReviews() {
         );
     }
 
-    if (pendingReviews.length === 0) {
+    if (visibleReviews.length === 0) {
         return null; // Don't show anything if no pending reviews
     }
 
@@ -61,52 +103,115 @@ export default function PendingReviews() {
                     <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
                     Pending Reviews
                     <span className="ml-2 bg-orange-100 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                        {pendingReviews.length}
+                        {visibleReviews.length}
                     </span>
                 </h2>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Your feedback helps the community!
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:inline">
+                        Your feedback helps the community!
+                    </span>
+                    {visibleReviews.length > 2 && (
+                        <div className="flex gap-1">
+                            <button
+                                onClick={() => scroll('left')}
+                                className="p-1.5 rounded-full bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 text-gray-600 dark:text-gray-400 transition-colors"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <button
+                                onClick={() => scroll('right')}
+                                className="p-1.5 rounded-full bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 text-gray-600 dark:text-gray-400 transition-colors"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {pendingReviews.map((item, index) => (
+            {/* Scrollable Container */}
+            <div
+                ref={scrollContainerRef}
+                className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+                {visibleReviews.map((item) => (
                     <div
                         key={`${item.trip._id}-${item.traveler._id}`}
-                        className="flex items-center p-3 bg-gray-50 dark:bg-dark-700 rounded-lg group hover:bg-orange-50 dark:hover:bg-dark-600 transition-colors cursor-pointer border border-transparent hover:border-orange-200"
-                        onClick={() => setSelectedReview(item)}
+                        className="flex-shrink-0 w-64 snap-start"
                     >
-                        <div className="flex-shrink-0 relative">
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-dark-600 shadow-sm">
-                                {item.traveler.profilePicture ? (
-                                    <Image
-                                        src={item.traveler.profilePicture}
-                                        alt={item.traveler.name}
-                                        width={48}
-                                        height={48}
-                                        className="object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
-                                        {item.traveler.name[0]}
-                                    </div>
-                                )}
+                        <div
+                            className="relative p-4 bg-gray-50 dark:bg-dark-700 rounded-xl group hover:bg-orange-50 dark:hover:bg-dark-600 transition-all cursor-pointer border border-transparent hover:border-orange-200 hover:shadow-md"
+                            onClick={() => setSelectedReview(item)}
+                        >
+                            {/* Skip/Dismiss Buttons */}
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={(e) => handleRemindLater(e, item)}
+                                    className="p-1 rounded-full bg-white dark:bg-dark-800 shadow-sm text-gray-400 hover:text-amber-500 transition-colors"
+                                    title="Remind me later"
+                                >
+                                    <Clock size={14} />
+                                </button>
+                                <button
+                                    onClick={(e) => handleSkip(e, item)}
+                                    className="p-1 rounded-full bg-white dark:bg-dark-800 shadow-sm text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Skip this review"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
+
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-dark-600 shadow-sm">
+                                        {item.traveler.profilePicture ? (
+                                            <Image
+                                                src={item.traveler.profilePicture}
+                                                alt={item.traveler.name}
+                                                width={48}
+                                                height={48}
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                                                {item.traveler.name[0]}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                        {item.traveler.name}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                        {item.trip.title}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button className="w-full text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-lg transition-colors">
+                                Write Review
+                            </button>
                         </div>
-                        <div className="ml-4 flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {item.traveler.name}
-                            </h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Trip: {item.trip.title}
-                            </p>
-                        </div>
-                        <button className="text-xs font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-800 px-3 py-1.5 rounded-full shadow-sm group-hover:bg-primary-600 group-hover:text-white transition-all">
-                            Review
-                        </button>
                     </div>
                 ))}
             </div>
+
+            {/* Skipped Count */}
+            {skippedReviews.size > 0 && (
+                <div className="mt-3 text-center">
+                    <button
+                        onClick={() => {
+                            setSkippedReviews(new Set());
+                            localStorage.removeItem('skippedReviews');
+                        }}
+                        className="text-xs text-gray-500 hover:text-primary-600 transition-colors"
+                    >
+                        Show {skippedReviews.size} skipped review{skippedReviews.size > 1 ? 's' : ''}
+                    </button>
+                </div>
+            )}
 
             {/* Modal */}
             {selectedReview && (
@@ -123,3 +228,4 @@ export default function PendingReviews() {
         </div>
     );
 }
+
