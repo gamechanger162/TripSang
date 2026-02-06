@@ -7,7 +7,8 @@ import {
     getAllPayments,
     activateFreeTrial,
     createOrder,
-    verifyOrder
+    verifyOrder,
+    getSubscriptionStatus
 } from '../controllers/paymentController.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
 
@@ -37,6 +38,14 @@ router.post('/verify-order', authenticate, verifyOrder);
  * @access  Private
  */
 router.get('/my-payments', authenticate, getMyPayments);
+
+/**
+ * @route   GET /api/payments/status
+ * @desc    Get current user's subscription status
+ * @access  Private
+ */
+router.get('/status', authenticate, getSubscriptionStatus);
+
 
 /**
  * @route   POST /api/payments/webhook

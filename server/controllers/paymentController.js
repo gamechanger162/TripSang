@@ -536,6 +536,58 @@ export const getAllPayments = async (req, res) => {
 };
 
 /**
+ * Get Current Subscription Status
+ * GET /api/payments/status
+ */
+export const getSubscriptionStatus = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId)
+            .select('subscription badges name email');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Check if subscription is active
+        const now = new Date();
+        let isActive = false;
+        let activeUntil = null;
+        let isTrial = false;
+
+        if (user.subscription) {
+            if (user.subscription.status === 'active' &&
+                user.subscription.currentEnd &&
+                new Date(user.subscription.currentEnd) > now) {
+                isActive = true;
+                activeUntil = user.subscription.currentEnd;
+            } else if (user.subscription.status === 'trial' &&
+                user.subscription.trialEnds &&
+                new Date(user.subscription.trialEnds) > now) {
+                isActive = true;
+                isTrial = true;
+                activeUntil = user.subscription.trialEnds;
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            subscription: {
+                status: isActive ? 'active' : 'inactive',
+                isTrial,
+                activeUntil,
+                planId: user.subscription?.planId,
+                details: user.subscription
+            }
+        });
+
+    } catch (error) {
+        console.error('Get subscription status error:', error);
+        res.status(500).json({ success: false, message: 'Failed to get subscription status' });
+    }
+};
+
+/**
  * Create Razorpay Order (One Time Payment)
  * POST /api/payments/create-order
  */

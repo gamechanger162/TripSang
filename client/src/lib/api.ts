@@ -496,6 +496,14 @@ export const paymentAPI = {
     },
 
     /**
+     * Get current subscription status
+     * GET /api/payments/status
+     */
+    getStatus: async () => {
+        return fetchWithAuth('/api/payments/status');
+    },
+
+    /**
      * Start Free Trial (No Razorpay)
      * POST /api/payments/start-trial
      */
@@ -940,6 +948,125 @@ export const friendAPI = {
     }
 };
 
+// ========================
+// Community API
+// ========================
+export const communityAPI = {
+    /**
+     * Get user's communities
+     * GET /api/communities
+     */
+    getMyCommunities: async () => {
+        return fetchWithAuth('/api/communities');
+    },
+
+    /**
+     * Discover public communities
+     * GET /api/communities/discover
+     */
+    discover: async (category?: string, search?: string) => {
+        const params = new URLSearchParams();
+        if (category) params.append('category', category);
+        if (search) params.append('search', search);
+        return fetchWithAuth(`/api/communities/discover?${params.toString()}`);
+    },
+
+    /**
+     * Create new community
+     * POST /api/communities/create
+     */
+    create: async (data: { name: string; description?: string; category?: string; isPrivate?: boolean }) => {
+        return fetchWithAuth('/api/communities/create', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+
+    /**
+     * Get community details
+     * GET /api/communities/:id
+     */
+    getDetails: async (id: string) => {
+        return fetchWithAuth(`/api/communities/${id}`);
+    },
+
+    /**
+     * Get community messages
+     * GET /api/communities/:id/messages
+     */
+    getMessages: async (id: string, before?: string) => {
+        const params = before ? `?before=${before}` : '';
+        return fetchWithAuth(`/api/communities/${id}/messages${params}`);
+    },
+
+    /**
+     * Join public community
+     * POST /api/communities/:id/join
+     */
+    join: async (id: string) => {
+        return fetchWithAuth(`/api/communities/${id}/join`, { method: 'POST' });
+    },
+
+    /**
+     * Request to join private community
+     * POST /api/communities/:id/request
+     */
+    requestToJoin: async (id: string) => {
+        return fetchWithAuth(`/api/communities/${id}/request`, { method: 'POST' });
+    },
+
+    /**
+     * Leave community
+     * POST /api/communities/:id/leave
+     */
+    leave: async (id: string) => {
+        return fetchWithAuth(`/api/communities/${id}/leave`, { method: 'POST' });
+    },
+
+    /**
+     * Update community settings (admin)
+     * PUT /api/communities/:id/settings
+     */
+    updateSettings: async (id: string, data: any) => {
+        return fetchWithAuth(`/api/communities/${id}/settings`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+
+    /**
+     * Remove member (admin)
+     * DELETE /api/communities/:id/members/:userId
+     */
+    removeMember: async (id: string, userId: string) => {
+        return fetchWithAuth(`/api/communities/${id}/members/${userId}`, { method: 'DELETE' });
+    },
+
+    /**
+     * Approve join request (admin)
+     * PUT /api/communities/:id/requests/:userId/approve
+     */
+    approveRequest: async (id: string, userId: string) => {
+        return fetchWithAuth(`/api/communities/${id}/requests/${userId}/approve`, { method: 'PUT' });
+    },
+
+    /**
+     * Reject join request (admin)
+     * PUT /api/communities/:id/requests/:userId/reject
+     */
+    rejectRequest: async (id: string, userId: string) => {
+        return fetchWithAuth(`/api/communities/${id}/requests/${userId}/reject`, { method: 'PUT' });
+    },
+
+    /**
+     * Delete community (admin)
+     * DELETE /api/communities/:id
+     */
+    delete: async (id: string) => {
+        return fetchWithAuth(`/api/communities/${id}`, { method: 'DELETE' });
+    }
+};
+
 // Export all APIs
 export default {
     authAPI,
@@ -952,5 +1079,6 @@ export default {
     userAPI,
     notificationAPI,
     friendAPI,
-    memoryAPI
+    memoryAPI,
+    communityAPI
 };

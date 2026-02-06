@@ -474,6 +474,103 @@ io.on('connection', (socket) => {
 
     // ========== END DM SOCKET EVENTS ==========
 
+    // ========== COMMUNITY SOCKET EVENTS ==========
+
+    // Join Community Room
+    socket.on('join_community', async ({ communityId }) => {
+        try {
+            if (!communityId) return;
+
+            const Community = (await import('./models/Community.js')).default;
+            const community = await Community.findById(communityId);
+
+            if (!community || !community.members.includes(socket.user._id)) {
+                return socket.emit('error', { message: 'Not a member of this community' });
+            }
+
+            socket.join(`community_${communityId}`);
+            console.log(`🏘️ ${socket.user.name} joined community: ${community.name}`);
+        } catch (error) {
+            console.error('Join community error:', error);
+        }
+    });
+
+    // Leave Community Room
+    socket.on('leave_community', ({ communityId }) => {
+        if (communityId) {
+            socket.leave(`community_${communityId}`);
+            console.log(`🏘️ ${socket.user.name} left community room: ${communityId}`);
+        }
+    });
+
+    // Send Community Message
+    socket.on('send_community_message', async ({ communityId, message, type, imageUrl }) => {
+        try {
+            const Community = (await import('./models/Community.js')).default;
+            const CommunityMessage = (await import('./models/CommunityMessage.js')).default;
+
+            const community = await Community.findById(communityId);
+            if (!community || !community.members.includes(socket.user._id)) {
+                return socket.emit('error', { message: 'Not a member' });
+            }
+
+            // Only allow text and image (no audio/video per requirements)
+            if (type !== 'text' && type !== 'image') {
+                return socket.emit('error', { message: 'Community chat only supports text and images' });
+            }
+
+            const savedMessage = await CommunityMessage.create({
+                communityId,
+                sender: socket.user._id,
+                message: message || '',
+                type: type || 'text',
+                imageUrl: type === 'image' ? imageUrl : null,
+                timestamp: new Date()
+            });
+
+            // Update community lastMessage
+            community.lastMessage = {
+                message: type === 'image' ? '📷 Sent an image' : message,
+                senderName: socket.user.name,
+                timestamp: new Date(),
+                type
+            };
+            await community.save();
+
+            const messageData = {
+                _id: savedMessage._id,
+                communityId,
+                sender: socket.user._id,
+                senderName: socket.user.name,
+                senderProfilePicture: socket.user.profilePicture || null,
+                message: savedMessage.message,
+                type: savedMessage.type,
+                imageUrl: savedMessage.imageUrl,
+                timestamp: savedMessage.timestamp
+            };
+
+            // Broadcast to all community members in the room
+            io.to(`community_${communityId}`).emit('receive_community_message', messageData);
+            console.log(`📢 Community message from ${socket.user.name} in ${community.name}`);
+        } catch (error) {
+            console.error('Send community message error:', error);
+            socket.emit('error', { message: 'Failed to send message' });
+        }
+    });
+
+    // Community Typing Indicator
+    socket.on('typing_community', ({ communityId, isTyping }) => {
+        if (communityId) {
+            socket.to(`community_${communityId}`).emit('user_typing_community', {
+                userId: socket.user._id,
+                userName: socket.user.name,
+                isTyping
+            });
+        }
+    });
+
+    // ========== END COMMUNITY SOCKET EVENTS ==========
+
     socket.on('disconnect', () => {
         console.log(`🔌 Client disconnected: ${socket.user.name} (${socket.id})`);
     });
@@ -507,6 +604,7 @@ import friendRoutes from './routes/friends.js';
 import memoryRoutes from './routes/memories.js';
 import reportRoutes from './routes/reports.js';
 import supportRoutes from './routes/support.js';
+import communityRoutes from './routes/community.js';
 
 // API Routes with Rate Limiting
 app.use('/api/auth', authLimiter, authRoutes);  // Strict limit for auth
@@ -523,6 +621,7 @@ app.use('/api/friends', apiLimiter, friendRoutes);
 app.use('/api/memories', createLimiter, memoryRoutes);  // Rate limit memory creation
 app.use('/api/reports', createLimiter, reportRoutes);  // Rate limit reports
 app.use('/api/support', apiLimiter, supportRoutes);
+app.use('/api/communities', apiLimiter, communityRoutes);
 
 // Keep-Alive Mechanism for Render Free Tier
 const PING_INTERVAL = 14 * 60 * 1000; // 14 minutes (render sleeps after 15)

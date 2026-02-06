@@ -3,13 +3,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { messageAPI, userAPI } from '@/lib/api';
+import { messageAPI, userAPI, communityAPI, paymentAPI } from '@/lib/api';
 import { Conversation } from '@/types/messages';
 import ConversationList from '@/components/messages/ConversationList';
 import SquadChatList from '@/components/messages/SquadChatList';
+import CommunityList from '@/components/messages/CommunityList';
+import PremiumGateModal from '@/components/community/PremiumGateModal';
+import CreateCommunityModal from '@/components/community/CreateCommunityModal';
 import toast from 'react-hot-toast';
-import { MessageSquare, Users } from 'lucide-react';
+import { MessageSquare, Users, Globe, Plus, Compass, Crown } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
+import Link from 'next/link';
 
 interface Trip {
     _id: string;
@@ -27,16 +31,33 @@ interface Trip {
     };
 }
 
+interface Community {
+    _id: string;
+    name: string;
+    description: string;
+    category: string;
+    isPrivate: boolean;
+    coverImage?: string;
+    memberCount: number;
+    creator: any;
+    lastMessage?: any;
+}
+
 export default function MessagesPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [trips, setTrips] = useState<Trip[]>([]);
+    const [communities, setCommunities] = useState<Community[]>([]);
     const [loadingDMs, setLoadingDMs] = useState(true);
     const [loadingTrips, setLoadingTrips] = useState(true);
+    const [loadingCommunities, setLoadingCommunities] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'dm' | 'squad'>('dm');
+    const [activeTab, setActiveTab] = useState<'dm' | 'squad' | 'community'>('dm');
     const [socket, setSocket] = useState<Socket | null>(null);
+    const [isPremium, setIsPremium] = useState(false);
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -49,6 +70,7 @@ export default function MessagesPage() {
         if (status === 'authenticated') {
             fetchConversations();
             fetchTrips();
+            checkPremiumStatus();
             initializeSocket();
         }
 
@@ -58,6 +80,41 @@ export default function MessagesPage() {
             }
         };
     }, [status]);
+
+    const checkPremiumStatus = async () => {
+        try {
+            const response = await paymentAPI.getStatus();
+            if (response.success) {
+                const hasActive = response.subscription?.status === 'active' ||
+                    (response.subscription?.trialEndDate && new Date(response.subscription.trialEndDate) > new Date());
+                setIsPremium(hasActive);
+                if (hasActive) {
+                    fetchCommunities();
+                }
+            }
+        } catch (error) {
+            console.error('Error checking premium status:', error);
+        }
+    };
+
+    const fetchCommunities = async () => {
+        try {
+            setLoadingCommunities(true);
+            const response = await communityAPI.getMyCommunities();
+            if (response.success) {
+                setCommunities(response.communities || []);
+            }
+        } catch (error: any) {
+            // Premium-required error expected for non-premium users
+            if (error.message?.includes('Premium')) {
+                setIsPremium(false);
+            } else {
+                console.error('Error fetching communities:', error);
+            }
+        } finally {
+            setLoadingCommunities(false);
+        }
+    };
 
     const initializeSocket = useCallback(() => {
         const token = (session?.user as any)?.accessToken || localStorage.getItem('token');
@@ -106,6 +163,30 @@ export default function MessagesPage() {
             fetchConversations();
         });
 
+        // Listen for community messages
+        newSocket.on('receive_community_message', (message: any) => {
+            setCommunities(prev =>
+                prev.map(c => {
+                    if (c._id === message.communityId) {
+                        return {
+                            ...c,
+                            lastMessage: {
+                                message: message.message,
+                                senderName: message.senderName,
+                                timestamp: message.timestamp,
+                                type: message.type
+                            }
+                        };
+                    }
+                    return c;
+                }).sort((a, b) => {
+                    const aTime = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+                    const bTime = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+                    return bTime - aTime;
+                })
+            );
+        });
+
         setSocket(newSocket);
     }, [session, trips.length]);
 
@@ -117,6 +198,15 @@ export default function MessagesPage() {
             });
         }
     }, [socket, trips.length]);
+
+    // Join community rooms when communities are loaded
+    useEffect(() => {
+        if (socket && communities.length > 0) {
+            communities.forEach(c => {
+                socket.emit('join_community', { communityId: c._id });
+            });
+        }
+    }, [socket, communities.length]);
 
     const fetchConversations = async () => {
         try {
@@ -153,12 +243,28 @@ export default function MessagesPage() {
         }
     };
 
+    const handleCommunityTabClick = () => {
+        if (!isPremium) {
+            setShowPremiumModal(true);
+        } else {
+            setActiveTab('community');
+        }
+    };
+
+    const handleCommunityCreated = (community: Community) => {
+        setCommunities(prev => [community, ...prev]);
+    };
+
     const filteredConversations = conversations.filter(conv =>
         conv.otherUser.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const filteredTrips = trips.filter(trip =>
         trip.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredCommunities = communities.filter(c =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (status === 'loading') {
@@ -183,10 +289,10 @@ export default function MessagesPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6">
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
                     <button
                         onClick={() => setActiveTab('dm')}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'dm'
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'dm'
                             ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
                             : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                             }`}
@@ -201,7 +307,7 @@ export default function MessagesPage() {
                     </button>
                     <button
                         onClick={() => setActiveTab('squad')}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'squad'
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'squad'
                             ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
                             : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                             }`}
@@ -211,6 +317,24 @@ export default function MessagesPage() {
                         {trips.length > 0 && (
                             <span className="ml-1 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full">
                                 {trips.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={handleCommunityTabClick}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'community'
+                            ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white shadow-lg shadow-primary-500/25'
+                            : isPremium
+                                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                : 'bg-gray-800/50 text-gray-500 cursor-pointer'
+                            }`}
+                    >
+                        <Globe className="w-4 h-4" />
+                        Communities
+                        {!isPremium && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                        {isPremium && communities.length > 0 && (
+                            <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-500/30 text-purple-200 rounded-full">
+                                {communities.length}
                             </span>
                         )}
                     </button>
@@ -231,7 +355,13 @@ export default function MessagesPage() {
                         </div>
                         <input
                             type="text"
-                            placeholder={activeTab === 'dm' ? 'Search conversations...' : 'Search squad chats...'}
+                            placeholder={
+                                activeTab === 'dm'
+                                    ? 'Search conversations...'
+                                    : activeTab === 'squad'
+                                        ? 'Search squad chats...'
+                                        : 'Search communities...'
+                            }
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="block w-full pl-10 pr-3 py-3 border border-gray-700 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400"
@@ -251,7 +381,7 @@ export default function MessagesPage() {
                             </div>
                         )}
                     </>
-                ) : (
+                ) : activeTab === 'squad' ? (
                     <>
                         <SquadChatList trips={filteredTrips} loading={loadingTrips} />
                         {!loadingTrips && searchQuery && filteredTrips.length === 0 && (
@@ -262,8 +392,50 @@ export default function MessagesPage() {
                             </div>
                         )}
                     </>
+                ) : (
+                    <>
+                        {/* Community Actions */}
+                        <div className="flex gap-3 mb-6">
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-500 hover:to-purple-500 text-white rounded-lg font-medium transition-all"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Create Community
+                            </button>
+                            <Link
+                                href="/community/discover"
+                                className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg font-medium transition-all"
+                            >
+                                <Compass className="w-4 h-4" />
+                                Discover
+                            </Link>
+                        </div>
+
+                        <CommunityList communities={filteredCommunities} loading={loadingCommunities} />
+                        {!loadingCommunities && searchQuery && filteredCommunities.length === 0 && (
+                            <div className="text-center py-12">
+                                <p className="text-gray-600 dark:text-gray-400">
+                                    No communities found for "{searchQuery}"
+                                </p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
+
+            {/* Premium Gate Modal */}
+            <PremiumGateModal
+                isOpen={showPremiumModal}
+                onClose={() => setShowPremiumModal(false)}
+            />
+
+            {/* Create Community Modal */}
+            <CreateCommunityModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={handleCommunityCreated}
+            />
         </div>
     );
 }
