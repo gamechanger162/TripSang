@@ -99,12 +99,23 @@ export default function SignInPage() {
                         Continue with Google
                     </button>
 
+                    {/* Phone Login Link */}
+                    <Link
+                        href="/auth/phone-login"
+                        className="w-full flex items-center justify-center px-4 py-3 border border-gray-600 text-sm font-medium rounded-xl text-gray-300 hover:bg-gray-800/50 transition-colors"
+                    >
+                        <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Continue with Phone
+                    </Link>
+
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-600" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-transparent text-gray-400">Or continue with</span>
+                            <span className="px-2 bg-transparent text-gray-400">Or continue with email</span>
                         </div>
                     </div>
 

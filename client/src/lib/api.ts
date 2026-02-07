@@ -143,6 +143,69 @@ export const authAPI = {
     logout: () => {
         removeToken();
     },
+
+    /**
+     * Check if phone number exists
+     * POST /api/auth/phone/check
+     */
+    checkPhone: async (phoneNumber: string) => {
+        const response = await fetch(`${API_URL}/api/auth/phone/check`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber })
+        });
+        return response.json();
+    },
+
+    /**
+     * Login with phone number (after Firebase OTP verification)
+     * POST /api/auth/phone/login
+     */
+    phoneLogin: async (phoneNumber: string) => {
+        const response = await fetch(`${API_URL}/api/auth/phone/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber })
+        });
+        const data = await response.json();
+
+        // Save token if successful
+        if (data.token) {
+            saveToken(data.token);
+        }
+
+        return data;
+    },
+
+    /**
+     * Get linked auth providers for current user
+     * GET /api/auth/account/providers
+     */
+    getLinkedProviders: async () => {
+        return fetchWithAuth('/api/auth/account/providers');
+    },
+
+    /**
+     * Link phone number to existing account
+     * POST /api/auth/account/link-phone
+     */
+    linkPhone: async (phoneNumber: string) => {
+        return fetchWithAuth('/api/auth/account/link-phone', {
+            method: 'POST',
+            body: JSON.stringify({ phoneNumber })
+        });
+    },
+
+    /**
+     * Unlink an auth provider
+     * POST /api/auth/account/unlink
+     */
+    unlinkProvider: async (provider: string, providerId: string) => {
+        return fetchWithAuth('/api/auth/account/unlink', {
+            method: 'POST',
+            body: JSON.stringify({ provider, providerId })
+        });
+    },
 };
 
 // ========================================

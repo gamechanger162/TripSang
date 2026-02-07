@@ -158,13 +158,13 @@ export default function SignUpPage() {
             return;
         }
 
-        // Phone verification temporarily disabled
-        /*
+
+        // Require phone verification
         if (formData.mobileNumber && !isPhoneVerified) {
             toast.error('Please verify your phone number first');
             return;
         }
-        */
+
 
         setLoading(true);
 
@@ -289,7 +289,8 @@ export default function SignUpPage() {
                                 />
                             </div>
 
-                            {/* Phone Verification Field - Temporarily disabled due to Firebase billing
+
+                            {/* Phone Verification Field */}
                             <div className="flex gap-2">
                                 <input
                                     id="mobileNumber"
@@ -344,7 +345,7 @@ export default function SignUpPage() {
                                     </div>
                                 </div>
                             )}
-                            */}
+
 
                             <div>
                                 <label htmlFor="email-address" className="sr-only">Email address</label>

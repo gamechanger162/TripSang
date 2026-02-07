@@ -23,7 +23,12 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
+        required: function () {
+            // Password required only if user doesn't have phone auth provider
+            // Allows phone-only login without password
+            const hasPhoneAuth = this.authProviders?.some(p => p.provider === 'phone' && p.verified);
+            return !hasPhoneAuth;
+        },
         minlength: [6, 'Password must be at least 6 characters'],
         select: false // Don't include password in queries by default
     },
@@ -67,6 +72,26 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // Track multiple authentication providers (email, Google, phone)
+    authProviders: [{
+        provider: {
+            type: String,
+            enum: ['email', 'google', 'phone'],
+            required: true
+        },
+        providerId: {
+            type: String, // email address, Google ID, or phone number
+            required: true
+        },
+        verified: {
+            type: Boolean,
+            default: false
+        },
+        linkedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     badges: {
         type: [String],
         default: [],

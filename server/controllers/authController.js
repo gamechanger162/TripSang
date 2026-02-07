@@ -66,9 +66,37 @@ export const register = async (req, res) => {
             currentEnd: trialEndDate
         };
 
-        // If registering via Google, mark email as verified
+        // Initialize authProviders array
+        userData.authProviders = [];
+
+        // Add email provider
+        userData.authProviders.push({
+            provider: 'email',
+            providerId: email,
+            verified: authProvider === 'google', // Google logins are pre-verified
+            linkedAt: new Date()
+        });
+
+        // If registering via Google, add Google provider and mark email as verified
         if (authProvider === 'google') {
             userData.isEmailVerified = true;
+            userData.authProviders.push({
+                provider: 'google',
+                providerId: email, // Use email as Google ID for now
+                verified: true,
+                linkedAt: new Date()
+            });
+        }
+
+        //If phone number provided and verified during signup, add phone provider
+        if (mobileNumber) {
+            userData.isMobileVerified = true; // Assume verified if provided
+            userData.authProviders.push({
+                provider: 'phone',
+                providerId: mobileNumber,
+                verified: true,
+                linkedAt: new Date()
+            });
         }
 
         const user = await User.create(userData);
