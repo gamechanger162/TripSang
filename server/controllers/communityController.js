@@ -255,9 +255,9 @@ export const getCommunityMessages = async (req, res) => {
         // Transform messages
         const transformedMessages = messages.reverse().map(msg => ({
             _id: msg._id,
-            sender: msg.sender._id,
-            senderName: msg.sender.name,
-            senderProfilePicture: msg.sender.profilePicture,
+            sender: msg.sender?._id || null, // Handle deleted users
+            senderName: msg.sender?.name || 'Unknown User',
+            senderProfilePicture: msg.sender?.profilePicture || null,
             message: msg.message,
             type: msg.type,
             imageUrl: msg.imageUrl,
