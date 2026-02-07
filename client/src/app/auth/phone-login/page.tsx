@@ -174,11 +174,20 @@ function PhoneLoginContent() {
                 return;
             }
 
-            // Store token and user data  
-            localStorage.setItem('token', loginData.token);
-            localStorage.setItem('user', JSON.stringify(loginData.user));
+            // Use NextAuth signIn for proper session management
+            const result = await signIn('phone-credentials', {
+                phoneNumber,
+                email: isNewUser ? email : undefined,
+                name: isNewUser ? name : undefined,
+                redirect: false,
+            });
 
-            toast.success('Login successful!');
+            if (result?.error) {
+                toast.error(result.error || 'Login failed');
+                return;
+            }
+
+            toast.success(loginData.isNewUser ? 'Account created!' : 'Login successful!');
 
             // Redirect to callback URL or home
             setTimeout(() => {

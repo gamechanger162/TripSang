@@ -71,6 +71,65 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
             },
         }),
+
+        // Phone Number Credentials Provider
+        CredentialsProvider({
+            id: 'phone-credentials',
+            name: 'Phone Number',
+            credentials: {
+                phoneNumber: {
+                    label: 'Phone Number',
+                    type: 'text',
+                    placeholder: '+91...',
+                },
+                email: {
+                    label: 'Email',
+                    type: 'email',
+                },
+                name: {
+                    label: 'Name',
+                    type: 'text',
+                },
+            },
+            async authorize(credentials) {
+                if (!credentials?.phoneNumber) {
+                    throw new Error('Phone number required');
+                }
+
+                try {
+                    const apiUrl = getApiUrl();
+                    const response = await fetch(`${apiUrl}/api/auth/phone/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phoneNumber: credentials.phoneNumber,
+                            email: credentials.email || undefined,
+                            name: credentials.name || undefined,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || 'Phone login failed');
+                    }
+
+                    // Return user object with token
+                    return {
+                        id: data.user._id,
+                        email: data.user.email,
+                        name: data.user.name,
+                        role: data.user.role,
+                        token: data.token,
+                        isMobileVerified: data.user.isMobileVerified,
+                        profilePicture: data.user.profilePicture,
+                        verificationStatus: data.user.verificationStatus,
+                    };
+                } catch (error: any) {
+                    throw new Error(error.message || 'Phone authentication failed');
+                }
+            },
+        }),
     ],
 
     callbacks: {

@@ -7,7 +7,7 @@ import { generateToken } from '../utils/jwt.js';
  */
 export const checkPhoneExists = async (req, res) => {
     try {
-        const { phoneNumber } = req.body;
+        let { phoneNumber } = req.body;
 
         if (!phoneNumber) {
             return res.status(400).json({
@@ -15,6 +15,9 @@ export const checkPhoneExists = async (req, res) => {
                 message: 'Phone number is required'
             });
         }
+
+        // Normalize phone number - remove spaces, dashes, parentheses
+        phoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
 
         // Check if user exists with this phone number
         const user = await User.findOne({ mobileNumber: phoneNumber });
@@ -55,7 +58,7 @@ export const checkPhoneExists = async (req, res) => {
  */
 export const phoneLogin = async (req, res) => {
     try {
-        const { phoneNumber, email, name } = req.body;
+        let { phoneNumber, email, name } = req.body;
 
         if (!phoneNumber) {
             return res.status(400).json({
@@ -63,6 +66,9 @@ export const phoneLogin = async (req, res) => {
                 message: 'Phone number is required'
             });
         }
+
+        // Normalize phone number - remove spaces, dashes, parentheses
+        phoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
 
         // Find user with this phone number
         let user = await User.findOne({ mobileNumber: phoneNumber });
