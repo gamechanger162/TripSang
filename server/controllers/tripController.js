@@ -847,3 +847,37 @@ export const getTrendingDestinations = async (req, res) => {
         });
     }
 };
+
+/**
+ * Get current user's trips (created and joined)
+ * GET /api/trips/my-trips
+ */
+export const getMyTrips = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Find trips where user is creator OR squad member
+        const trips = await Trip.find({
+            $or: [
+                { creator: userId },
+                { squadMembers: userId }
+            ]
+        })
+            .populate('creator', 'name profilePicture')
+            .populate('squadMembers', 'name profilePicture')
+            .sort({ startDate: -1 });
+
+        res.status(200).json({
+            success: true,
+            trips,
+            count: trips.length
+        });
+    } catch (error) {
+        console.error('Get my trips error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch your trips.',
+            error: error.message
+        });
+    }
+};

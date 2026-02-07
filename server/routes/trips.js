@@ -10,13 +10,21 @@ import {
     leaveTrip,
     removeMember,
     toggleLike,
-    getTrendingDestinations
+    getTrendingDestinations,
+    getMyTrips
 } from '../controllers/tripController.js';
 import { getTripMemories, createMemory } from '../controllers/memoryController.js';
 import { authenticate, optionalAuth, requireMobileVerification } from '../middleware/auth.js';
 import { checkPremium } from '../middleware/checkPremium.js';
 
 const router = express.Router();
+
+/**
+ * @route   GET /api/trips/my-trips
+ * @desc    Get current user's trips (created and joined)
+ * @access  Private
+ */
+router.get('/my-trips', authenticate, getMyTrips);
 
 /**
  * @route   GET /api/trips/trending

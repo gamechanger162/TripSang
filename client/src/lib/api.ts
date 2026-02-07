@@ -358,6 +358,14 @@ export const tripAPI = {
     getTrendingDestinations: async () => {
         return fetchWithAuth('/api/trips/trending');
     },
+
+    /**
+     * Get current user's trips (created and joined)
+     * GET /api/trips/my-trips
+     */
+    getMyTrips: async () => {
+        return fetchWithAuth('/api/trips/my-trips');
+    },
 };
 
 // ========================================
