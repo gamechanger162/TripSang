@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { communityAPI, uploadAPI } from '@/lib/api';
 import { GlassBubble, GlassInputBar, AnimatedMeshBackground } from '@/components/chat/FuturisticUI';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Settings, Loader2 } from 'lucide-react';
+import { ArrowLeft, Users, Settings, Loader2, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { io, Socket } from 'socket.io-client';
@@ -53,6 +53,7 @@ export default function CommunityPage() {
     const [isCreator, setIsCreator] = useState(false);
     const [socket, setSocket] = useState<Socket | null>(null);
     const [showMembers, setShowMembers] = useState(false);
+    const [leaving, setLeaving] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -168,10 +169,8 @@ export default function CommunityPage() {
 
         try {
             setUploading(true);
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await uploadAPI.uploadImage(formData as any);
+            // Use uploadFile which correctly handles File objects
+            const response = await uploadAPI.uploadFile(file);
             if (response.success && response.url) {
                 socket.emit('send_community_message', {
                     communityId: id,
@@ -184,6 +183,25 @@ export default function CommunityPage() {
             toast.error('Failed to upload image');
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleLeaveCommunity = async () => {
+        if (!confirm('Are you sure you want to leave this community?')) return;
+
+        try {
+            setLeaving(true);
+            const response = await communityAPI.leave(id as string);
+            if (response.success) {
+                toast.success('You have left the community');
+                router.push('/messages');
+            } else {
+                toast.error(response.message || 'Failed to leave community');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to leave community');
+        } finally {
+            setLeaving(false);
         }
     };
 
@@ -259,6 +277,16 @@ export default function CommunityPage() {
                         >
                             <Settings className="w-5 h-5 text-gray-400" />
                         </Link>
+                    )}
+                    {!isCreator && (
+                        <button
+                            onClick={handleLeaveCommunity}
+                            disabled={leaving}
+                            className="p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+                            title="Leave community"
+                        >
+                            {leaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+                        </button>
                     )}
                 </div>
             </div>

@@ -63,8 +63,9 @@ export default function UserDashboard() {
                 const now = new Date();
                 const allTrips = response.trips || [];
 
-                const upcoming = allTrips.filter((t: any) => new Date(t.startDate) >= now);
-                const past = allTrips.filter((t: any) => new Date(t.startDate) < now);
+                // Trip is "upcoming" if endDate hasn't passed yet
+                const upcoming = allTrips.filter((t: any) => new Date(t.endDate || t.startDate) >= now);
+                const past = allTrips.filter((t: any) => new Date(t.endDate || t.startDate) < now);
 
                 setUpcomingTrips(upcoming);
                 setPastTrips(past);
