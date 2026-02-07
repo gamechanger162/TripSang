@@ -63,24 +63,40 @@ export default function SignUpPage() {
         };
     }, []);
 
-    const initializeRecaptcha = () => {
-        if (!window.recaptchaVerifier) {
+    const resetRecaptcha = () => {
+        if (window.recaptchaVerifier) {
             try {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'normal',
-                    'callback': (response: any) => {
-                        console.log('reCAPTCHA solved');
-                    },
-                    'expired-callback': () => {
-                        console.log('reCAPTCHA expired');
-                        toast.error('reCAPTCHA expired. Please try again.');
-                    }
-                });
-                window.recaptchaVerifier.render();
-            } catch (error: any) {
-                console.error('Recaptcha initialization error:', error);
-                toast.error('Failed to initialize verification. Please refresh the page.');
+                window.recaptchaVerifier.clear();
+            } catch (e) {
+                console.log('Recaptcha clear error:', e);
             }
+            window.recaptchaVerifier = null;
+        }
+        // Clear the container
+        const container = document.getElementById('recaptcha-container');
+        if (container) {
+            container.innerHTML = '';
+        }
+    };
+
+    const initializeRecaptcha = () => {
+        resetRecaptcha();
+        try {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'normal',
+                'callback': (response: any) => {
+                    console.log('reCAPTCHA solved');
+                },
+                'expired-callback': () => {
+                    console.log('reCAPTCHA expired');
+                    toast.error('reCAPTCHA expired. Please try again.');
+                    resetRecaptcha();
+                }
+            });
+            window.recaptchaVerifier.render();
+        } catch (error: any) {
+            console.error('Recaptcha initialization error:', error);
+            toast.error('Failed to initialize verification. Please refresh the page.');
         }
     };
 

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
+import PhoneInput from '@/components/PhoneInput';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -40,24 +41,40 @@ function PhoneLoginContent() {
         };
     }, []);
 
-    const initializeRecaptcha = () => {
-        if (!window.recaptchaVerifier) {
+    const resetRecaptcha = () => {
+        if (window.recaptchaVerifier) {
             try {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'normal',
-                    'callback': (response: any) => {
-                        console.log('reCAPTCHA solved');
-                    },
-                    'expired-callback': () => {
-                        console.log('reCAPTCHA expired');
-                        toast.error('reCAPTCHA expired. Please try again.');
-                    }
-                });
-                window.recaptchaVerifier.render();
-            } catch (error: any) {
-                console.error('Recaptcha initialization error:', error);
-                toast.error('Failed to initialize verification. Please refresh the page.');
+                window.recaptchaVerifier.clear();
+            } catch (e) {
+                console.log('Recaptcha clear error:', e);
             }
+            window.recaptchaVerifier = null;
+        }
+        // Clear the container
+        const container = document.getElementById('recaptcha-container');
+        if (container) {
+            container.innerHTML = '';
+        }
+    };
+
+    const initializeRecaptcha = () => {
+        resetRecaptcha();
+        try {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'normal',
+                'callback': (response: any) => {
+                    console.log('reCAPTCHA solved');
+                },
+                'expired-callback': () => {
+                    console.log('reCAPTCHA expired');
+                    toast.error('reCAPTCHA expired. Please try again.');
+                    resetRecaptcha();
+                }
+            });
+            window.recaptchaVerifier.render();
+        } catch (error: any) {
+            console.error('Recaptcha initialization error:', error);
+            toast.error('Failed to initialize verification. Please refresh the page.');
         }
     };
 
@@ -258,26 +275,14 @@ function PhoneLoginContent() {
                             {/* Phone Number Input */}
                             <div>
                                 <label htmlFor="phoneNumber" className="sr-only">Phone Number</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        id="phoneNumber"
-                                        name="phoneNumber"
-                                        type="tel"
-                                        required
-                                        className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
-                                        placeholder="Phone (+919876543210)"
-                                        value={phoneNumber}
-                                        onChange={(e) => setPhoneNumber(e.target.value)}
-                                        onKeyPress={(e) => {
-                                            if (e.key === 'Enter') {
-                                                handleSendOTP();
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <p className="mt-2 text-xs text-gray-400">
-                                    Format: +[country code][number] (e.g., +919876543210)
-                                </p>
+                                <PhoneInput
+                                    value={phoneNumber}
+                                    onChange={setPhoneNumber}
+                                    placeholder="Phone number"
+                                    id="phoneNumber"
+                                    name="phoneNumber"
+                                    required
+                                />
                             </div>
 
                             {/* reCAPTCHA Container */}
