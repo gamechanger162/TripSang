@@ -7,6 +7,8 @@ import { messageAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageViewer from '../ImageViewer';
+import Link from 'next/link';
+import { UserCircle, Ban, CheckCircle } from 'lucide-react';
 import {
     AnimatedMeshBackground,
     GlassBubble,
@@ -22,6 +24,13 @@ interface FuturisticDirectMessageProps {
     receiverImage?: string;
     initialMessages?: DirectMessage[];
     isBlocked?: boolean;
+    blockStatus?: {
+        iBlockedThem: boolean;
+        theyBlockedMe: boolean;
+        canMessage: boolean;
+    } | null;
+    onBlock?: () => void;
+    onUnblock?: () => void;
 }
 
 export default function FuturisticDirectMessage({
@@ -30,7 +39,10 @@ export default function FuturisticDirectMessage({
     receiverName,
     receiverImage,
     initialMessages = [],
-    isBlocked = false
+    isBlocked = false,
+    blockStatus = null,
+    onBlock,
+    onUnblock
 }: FuturisticDirectMessageProps) {
     const { messages, setMessages, sendMessage, isTyping, setIsTyping, connected } = useDMSocket(conversationId);
     const [messageInput, setMessageInput] = useState('');
@@ -156,6 +168,34 @@ export default function FuturisticDirectMessage({
                 avatarImage={receiverImage}
                 isConnected={connected}
                 backHref="/messages"
+                rightContent={
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={`/profile/${receiverId}`}
+                            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                            title="View Profile"
+                        >
+                            <UserCircle className="w-5 h-5 text-white/80" />
+                        </Link>
+                        {blockStatus?.iBlockedThem ? (
+                            <button
+                                onClick={onUnblock}
+                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-green-400"
+                                title="Unblock User"
+                            >
+                                <CheckCircle className="w-5 h-5" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={onBlock}
+                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-red-400"
+                                title="Block User"
+                            >
+                                <Ban className="w-5 h-5" />
+                            </button>
+                        )}
+                    </div>
+                }
             />
 
             {/* Connection warning */}

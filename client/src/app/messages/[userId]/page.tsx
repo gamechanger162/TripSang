@@ -25,7 +25,6 @@ export default function ChatPage() {
         theyBlockedMe: boolean;
         canMessage: boolean;
     } | null>(null);
-    const [showMenu, setShowMenu] = useState(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -88,7 +87,6 @@ export default function ChatPage() {
         } catch (error: any) {
             toast.error(error.message || 'Failed to block user');
         }
-        setShowMenu(false);
     };
 
     const handleUnblock = async () => {
@@ -101,7 +99,6 @@ export default function ChatPage() {
         } catch (error: any) {
             toast.error(error.message || 'Failed to unblock user');
         }
-        setShowMenu(false);
     };
 
     if (status === 'loading' || loading) {
@@ -127,92 +124,6 @@ export default function ChatPage() {
 
     return (
         <div className="fixed inset-0 flex flex-col bg-gray-900 pt-16 pb-20 md:pb-0 z-40">
-            {/* Header */}
-            <div className="bg-gray-800 shadow-sm border-b border-gray-700 flex-shrink-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            {/* Back button */}
-                            <Link
-                                href="/messages"
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
-                            >
-                                <svg className="w-6 h-6 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </Link>
-
-                            {/* User info - Clickable to view profile */}
-                            <Link href={`/profile/${otherUser._id}`} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
-                                    {otherUser.profilePicture ? (
-                                        <Image
-                                            src={otherUser.profilePicture}
-                                            alt={otherUser.name}
-                                            width={40}
-                                            height={40}
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                                            {otherUser.name[0].toUpperCase()}
-                                        </span>
-                                    )}
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-semibold text-white">
-                                        {otherUser.name}
-                                    </h2>
-                                    {blockStatus?.theyBlockedMe && (
-                                        <p className="text-xs text-red-500">This user has blocked you</p>
-                                    )}
-                                </div>
-                            </Link>
-                        </div>
-
-                        {/* Menu button */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowMenu(!showMenu)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
-                            >
-                                <svg className="w-6 h-6 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                            </button>
-
-                            {/* Dropdown menu */}
-                            {showMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-lg shadow-lg border border-gray-200 dark:border-dark-700 py-1 z-[100]">
-                                    <Link
-                                        href={`/profile/${otherUser._id}`}
-                                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700"
-                                        onClick={() => setShowMenu(false)}
-                                    >
-                                        View Profile
-                                    </Link>
-                                    {blockStatus?.iBlockedThem ? (
-                                        <button
-                                            onClick={handleUnblock}
-                                            className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:hover:bg-dark-700"
-                                        >
-                                            Unblock User
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={handleBlock}
-                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-dark-700"
-                                        >
-                                            Block User
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Blocked notice */}
             {blockStatus?.iBlockedThem && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
@@ -241,6 +152,9 @@ export default function ChatPage() {
                             receiverImage={otherUser.profilePicture}
                             initialMessages={messages}
                             isBlocked={!blockStatus?.canMessage}
+                            blockStatus={blockStatus}
+                            onBlock={handleBlock}
+                            onUnblock={handleUnblock}
                         />
                     )}
                 </div>

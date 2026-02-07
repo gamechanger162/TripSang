@@ -122,45 +122,6 @@ export default function TripChatPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
-            {/* Header */}
-            <div className="sticky top-0 z-40 bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700 shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-                    <Link
-                        href="/messages"
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    </Link>
-
-                    <Link href={`/trips/${tripId}`} className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-400 to-purple-500 overflow-hidden flex-shrink-0">
-                            {trip.coverPhoto ? (
-                                <Image
-                                    src={trip.coverPhoto}
-                                    alt={trip.title}
-                                    width={40}
-                                    height={40}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                                    {trip.title[0]}
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h1 className="font-semibold text-gray-900 dark:text-white truncate">
-                                {trip.title}
-                            </h1>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                {trip.squadMembers.length + 1} members
-                            </p>
-                        </div>
-                    </Link>
-                </div>
-            </div>
-
             {/* Chat Room - Full height */}
             <div className="w-full px-4 sm:px-6 lg:px-8">
                 <FuturisticSquadChat
