@@ -41,7 +41,7 @@ export default function CallToAction() {
                     </span>
                     <h3 className="text-3xl font-bold text-white mb-4">Ready to make memories?</h3>
                     <p className="text-gray-400 mb-8">Join 10,000+ travelers. No credit card required to start.</p>
-                    <div className="flex justify-center gap-4">
+                    <div className="flex justify-center gap-4 mb-4">
                         <Link href="/search" className="btn-outline border-white/30 text-white hover:bg-white hover:text-black hover:border-white">
                             Browse Trips
                         </Link>
@@ -49,6 +49,9 @@ export default function CallToAction() {
                             Start Free Trial →
                         </Link>
                     </div>
+                    <p className="text-gray-500 text-sm">
+                        Quick login? <Link href="/auth/phone-login" className="text-primary-400 hover:text-primary-300">Login with Phone →</Link>
+                    </p>
                 </div>
             </section>
         </>

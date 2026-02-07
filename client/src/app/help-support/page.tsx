@@ -14,6 +14,22 @@ export default function HelpSupportPage() {
             answer: "You can join a squad by clicking the 'Join Squad' button on any trip page. If the trip is private, you may need a code from the trip creator."
         },
         {
+            question: "How can I login with my phone number?",
+            answer: "Go to the login page and click 'Login with Phone'. Enter your phone number with country code (e.g., +91 for India), receive an OTP via SMS, and you're in! No password needed."
+        },
+        {
+            question: "How do I verify my phone number?",
+            answer: "Go to Profile → Edit Profile, scroll to Mobile Number, and click 'Verify Phone'. You'll receive an OTP on your phone. Enter it to verify your number and enable phone-based login."
+        },
+        {
+            question: "What are Communities?",
+            answer: "Communities are groups of travelers with shared interests. Join communities to discover trips, connect with like-minded travelers, and participate in group discussions. You can browse communities at Explore → Communities."
+        },
+        {
+            question: "How do I create a Community?",
+            answer: "Go to Explore → Communities → Create Community. Add a name, description, cover image, and set your community rules. You can make it public or private."
+        },
+        {
             question: "Is TripSang free to use?",
             answer: "Yes! TripSang offers a free tier that allows you to join trips and create your own. We also offer premium plans for advanced features like unlimited trips and exclusive badges."
         },

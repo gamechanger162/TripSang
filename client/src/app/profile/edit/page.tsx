@@ -18,6 +18,7 @@ export default function EditProfilePage() {
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [otp, setOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
+    const [isMobileVerified, setIsMobileVerified] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -51,6 +52,7 @@ export default function EditProfilePage() {
                     profilePicture: user.profilePicture || '',
                     socialLinks: user.socialLinks || { instagram: '', facebook: '', twitter: '' }
                 });
+                setIsMobileVerified(user.isMobileVerified || false);
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -148,12 +150,26 @@ export default function EditProfilePage() {
         }
 
         try {
-            // Initialize recaptcha
-            if (!window.recaptchaVerifier) {
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                    'size': 'invisible',
-                });
+            // Clean up existing reCAPTCHA first
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                } catch (e) {
+                    console.log('reCAPTCHA clear failed, continuing...');
+                }
+                window.recaptchaVerifier = null;
             }
+
+            // Clear any existing reCAPTCHA from DOM
+            const recaptchaContainer = document.getElementById('recaptcha-container');
+            if (recaptchaContainer) {
+                recaptchaContainer.innerHTML = '';
+            }
+
+            // Initialize new recaptcha
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+            });
 
             // Send OTP via Firebase
             const confirmationResult = await signInWithPhoneNumber(
@@ -167,10 +183,16 @@ export default function EditProfilePage() {
             toast.success('OTP sent to your phone!');
         } catch (error: any) {
             console.error('Send OTP error:', error);
-            toast.error(error.message || 'Failed to send OTP');
+            if (error.code === 'auth/too-many-requests') {
+                toast.error('Too many attempts. Please try again later.');
+            } else {
+                toast.error(error.message || 'Failed to send OTP');
+            }
             // Clear recaptcha on error
             if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.clear();
+                try {
+                    window.recaptchaVerifier.clear();
+                } catch (e) { }
                 window.recaptchaVerifier = null;
             }
         }
@@ -193,6 +215,7 @@ export default function EditProfilePage() {
                 toast.success('Phone verified successfully!');
                 setShowVerifyModal(false);
                 setOtp('');
+                setIsMobileVerified(true); // Update local state immediately
 
                 // Update session to reflect verification
                 await updateSession();
@@ -340,10 +363,10 @@ export default function EditProfilePage() {
                                         onChange={handleInputChange}
                                         className="flex-1 block rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
                                         placeholder="+91..."
-                                        disabled={!!(formData.mobileNumber && session?.user?.isMobileVerified)}
+                                        disabled={!!(formData.mobileNumber && isMobileVerified)}
                                     />
                                     {formData.mobileNumber && (
-                                        session?.user?.isMobileVerified ? (
+                                        isMobileVerified ? (
                                             <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
                                                 <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -362,7 +385,7 @@ export default function EditProfilePage() {
                                     )}
                                 </div>
                                 <p className="mt-1 text-xs text-gray-500">
-                                    {session?.user?.isMobileVerified
+                                    {isMobileVerified
                                         ? 'Your phone number is verified and can be used for login.'
                                         : 'Verify your phone to enable phone-based login and trip coordination.'}
                                 </p>
