@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useState, useRef, forwardRef, ReactNode } from 'react';
 import { X, Camera, Pin, Send, Play, Pause } from 'lucide-react';
 import Image from 'next/image';
@@ -184,6 +184,9 @@ export function GlassBubble({
             onReply();
             triggerHaptic('light');
         }
+
+        // Snap back to original position with spring animation
+        animate(x, 0, { type: 'spring', stiffness: 500, damping: 30 });
         setIsDragging(false);
     };
 

@@ -133,7 +133,13 @@ export default function PendingReviews() {
             <div
                 ref={scrollContainerRef}
                 className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    touchAction: 'pan-x',
+                    overscrollBehaviorX: 'contain',
+                    WebkitOverflowScrolling: 'touch'
+                }}
             >
                 {visibleReviews.map((item) => (
                     <div

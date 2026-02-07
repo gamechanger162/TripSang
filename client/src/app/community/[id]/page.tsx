@@ -214,7 +214,10 @@ export default function CommunityPage() {
                     <ArrowLeft className="w-5 h-5 text-gray-300" />
                 </Link>
 
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Link
+                    href={`/community/${id}/settings`}
+                    className="flex items-center gap-3 flex-1 min-w-0 hover:bg-gray-700/50 rounded-lg p-2 -m-2 transition-colors"
+                >
                     {community.coverImage ? (
                         <Image
                             src={community.coverImage}
@@ -237,10 +240,10 @@ export default function CommunityPage() {
                         </h1>
                         <p className="text-xs text-gray-400 flex items-center gap-1">
                             <Users className="w-3 h-3" />
-                            {community.memberCount} member{community.memberCount !== 1 ? 's' : ''}
+                            {community.memberCount} member{community.memberCount !== 1 ? 's' : ''} • Tap for details
                         </p>
                     </div>
-                </div>
+                </Link>
 
                 <div className="flex items-center gap-2">
                     <button

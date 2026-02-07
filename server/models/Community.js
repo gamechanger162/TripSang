@@ -30,6 +30,10 @@ const communitySchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    logo: {
+        type: String,
+        default: null
+    },
     creator: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

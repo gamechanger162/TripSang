@@ -157,18 +157,54 @@ export const getUserTrips = async (req, res) => {
             ]
         })
             .populate('creator', 'name profilePicture')
-            .sort({ startDate: 1 }); // Sort by upcoming
+            .lean();
+
+        // Get last message for each trip
+        const tripIds = trips.map(t => t._id);
+        const lastMessages = await Message.aggregate([
+            { $match: { tripId: { $in: tripIds } } },
+            { $sort: { timestamp: -1 } },
+            {
+                $group: {
+                    _id: '$tripId',
+                    senderName: { $first: '$senderName' },
+                    message: { $first: '$message' },
+                    timestamp: { $first: '$timestamp' },
+                    type: { $first: '$type' }
+                }
+            }
+        ]);
+
+        // Create a map for quick lookup
+        const lastMessageMap = {};
+        lastMessages.forEach(lm => {
+            lastMessageMap[lm._id.toString()] = {
+                senderName: lm.senderName,
+                message: lm.type === 'image' ? '📷 Sent an image' : lm.message,
+                timestamp: lm.timestamp
+            };
+        });
+
+        // Attach lastMessage to trips and sort
+        const tripsWithMessages = trips.map(trip => ({
+            ...trip,
+            lastMessage: lastMessageMap[trip._id.toString()] || null
+        })).sort((a, b) => {
+            const aTime = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+            const bTime = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+            return bTime - aTime;
+        });
 
         // Categorize
-        const createdTrips = trips.filter(trip => trip.creator._id.toString() === userId.toString());
-        const joinedTrips = trips.filter(trip => trip.creator._id.toString() !== userId.toString());
+        const createdTrips = tripsWithMessages.filter(trip => trip.creator._id.toString() === userId.toString());
+        const joinedTrips = tripsWithMessages.filter(trip => trip.creator._id.toString() !== userId.toString());
 
         res.status(200).json({
             success: true,
-            trips,
+            trips: tripsWithMessages,
             createdTrips,
             joinedTrips,
-            count: trips.length
+            count: tripsWithMessages.length
         });
     } catch (error) {
         console.error('Get user trips error:', error);

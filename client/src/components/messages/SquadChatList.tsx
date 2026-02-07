@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Users, MessageSquare, Compass, Sparkles } from 'lucide-react';
+import { Users, MessageSquare, Compass, Sparkles, X, MoreVertical } from 'lucide-react';
+import { useState } from 'react';
 
 interface Trip {
     _id: string;
@@ -23,9 +24,22 @@ interface Trip {
 interface SquadChatListProps {
     trips: Trip[];
     loading?: boolean;
+    hiddenTrips?: Set<string>;
+    onHideTrip?: (tripId: string) => void;
 }
 
-export default function SquadChatList({ trips, loading }: SquadChatListProps) {
+export default function SquadChatList({ trips, loading, hiddenTrips = new Set(), onHideTrip }: SquadChatListProps) {
+    const [menuOpen, setMenuOpen] = useState<string | null>(null);
+
+    const handleHideTrip = (e: React.MouseEvent, tripId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onHideTrip) {
+            onHideTrip(tripId);
+        }
+        setMenuOpen(null);
+    };
+
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
         const now = new Date();
@@ -46,6 +60,9 @@ export default function SquadChatList({ trips, loading }: SquadChatListProps) {
             });
         }
     };
+
+    // Filter hidden trips
+    const visibleTrips = trips.filter(trip => !hiddenTrips.has(trip._id));
 
     if (loading) {
         return (
@@ -94,80 +111,92 @@ export default function SquadChatList({ trips, loading }: SquadChatListProps) {
 
     return (
         <div className="space-y-3">
-            {trips.map((trip, index) => (
-                <Link
-                    key={trip._id}
-                    href={`/trips/${trip._id}/chat`}
-                    className="block group"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                >
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800/40 via-gray-900/60 to-gray-800/40 backdrop-blur-xl border border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-0.5">
-                        {/* Animated gradient overlay on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-cyan-600/0 to-blue-600/0 group-hover:from-blue-600/5 group-hover:via-cyan-600/10 group-hover:to-blue-600/5 transition-all duration-500" />
+            {visibleTrips.map((trip, index) => (
+                <div key={trip._id} className="relative">
+                    <Link
+                        href={`/trips/${trip._id}/chat`}
+                        className="block group"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-800/40 via-gray-900/60 to-gray-800/40 backdrop-blur-xl border border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-0.5">
+                            {/* Animated gradient overlay on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-cyan-600/0 to-blue-600/0 group-hover:from-blue-600/5 group-hover:via-cyan-600/10 group-hover:to-blue-600/5 transition-all duration-500" />
 
-                        <div className="relative flex items-center gap-4 p-5">
-                            {/* Trip Cover with Premium Styling */}
-                            <div className="relative flex-shrink-0">
-                                <div className="w-14 h-14 rounded-xl p-[2px] bg-gradient-to-br from-blue-500/50 via-cyan-500/50 to-teal-500/50 group-hover:from-blue-400 group-hover:via-cyan-500 group-hover:to-teal-400 transition-all duration-500 shadow-lg shadow-blue-500/20 overflow-hidden">
-                                    {trip.coverPhoto ? (
-                                        <Image
-                                            src={trip.coverPhoto}
-                                            alt={trip.title}
-                                            width={54}
-                                            height={54}
-                                            className="object-cover w-full h-full rounded-[10px]"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center">
-                                            <MessageSquare className="w-6 h-6 text-white/90" />
-                                        </div>
-                                    )}
-                                </div>
-                                {/* Member count badge */}
-                                <div className="absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-900/90 border border-white/10 rounded-full text-[9px] text-gray-300 font-medium backdrop-blur-sm">
-                                    <Users className="w-2.5 h-2.5" />
-                                    {trip.squadMembers.length + 1}
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <h3 className="font-semibold text-white group-hover:text-blue-200 transition-colors truncate">
-                                        {trip.title}
-                                    </h3>
-                                    {trip.lastMessage && (
-                                        <span className="text-[11px] text-gray-500 flex-shrink-0 ml-3 font-medium tracking-wide">
-                                            {formatTimestamp(trip.lastMessage.timestamp)}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm text-gray-400 truncate">
-                                        {trip.lastMessage ? (
-                                            <>
-                                                <span className="text-cyan-400/80 font-medium">{trip.lastMessage.senderName}:</span>{' '}
-                                                <span className="text-gray-400">{trip.lastMessage.message}</span>
-                                            </>
+                            <div className="relative flex items-center gap-4 p-5">
+                                {/* Trip Cover with Premium Styling */}
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-14 h-14 rounded-xl p-[2px] bg-gradient-to-br from-blue-500/50 via-cyan-500/50 to-teal-500/50 group-hover:from-blue-400 group-hover:via-cyan-500 group-hover:to-teal-400 transition-all duration-500 shadow-lg shadow-blue-500/20 overflow-hidden">
+                                        {trip.coverPhoto ? (
+                                            <Image
+                                                src={trip.coverPhoto}
+                                                alt={trip.title}
+                                                width={54}
+                                                height={54}
+                                                className="object-cover w-full h-full rounded-[10px]"
+                                            />
                                         ) : (
-                                            <span className="flex items-center gap-1.5 text-gray-500">
-                                                <Sparkles className="w-3 h-3 text-blue-400" />
-                                                Ready to start planning!
+                                            <div className="w-full h-full rounded-[10px] bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center">
+                                                <MessageSquare className="w-6 h-6 text-white/90" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Member count badge */}
+                                    <div className="absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-900/90 border border-white/10 rounded-full text-[9px] text-gray-300 font-medium backdrop-blur-sm">
+                                        <Users className="w-2.5 h-2.5" />
+                                        {trip.squadMembers.length + 1}
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <h3 className="font-semibold text-white group-hover:text-blue-200 transition-colors truncate">
+                                            {trip.title}
+                                        </h3>
+                                        {trip.lastMessage && (
+                                            <span className="text-[11px] text-gray-500 flex-shrink-0 ml-3 font-medium tracking-wide">
+                                                {formatTimestamp(trip.lastMessage.timestamp)}
                                             </span>
                                         )}
-                                    </p>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm text-gray-400 truncate">
+                                            {trip.lastMessage ? (
+                                                <>
+                                                    <span className="text-cyan-400/80 font-medium">{trip.lastMessage.senderName}:</span>{' '}
+                                                    <span className="text-gray-400">{trip.lastMessage.message}</span>
+                                                </>
+                                            ) : (
+                                                <span className="flex items-center gap-1.5 text-gray-500">
+                                                    <Sparkles className="w-3 h-3 text-blue-400" />
+                                                    Ready to start planning!
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Arrow indicator */}
+                                <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
                                 </div>
                             </div>
-
-                            {/* Arrow indicator */}
-                            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </div>
                         </div>
-                    </div>
-                </Link>
+                    </Link>
+
+                    {/* Hide button */}
+                    {onHideTrip && (
+                        <button
+                            onClick={(e) => handleHideTrip(e, trip._id)}
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-gray-800/80 text-gray-400 hover:text-red-400 hover:bg-red-900/30 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            title="Hide from chat list"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             ))}
         </div>
     );

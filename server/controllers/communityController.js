@@ -132,7 +132,7 @@ export const discoverCommunities = async (req, res) => {
  */
 export const createCommunity = async (req, res) => {
     try {
-        const { name, description, category, isPrivate, coverImage } = req.body;
+        const { name, description, category, isPrivate, coverImage, logo } = req.body;
 
         // Check if name is unique
         const existing = await Community.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
@@ -149,6 +149,7 @@ export const createCommunity = async (req, res) => {
             category: category || 'Other',
             isPrivate: isPrivate !== false,
             coverImage,
+            logo,
             creator: req.user._id
         });
 
@@ -387,7 +388,7 @@ export const leaveCommunity = async (req, res) => {
 export const updateCommunitySettings = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, category, isPrivate, coverImage } = req.body;
+        const { name, description, category, isPrivate, coverImage, logo } = req.body;
 
         const community = await Community.findById(id);
         if (!community) {
@@ -414,6 +415,7 @@ export const updateCommunitySettings = async (req, res) => {
         if (category) community.category = category;
         if (isPrivate !== undefined) community.isPrivate = isPrivate;
         if (coverImage !== undefined) community.coverImage = coverImage;
+        if (logo !== undefined) community.logo = logo;
 
         await community.save();
 

@@ -58,6 +58,29 @@ export default function MessagesPage() {
     const [isPremium, setIsPremium] = useState(false);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [hiddenTrips, setHiddenTrips] = useState<Set<string>>(new Set());
+
+    // Load hidden trips from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem('hiddenSquadChats');
+        if (saved) {
+            try {
+                setHiddenTrips(new Set(JSON.parse(saved)));
+            } catch (e) {
+                console.error('Error loading hidden trips:', e);
+            }
+        }
+    }, []);
+
+    const handleHideTrip = (tripId: string) => {
+        setHiddenTrips(prev => {
+            const newSet = new Set(prev);
+            newSet.add(tripId);
+            localStorage.setItem('hiddenSquadChats', JSON.stringify([...newSet]));
+            return newSet;
+        });
+        toast.success('Trip hidden from chat list');
+    };
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -383,7 +406,12 @@ export default function MessagesPage() {
                     </>
                 ) : activeTab === 'squad' ? (
                     <>
-                        <SquadChatList trips={filteredTrips} loading={loadingTrips} />
+                        <SquadChatList
+                            trips={filteredTrips}
+                            loading={loadingTrips}
+                            hiddenTrips={hiddenTrips}
+                            onHideTrip={handleHideTrip}
+                        />
                         {!loadingTrips && searchQuery && filteredTrips.length === 0 && (
                             <div className="text-center py-12">
                                 <p className="text-gray-600 dark:text-gray-400">
