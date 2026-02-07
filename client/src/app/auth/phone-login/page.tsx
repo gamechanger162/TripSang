@@ -88,7 +88,6 @@ function PhoneLoginContent() {
             if (checkData.requiresSignup || !checkData.exists) {
                 setIsNewUser(true);
                 toast.success('New number! Please provide your email to continue.');
-                // Don't return - continue with OTP flow
             } else {
                 setIsNewUser(false);
             }
@@ -96,11 +95,26 @@ function PhoneLoginContent() {
             // Store user name for display
             setUserName(checkData.userName);
 
-            // Initialize recaptcha
+            // Clear existing recaptcha before reinitializing
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                    window.recaptchaVerifier = null;
+                } catch (e) {
+                    console.log('Recaptcha cleanup before init:', e);
+                }
+            }
+
+            // Initialize recaptcha with retry
             initializeRecaptcha();
 
+            // Wait a moment for recaptcha to render
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             if (!window.recaptchaVerifier) {
-                throw new Error('Recaptcha not initialized');
+                toast.error('Please complete the captcha verification');
+                setVerifyingPhone(false);
+                return;
             }
 
             // Send OTP via Firebase
@@ -117,9 +131,11 @@ function PhoneLoginContent() {
             if (error.code === 'auth/invalid-phone-number') {
                 errorMessage = 'Invalid phone number format';
             } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many requests. Please try again later.';
+                errorMessage = 'Too many requests. Please try again in a few minutes.';
             } else if (error.code === 'auth/captcha-check-failed') {
-                errorMessage = 'Captcha verification failed. Please try again.';
+                errorMessage = 'Captcha verification failed. Please refresh and try again.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = 'Network error. Please check your connection.';
             } else if (error.message) {
                 errorMessage = error.message;
             }

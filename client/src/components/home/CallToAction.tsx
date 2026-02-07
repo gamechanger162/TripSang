@@ -2,8 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function CallToAction() {
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated';
+
     return (
         <>
             {/* Immersive Parallax Call to Action */}
@@ -26,10 +30,10 @@ export default function CallToAction() {
                         Life is short. The world is wide. Stop waiting for your friends to agree on a date.
                     </p>
                     <Link
-                        href="/trips/create"
+                        href={isAuthenticated ? "/trips/create" : "/auth/signup"}
                         className="inline-block bg-white text-black text-lg font-bold px-10 py-5 rounded-full hover:bg-gray-100 hover:scale-105 transition-all duration-300 shadow-2xl"
                     >
-                        Start a Trip Now
+                        {isAuthenticated ? 'Create a Trip' : 'Start a Trip Now'}
                     </Link>
                 </div>
             </section>
@@ -37,22 +41,47 @@ export default function CallToAction() {
             {/* Footer CTA */}
             <section className="py-24 bg-black text-center border-t border-white/10">
                 <div className="max-w-2xl mx-auto px-4">
-                    <span className="inline-block py-1 px-4 rounded-full bg-green-500/20 border border-green-500/30 text-sm font-bold text-green-400 mb-4">
-                        ✨ Start with 30 Days Free
-                    </span>
-                    <h3 className="text-3xl font-bold text-white mb-4">Ready to make memories?</h3>
-                    <p className="text-gray-400 mb-8">Join 10,000+ travelers. No credit card required to start.</p>
-                    <div className="flex justify-center gap-4 mb-4">
-                        <Link href="/search" className="btn-outline border-white/30 text-white hover:bg-white hover:text-black hover:border-white">
-                            Browse Trips
-                        </Link>
-                        <Link href="/auth/signup" className="btn-primary">
-                            Start Free Trial →
-                        </Link>
-                    </div>
-                    <p className="text-gray-500 text-sm">
-                        Quick login? <Link href="/auth/phone-login" className="text-primary-400 hover:text-primary-300">Login with Phone →</Link>
-                    </p>
+                    {isAuthenticated ? (
+                        <>
+                            {/* Logged-in user view */}
+                            <span className="inline-block py-1 px-4 rounded-full bg-primary-500/20 border border-primary-500/30 text-sm font-bold text-primary-400 mb-4">
+                                ✨ Welcome Back, Traveler
+                            </span>
+                            <h3 className="text-3xl font-bold text-white mb-4">Ready to explore?</h3>
+                            <p className="text-gray-400 mb-8">Your next adventure is just a click away.</p>
+                            <div className="flex justify-center gap-4 mb-4">
+                                <Link href="/search" className="btn-outline border-white/30 text-white hover:bg-white hover:text-black hover:border-white">
+                                    Browse Trips
+                                </Link>
+                                <Link href="/trips/create" className="btn-primary">
+                                    Create Trip →
+                                </Link>
+                            </div>
+                            <p className="text-gray-500 text-sm">
+                                <Link href="/dashboard" className="text-primary-400 hover:text-primary-300">View your profile →</Link>
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            {/* Guest user view */}
+                            <span className="inline-block py-1 px-4 rounded-full bg-green-500/20 border border-green-500/30 text-sm font-bold text-green-400 mb-4">
+                                ✨ Start with 30 Days Free
+                            </span>
+                            <h3 className="text-3xl font-bold text-white mb-4">Ready to make memories?</h3>
+                            <p className="text-gray-400 mb-8">Join 10,000+ travelers. No credit card required to start.</p>
+                            <div className="flex justify-center gap-4 mb-4">
+                                <Link href="/search" className="btn-outline border-white/30 text-white hover:bg-white hover:text-black hover:border-white">
+                                    Browse Trips
+                                </Link>
+                                <Link href="/auth/signup" className="btn-primary">
+                                    Start Free Trial →
+                                </Link>
+                            </div>
+                            <p className="text-gray-500 text-sm">
+                                Quick login? <Link href="/auth/phone-login" className="text-primary-400 hover:text-primary-300">Login with Phone →</Link>
+                            </p>
+                        </>
+                    )}
                 </div>
             </section>
         </>

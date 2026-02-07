@@ -156,9 +156,14 @@ export default function CommunityPage() {
         }, 100);
     };
 
+    // Only scroll to bottom on initial load, not after every message change
+    // The socket handler already calls scrollToBottom() for new messages
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        if (messages.length > 0 && !loading) {
+            scrollToBottom();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]); // Only on initial load
 
     const handleSend = async () => {
         if (!inputValue.trim() || !socket) return;

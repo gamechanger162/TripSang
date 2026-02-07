@@ -273,11 +273,13 @@ export default function MessagesPage() {
     };
 
     const handleCommunityTabClick = () => {
-        if (!isPremium) {
+        // Only show modal if we've confirmed user is NOT premium (not while still checking)
+        if (isPremium === false) {
             setShowPremiumModal(true);
-        } else {
+        } else if (isPremium === true) {
             setActiveTab('community');
         }
+        // If isPremium is null (still checking), do nothing - wait for check to complete
     };
 
     const handleCommunityCreated = (community: Community) => {
