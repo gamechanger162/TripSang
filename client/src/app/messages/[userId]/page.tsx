@@ -123,7 +123,7 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="fixed inset-0 flex flex-col bg-gray-900 z-40">
+        <div className="fixed inset-0 flex flex-col bg-gray-900 pt-16 pb-20 md:pt-16 md:pb-0 z-40">
             {/* Blocked notice */}
             {blockStatus?.iBlockedThem && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
