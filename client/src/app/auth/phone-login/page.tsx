@@ -22,6 +22,9 @@ function PhoneLoginContent() {
     const [otp, setOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const [userName, setUserName] = useState('');
+    const [isNewUser, setIsNewUser] = useState(false);
+    const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
 
     useEffect(() => {
         // Cleanup recaptcha on unmount
@@ -81,10 +84,13 @@ function PhoneLoginContent() {
 
             const checkData = await checkResponse.json();
 
-            if (!checkResponse.ok || !checkData.exists) {
-                toast.error(checkData.message || 'No account found with this phone number');
-                setVerifyingPhone(false);
-                return;
+            // Check if requires signup (new user)
+            if (checkData.requiresSignup || !checkData.exists) {
+                setIsNewUser(true);
+                toast.success('New number! Please provide your email to continue.');
+                // Don't return - continue with OTP flow
+            } else {
+                setIsNewUser(false);
             }
 
             // Store user name for display
@@ -150,13 +156,21 @@ function PhoneLoginContent() {
             const loginResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/phone/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phoneNumber })
+                body: JSON.stringify({
+                    phoneNumber,
+                    ...(isNewUser && { email, name: name || undefined })
+                })
             });
 
             const loginData = await loginResponse.json();
 
             if (!loginResponse.ok) {
-                toast.error(loginData.message || 'Login failed');
+                // Check if email is required
+                if (loginData.requiresEmail) {
+                    toast.error('Please provide your email address to continue');
+                } else {
+                    toast.error(loginData.message || 'Login failed');
+                }
                 return;
             }
 
@@ -274,12 +288,43 @@ function PhoneLoginContent() {
                                         autoFocus
                                     />
                                 </div>
+
+                                {/* Email and Name for new users */}
+                                {isNewUser && (
+                                    <>
+                                        <div>
+                                            <label htmlFor="email" className="sr-only">Email address</label>
+                                            <input
+                                                id="email"
+                                                name="email"
+                                                type="email"
+                                                required
+                                                placeholder="Email address (required)"
+                                                className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="name" className="sr-only">Name</label>
+                                            <input
+                                                id="name"
+                                                name="name"
+                                                type="text"
+                                                placeholder="Your name (optional)"
+                                                className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {/* Verify OTP Button */}
                             <button
                                 onClick={handleVerifyOTP}
-                                disabled={verifyingPhone || otp.length !== 6}
+                                disabled={verifyingPhone || otp.length !== 6 || (isNewUser && !email)}
                                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {verifyingPhone ? 'Verifying...' : 'Verify OTP'}

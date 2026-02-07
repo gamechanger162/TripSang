@@ -20,18 +20,21 @@ export const checkPhoneExists = async (req, res) => {
         const user = await User.findOne({ mobileNumber: phoneNumber });
 
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'No account found with this phone number. Please sign up first.',
-                exists: false
+            // Phone doesn't exist - user should sign up or can create account with just phone
+            return res.status(200).json({
+                success: true,
+                message: 'New phone number. You can proceed with signup.',
+                exists: false,
+                requiresSignup: true
             });
         }
 
-        // Phone exists, client can proceed with Firebase OTP
+        // Phone exists, client can proceed with Firebase OTP for login
         res.status(200).json({
             success: true,
             message: 'Account found. Proceed with OTP verification.',
             exists: true,
+            requiresSignup: false,
             userName: user.name // Return name for display
         });
 
@@ -47,11 +50,12 @@ export const checkPhoneExists = async (req, res) => {
 
 /**
  * Login with phone number after Firebase OTP verification
+ * Creates account if doesn't exist (phone-first auth)
  * POST /api/auth/phone/login
  */
 export const phoneLogin = async (req, res) => {
     try {
-        const { phoneNumber } = req.body;
+        const { phoneNumber, email, name } = req.body;
 
         if (!phoneNumber) {
             return res.status(400).json({
@@ -60,48 +64,91 @@ export const phoneLogin = async (req, res) => {
             });
         }
 
-        // Find user with verified phone
-        const user = await User.findOne({
-            mobileNumber: phoneNumber,
-            isMobileVerified: true
-        });
+        // Find user with this phone number
+        let user = await User.findOne({ mobileNumber: phoneNumber });
 
+        // If user doesn't exist, create new account
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found or phone not verified'
-            });
-        }
-
-        // Check if account is active
-        if (!user.isActive) {
-            return res.status(403).json({
-                success: false,
-                message: 'Your account has been deactivated. Please contact support.'
-            });
-        }
-
-        // Update last login
-        user.lastLogin = new Date();
-
-        // Add phone to authProviders if not already there
-        const hasPhoneProvider = user.authProviders?.some(
-            p => p.provider === 'phone' && p.providerId === phoneNumber
-        );
-
-        if (!hasPhoneProvider) {
-            if (!user.authProviders) {
-                user.authProviders = [];
+            // Email is required for new accounts
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email is required to create account',
+                    requiresEmail: true
+                });
             }
-            user.authProviders.push({
-                provider: 'phone',
-                providerId: phoneNumber,
-                verified: true,
-                linkedAt: new Date()
-            });
-        }
 
-        await user.save();
+            // Check if email already exists
+            const existingEmail = await User.findOne({ email });
+            if (existingEmail) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email already registered. Please login with email or link your phone number.'
+                });
+            }
+
+            // Create new user
+            user = new User({
+                name: name || 'User',
+                email,
+                mobileNumber: phoneNumber,
+                isMobileVerified: true,
+                isEmailVerified: false,
+                authProviders: [
+                    {
+                        provider: 'phone',
+                        providerId: phoneNumber,
+                        verified: true,
+                        linkedAt: new Date()
+                    },
+                    {
+                        provider: 'email',
+                        providerId: email,
+                        verified: false,
+                        linkedAt: new Date()
+                    }
+                ]
+            });
+
+            await user.save();
+
+            console.log('New user created via phone login:', user.email);
+        } else {
+            // Existing user - verify phone is verified
+            if (!user.isMobileVerified) {
+                user.isMobileVerified = true;
+            }
+
+            // Check if account is active
+            if (!user.isActive) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your account has been deactivated. Please contact support.'
+                });
+            }
+
+            // Update last login
+            user.lastLogin = new Date();
+
+            // Add phone to authProviders if not already there
+            const hasPhoneProvider = user.authProviders?.some(
+                p => p.provider === 'phone' && p.providerId === phoneNumber
+            );
+
+            if (!hasPhoneProvider) {
+                if (!user.authProviders) {
+                    user.authProviders = [];
+                }
+                user.authProviders.push({
+                    provider: 'phone',
+                    providerId: phoneNumber,
+                    verified: true,
+                    linkedAt: new Date()
+                });
+            }
+
+            await user.save();
+        }
 
         // Generate token
         const token = generateToken({ userId: user._id });
@@ -128,9 +175,10 @@ export const phoneLogin = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Login successful',
+            message: user.createdAt.getTime() === user.updatedAt.getTime() ? 'Account created successfully' : 'Login successful',
             token,
-            user: userResponse
+            user: userResponse,
+            isNewUser: user.createdAt.getTime() === user.updatedAt.getTime()
         });
 
     } catch (error) {
