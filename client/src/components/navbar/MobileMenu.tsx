@@ -79,7 +79,7 @@ export default function MobileMenu({
                             {user?.role === 'admin' ? 'Admin Dashboard' : 'My Profile'}
                         </Link>
                         <button
-                            onClick={() => signOut()}
+                            onClick={() => signOut({ callbackUrl: '/' })}
                             className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50"
                         >
                             Sign out

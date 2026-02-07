@@ -93,13 +93,23 @@ export const phoneLogin = async (req, res) => {
                 });
             }
 
-            // Create new user
+            // Calculate trial end date (30 days from now)
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 30);
+
+            // Create new user with free trial
             user = new User({
                 name: name || 'User',
                 email,
                 mobileNumber: phoneNumber,
                 isMobileVerified: true,
                 isEmailVerified: false,
+                subscription: {
+                    status: 'trial',
+                    trialEnds: trialEndDate,
+                    currentStart: new Date(),
+                    currentEnd: trialEndDate
+                },
                 authProviders: [
                     {
                         provider: 'phone',

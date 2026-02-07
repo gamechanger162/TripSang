@@ -55,7 +55,7 @@ export default function MessagesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'dm' | 'squad' | 'community'>('dm');
     const [socket, setSocket] = useState<Socket | null>(null);
-    const [isPremium, setIsPremium] = useState(false);
+    const [isPremium, setIsPremium] = useState<boolean | null>(null); // null = checking
     const [showPremiumModal, setShowPremiumModal] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [hiddenTrips, setHiddenTrips] = useState<Set<string>>(new Set());
@@ -108,15 +108,21 @@ export default function MessagesPage() {
         try {
             const response = await paymentAPI.getStatus();
             if (response.success) {
-                const hasActive = response.subscription?.status === 'active' ||
-                    (response.subscription?.trialEndDate && new Date(response.subscription.trialEndDate) > new Date());
+                const sub = response.subscription;
+                // Check both field names (backend uses trialEnds, API might return trialEndDate)
+                const trialEnd = sub?.trialEndDate || sub?.trialEnds;
+                const hasActive = sub?.status === 'active' || sub?.status === 'trial' ||
+                    (trialEnd && new Date(trialEnd) > new Date());
                 setIsPremium(hasActive);
                 if (hasActive) {
                     fetchCommunities();
                 }
+            } else {
+                setIsPremium(false);
             }
         } catch (error) {
             console.error('Error checking premium status:', error);
+            setIsPremium(false);
         }
     };
 

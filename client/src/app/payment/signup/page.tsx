@@ -185,7 +185,7 @@ export default function SignupPaymentPage() {
             <div className="max-w-4xl w-full grid md:grid-cols-2 gap-8 items-start">
 
                 {/* Left Side: Value Prop */}
-                <div className="space-y-8 sticky top-8">
+                <div className="space-y-8 md:sticky md:top-8">
                     <div>
                         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
                             Start Your Journey <br />

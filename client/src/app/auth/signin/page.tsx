@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,12 +11,29 @@ import toast from 'react-hot-toast';
 export const dynamic = 'force-dynamic';
 
 export default function SignInPage() {
+    const { data: session, status } = useSession();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.push('/');
+        }
+    }, [status, router]);
+
+    // Show loading while checking auth
+    if (status === 'loading' || status === 'authenticated') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

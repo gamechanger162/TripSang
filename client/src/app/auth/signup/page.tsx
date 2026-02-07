@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
@@ -13,7 +13,25 @@ import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
 export const dynamic = 'force-dynamic';
 
 export default function SignUpPage() {
+    const { data: session, status } = useSession();
     const router = useRouter();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.push('/');
+        }
+    }, [status, router]);
+
+    // Show loading while checking auth
+    if (status === 'loading' || status === 'authenticated') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
     const [loading, setLoading] = useState(false);
     const [verifyingPhone, setVerifyingPhone] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
