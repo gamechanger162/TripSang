@@ -51,6 +51,21 @@ const wrapEmailContent = (content) => `
  */
 export const sendEmail = async ({ to, subject, text, html }) => {
     try {
+        // Log SMTP config for debugging (without password)
+        console.log('📧 Attempting to send email to:', to);
+        console.log('📧 SMTP Config:', {
+            host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+            port: process.env.SMTP_PORT || 465,
+            secure: process.env.SMTP_SECURE === 'true',
+            user: process.env.SMTP_USER ? '✓ Set' : '✗ NOT SET',
+            pass: process.env.SMTP_PASS ? '✓ Set' : '✗ NOT SET'
+        });
+
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.error('❌ SMTP credentials not configured!');
+            return { success: false, error: 'SMTP credentials not configured' };
+        }
+
         const info = await transporter.sendMail({
             from: `"${process.env.SMTP_FROM_NAME || 'TripSang'}" <${process.env.SMTP_USER}>`,
             to,
@@ -59,11 +74,27 @@ export const sendEmail = async ({ to, subject, text, html }) => {
             html
         });
 
-        console.log('Email sent successfully: %s to %s', info.messageId, to);
+        console.log('✅ Email sent successfully: %s to %s', info.messageId, to);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        console.error('Error sending email to %s:', to, error.message);
+        console.error('❌ Error sending email to %s:', to, error.message);
+        console.error('❌ Full error:', error);
         // Don't throw error to prevent breaking the flow
+        return { success: false, error: error.message };
+    }
+};
+
+/**
+ * Test SMTP connection
+ */
+export const testSMTPConnection = async () => {
+    try {
+        console.log('🔍 Testing SMTP connection...');
+        await transporter.verify();
+        console.log('✅ SMTP connection verified successfully');
+        return { success: true, message: 'SMTP connection is working' };
+    } catch (error) {
+        console.error('❌ SMTP connection failed:', error.message);
         return { success: false, error: error.message };
     }
 };

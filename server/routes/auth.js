@@ -106,4 +106,59 @@ router.get('/me', authenticate, getCurrentUser);
  */
 router.post('/logout', authenticate, logout);
 
+/**
+ * @route   POST /api/auth/test-email
+ * @desc    Test SMTP configuration (admin only)
+ * @access  Private
+ */
+router.post('/test-email', authenticate, async (req, res) => {
+    try {
+        const { testSMTPConnection, sendEmail } = await import('../utils/email.js');
+
+        // First test the connection
+        const connectionTest = await testSMTPConnection();
+        if (!connectionTest.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'SMTP connection failed',
+                error: connectionTest.error
+            });
+        }
+
+        // Send a test email to the logged-in user
+        const result = await sendEmail({
+            to: req.user.email,
+            subject: '✅ TripSang Email Test',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>Email Configuration Test</h2>
+                    <p>If you're reading this, your SMTP is working correctly! 🎉</p>
+                    <p>Sent at: ${new Date().toISOString()}</p>
+                </div>
+            `
+        });
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: `Test email sent to ${req.user.email}`,
+                messageId: result.messageId
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send test email',
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Test email error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Email test failed',
+            error: error.message
+        });
+    }
+});
+
 export default router;
