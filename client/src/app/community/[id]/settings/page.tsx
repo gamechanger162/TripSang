@@ -67,9 +67,8 @@ export default function CommunitySettingsPage() {
             reader.onload = (e) => setLogoPreview(e.target?.result as string);
             reader.readAsDataURL(file);
 
-            const formDataUpload = new FormData();
-            formDataUpload.append('file', file);
-            const response = await uploadAPI.uploadImage(formDataUpload as any);
+            // Upload using uploadFile which accepts File object directly
+            const response = await uploadAPI.uploadFile(file);
 
             if (response.success && response.url) {
                 setFormData(p => ({ ...p, logo: response.url }));
@@ -388,13 +387,13 @@ export default function CommunitySettingsPage() {
                                         <input
                                             ref={fileInputRef}
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.svg,.heic"
                                             onChange={handleLogoUpload}
                                             className="hidden"
                                         />
                                         <div className="text-sm text-gray-400">
                                             <p>Click to upload logo</p>
-                                            <p className="text-xs">PNG, JPG up to 5MB</p>
+                                            <p className="text-xs">JPG, PNG, GIF, WebP up to 5MB</p>
                                         </div>
                                     </div>
                                 </div>
