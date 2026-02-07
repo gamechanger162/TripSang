@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { userAPI, uploadAPI } from '@/lib/api';
+import { userAPI, uploadAPI, authAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -14,6 +15,9 @@ export default function EditProfilePage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -134,6 +138,73 @@ export default function EditProfilePage() {
             toast.error('Failed to update profile');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleVerifyPhone = async () => {
+        if (!formData.mobileNumber) {
+            toast.error('Please enter a phone number');
+            return;
+        }
+
+        try {
+            // Initialize recaptcha
+            if (!window.recaptchaVerifier) {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible',
+                });
+            }
+
+            // Send OTP via Firebase
+            const confirmationResult = await signInWithPhoneNumber(
+                auth,
+                formData.mobileNumber,
+                window.recaptchaVerifier
+            );
+
+            setConfirmationResult(confirmationResult);
+            setShowVerifyModal(true);
+            toast.success('OTP sent to your phone!');
+        } catch (error: any) {
+            console.error('Send OTP error:', error);
+            toast.error(error.message || 'Failed to send OTP');
+            // Clear recaptcha on error
+            if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.clear();
+                window.recaptchaVerifier = null;
+            }
+        }
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!confirmationResult || !otp) {
+            toast.error('Please enter OTP');
+            return;
+        }
+
+        try {
+            // Verify OTP with Firebase
+            await confirmationResult.confirm(otp);
+
+            // Link phone to account via backend
+            const response = await authAPI.linkPhone(formData.mobileNumber);
+
+            if (response.success) {
+                toast.success('Phone verified successfully!');
+                setShowVerifyModal(false);
+                setOtp('');
+
+                // Update session to reflect verification
+                await updateSession();
+                await fetchProfile(); // Refresh profile data
+            }
+        } catch (error: any) {
+            console.error('OTP verification error:', error);
+            if (error.code === 'auth/invalid-verification-code') {
+                toast.error('Invalid OTP. Please try again.');
+            } else {
+                toast.error('Verification failed. Please try again.');
+            }
         }
     };
 
@@ -261,16 +332,39 @@ export default function EditProfilePage() {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Mobile Number
                                 </label>
-                                <input
-                                    type="tel"
-                                    name="mobileNumber"
-                                    value={formData.mobileNumber}
-                                    onChange={handleInputChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
-                                    placeholder="+91..."
-                                />
+                                <div className="mt-1 flex gap-2">
+                                    <input
+                                        type="tel"
+                                        name="mobileNumber"
+                                        value={formData.mobileNumber}
+                                        onChange={handleInputChange}
+                                        className="flex-1 block rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
+                                        placeholder="+91..."
+                                        disabled={!!(formData.mobileNumber && session?.user?.isMobileVerified)}
+                                    />
+                                    {formData.mobileNumber && (
+                                        session?.user?.isMobileVerified ? (
+                                            <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                                                <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                </svg>
+                                                Verified
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleVerifyPhone()}
+                                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                            >
+                                                Verify Phone
+                                            </button>
+                                        )
+                                    )}
+                                </div>
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Used for verification and trip coordination.
+                                    {session?.user?.isMobileVerified
+                                        ? 'Your phone number is verified and can be used for login.'
+                                        : 'Verify your phone to enable phone-based login and trip coordination.'}
                                 </p>
                             </div>
 
@@ -367,6 +461,50 @@ export default function EditProfilePage() {
                     </form>
                 </div>
             </div>
+
+            {/* OTP Verification Modal */}
+            {showVerifyModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                            Verify Phone Number
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Enter the 6-digit OTP sent to {formData.mobileNumber}
+                        </p>
+                        <input
+                            type="text"
+                            maxLength={6}
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                            placeholder="000000"
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center text-2xl tracking-widest"
+                            autoFocus
+                        />
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowVerifyModal(false);
+                                    setOtp('');
+                                }}
+                                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleVerifyOTP}
+                                disabled={otp.length !== 6}
+                                className="flex-1 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Verify
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recaptcha container */}
+            <div id="recaptcha-container"></div>
         </div>
     );
 }
