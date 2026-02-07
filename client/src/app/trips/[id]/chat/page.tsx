@@ -123,7 +123,7 @@ export default function TripChatPage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
             {/* Chat Room - Full height */}
-            <div className="w-full px-4 sm:px-6 lg:px-8">
+            <div className="w-full h-screen">
                 <FuturisticSquadChat
                     tripId={tripId}
                     isSquadMember={isSquadMember}

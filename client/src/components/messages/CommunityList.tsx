@@ -12,6 +12,7 @@ interface Community {
     category: string;
     isPrivate: boolean;
     coverImage?: string;
+    logo?: string;
     memberCount: number;
     creator: {
         _id: string;
@@ -95,9 +96,9 @@ export default function CommunityList({ communities, loading }: CommunityListPro
                     <div className="flex items-center gap-4">
                         {/* Community Image */}
                         <div className="relative w-14 h-14 flex-shrink-0">
-                            {community.coverImage ? (
+                            {(community.logo || community.coverImage) ? (
                                 <Image
-                                    src={community.coverImage}
+                                    src={(community.logo || community.coverImage) as string}
                                     alt={community.name}
                                     fill
                                     className="rounded-xl object-cover"
