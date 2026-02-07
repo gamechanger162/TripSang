@@ -209,8 +209,9 @@ io.on('connection', (socket) => {
                 return socket.emit('error', { message: 'Message not found' });
             }
 
-            // Update trip with pinned message
+            // Update trip with pinned message and who pinned it
             trip.pinnedMessage = messageId;
+            trip.pinnedBy = socket.user._id;
             await trip.save();
 
             // Broadcast to all in room
@@ -220,7 +221,8 @@ io.on('connection', (socket) => {
                 senderName: pinnedMsg.senderName,
                 type: pinnedMsg.type,
                 imageUrl: pinnedMsg.imageUrl,
-                pinnedBy: socket.user.name
+                pinnedBy: socket.user.name,
+                pinnedById: socket.user._id.toString()
             });
 
             console.log(`📌 Message pinned in trip ${tripId} by ${socket.user.name}`);
@@ -241,16 +243,17 @@ io.on('connection', (socket) => {
                 return socket.emit('error', { message: 'Trip not found' });
             }
 
-            // Check if user is squad member or creator
-            const isSquadMember = trip.squadMembers.some(m => m.toString() === socket.user._id.toString());
+            // Check if user is the one who pinned the message OR the trip creator
+            const isPinner = trip.pinnedBy && trip.pinnedBy.toString() === socket.user._id.toString();
             const isCreator = trip.creator.toString() === socket.user._id.toString();
 
-            if (!isSquadMember && !isCreator) {
-                return socket.emit('error', { message: 'Only squad members can unpin messages' });
+            if (!isPinner && !isCreator) {
+                return socket.emit('error', { message: 'Only the person who pinned or trip creator can unpin' });
             }
 
-            // Clear pinned message
+            // Clear pinned message and pinnedBy
             trip.pinnedMessage = null;
+            trip.pinnedBy = null;
             await trip.save();
 
             // Broadcast to all in room
