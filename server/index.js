@@ -124,7 +124,7 @@ io.on('connection', (socket) => {
             // Fetch and send pinned message if exists
             const trip = await Trip.findById(tripId).populate('pinnedMessage');
             if (trip && trip.pinnedMessage) {
-                socket.emit('message_pinned', {
+                socket.emit('pinned_message', {
                     messageId: trip.pinnedMessage._id,
                     senderName: trip.pinnedMessage.senderName,
                     message: trip.pinnedMessage.message,

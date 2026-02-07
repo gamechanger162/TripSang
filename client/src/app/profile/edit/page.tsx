@@ -7,6 +7,7 @@ import { userAPI, uploadAPI, authAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
+import PhoneInput from '@/components/PhoneInput';
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -356,14 +357,12 @@ export default function EditProfilePage() {
                                     Mobile Number
                                 </label>
                                 <div className="mt-1 flex gap-2">
-                                    <input
-                                        type="tel"
-                                        name="mobileNumber"
+                                    <PhoneInput
                                         value={formData.mobileNumber}
-                                        onChange={handleInputChange}
-                                        className="flex-1 block rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm p-2.5 border"
-                                        placeholder="+91..."
+                                        onChange={(value) => setFormData({ ...formData, mobileNumber: value })}
+                                        placeholder="Phone number"
                                         disabled={!!(formData.mobileNumber && isMobileVerified)}
+                                        name="mobileNumber"
                                     />
                                     {formData.mobileNumber && (
                                         isMobileVerified ? (

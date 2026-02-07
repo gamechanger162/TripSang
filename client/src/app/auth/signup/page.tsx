@@ -8,6 +8,7 @@ import { signIn, useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
+import PhoneInput from '@/components/PhoneInput';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -310,16 +311,14 @@ export default function SignUpPage() {
 
                             {/* Phone Verification Field */}
                             <div className="flex gap-2">
-                                <input
+                                <PhoneInput
+                                    value={formData.mobileNumber}
+                                    onChange={(value) => setFormData({ ...formData, mobileNumber: value })}
+                                    placeholder="Phone number"
+                                    disabled={isPhoneVerified}
                                     id="mobileNumber"
                                     name="mobileNumber"
-                                    type="tel"
                                     required
-                                    disabled={isPhoneVerified}
-                                    className={`appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm ${isPhoneVerified ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    placeholder="Mobile (+919876543210)"
-                                    value={formData.mobileNumber}
-                                    onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
                                 />
                                 {!isPhoneVerified && (
                                     <button

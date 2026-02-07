@@ -73,25 +73,33 @@ const userSchema = new mongoose.Schema({
         default: false
     },
     // Track multiple authentication providers (email, Google, phone)
-    authProviders: [{
-        provider: {
-            type: String,
-            enum: ['email', 'google', 'phone'],
-            required: true
-        },
-        providerId: {
-            type: String, // email address, Google ID, or phone number
-            required: true
-        },
-        verified: {
-            type: Boolean,
-            default: false
-        },
-        linkedAt: {
-            type: Date,
-            default: Date.now
+    authProviders: {
+        type: [{
+            provider: {
+                type: String,
+                enum: ['email', 'google', 'phone'],
+                required: true
+            },
+            providerId: {
+                type: String, // email address, Google ID, or phone number
+                required: true
+            },
+            verified: {
+                type: Boolean,
+                default: false
+            },
+            linkedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }],
+        validate: {
+            validator: function (providers) {
+                return providers.length <= 3; // Max 3 auth providers (email, google, phone)
+            },
+            message: 'Maximum 3 authentication providers allowed'
         }
-    }],
+    },
     badges: {
         type: [String],
         default: [],
