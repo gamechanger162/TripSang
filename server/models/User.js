@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema({
     mobileNumber: {
         type: String,
         trim: true,
-        match: [/^[0-9]{10,15}$/, 'Please provide a valid mobile number'],
+        match: [/^\+?[0-9]{10,15}$/, 'Please provide a valid mobile number'],
         sparse: true, // Allows multiple null values while maintaining unique constraint
         index: true
     },
