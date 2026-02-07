@@ -28,10 +28,10 @@ export default function MomentsShowcase() {
                         {/* Floating Cards Effect */}
                         <div className="relative w-full aspect-square md:aspect-[4/3]">
                             <div className="absolute top-0 right-0 w-2/3 h-5/6 bg-gray-800 rounded-2xl rotate-6 overflow-hidden border-4 border-white/5 opacity-60 transform translate-x-4">
-                                <Image src="/images/home/moment_hike.png" fill alt="Travel 1" className="object-cover" />
+                                <Image src="/images/home/moment_hike.png" fill alt="Travel 1" loading="lazy" className="object-cover" />
                             </div>
                             <div className="absolute top-10 right-12 w-2/3 h-5/6 bg-gray-800 rounded-2xl -rotate-3 overflow-hidden border-4 border-white/10 shadow-2xl z-10">
-                                <Image src="/images/home/moment_bali.png" fill alt="Travel 2" className="object-cover" />
+                                <Image src="/images/home/moment_bali.png" fill alt="Travel 2" loading="lazy" className="object-cover" />
                                 <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-white/20">
                                     @Sarah in Bali 🌴
                                 </div>

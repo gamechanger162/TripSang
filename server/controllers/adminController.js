@@ -1,4 +1,5 @@
 import { User, GlobalConfig, Trip, Payment, Notification } from '../models/index.js';
+import { sendVerificationApprovedEmail, sendVerificationRejectedEmail } from '../utils/email.js';
 
 /**
  * Get Global Configuration
@@ -611,7 +612,7 @@ export const handleVerificationAction = async (req, res) => {
                     recipient: user._id,
                     title: 'Verification Approved! 🎉',
                     message: 'Congratulations! Your identity has been verified. You now have the blue tick badge.',
-                    type: 'system',
+                    type: 'verification_approved',
                     link: '/profile',
                     sender: req.user._id
                 });
@@ -621,8 +622,15 @@ export const handleVerificationAction = async (req, res) => {
                     io.to(`user_${user._id}`).emit('new_notification', {
                         title: 'Verification Approved!',
                         message: 'Your identity has been verified.',
-                        type: 'system'
+                        type: 'verification_approved'
                     });
+                }
+
+                // Send email notification
+                if (user.email) {
+                    sendVerificationApprovedEmail(user.email, user.name).catch(err =>
+                        console.error('Failed to send verification approved email:', err)
+                    );
                 }
             } catch (notifError) {
                 console.error('Notification creation error:', notifError);
@@ -632,12 +640,7 @@ export const handleVerificationAction = async (req, res) => {
         } else if (action === 'reject') {
             user.verificationStatus = 'rejected';
             user.rejectionReason = reason || 'Document authentication failed';
-            user.idDocumentFront = undefined; // Clear documents for privacy/security on rejection often good practice, or keep for audit?
-            // Keeping for audit might be better, but privacy policy said "solely for verification".
-            // Let's keep simpler logic for now: just mark rejected.
-            // Actually, let's NOT delete the doc URL immediately so admin can see history or re-evaluate,
-            // BUT for strict privacy we might want to.
-            // For now, let's keep the URL but mark status rejected.
+            // Keep document URLs for audit/re-evaluation purposes
 
             // Notify user
             try {
@@ -645,18 +648,26 @@ export const handleVerificationAction = async (req, res) => {
                     recipient: user._id,
                     title: 'Verification Rejected',
                     message: `Your verification request was rejected. Reason: ${reason || 'Documents unclear'}. Please try again.`,
-                    type: 'system',
+                    type: 'verification_rejected',
                     link: '/verify/id',
-                    sender: req.user._id
+                    sender: req.user._id,
+                    data: { rejectionReason: reason || 'Documents unclear' }
                 });
 
                 const io = req.app.get('io');
                 if (io) {
                     io.to(`user_${user._id}`).emit('new_notification', {
                         title: 'Verification Rejected',
-                        message: 'Your verification request was rejected.',
-                        type: 'system'
+                        message: `Your verification was rejected: ${reason || 'Documents unclear'}`,
+                        type: 'verification_rejected'
                     });
+                }
+
+                // Send email notification with rejection reason
+                if (user.email) {
+                    sendVerificationRejectedEmail(user.email, user.name, reason || 'Documents unclear').catch(err =>
+                        console.error('Failed to send verification rejected email:', err)
+                    );
                 }
             } catch (notifError) {
                 console.error('Notification creation error:', notifError);

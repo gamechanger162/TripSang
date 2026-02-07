@@ -13,39 +13,39 @@ interface TrendingDestination {
     tripCount?: number;
 }
 
-// Static trending data with categories
+// Static trending data with Cloudinary CDN URLs for optimal performance
 const staticTrending: TrendingDestination[] = [
-    { name: "Bali, Indonesia", image: "/images/trending/bali_landscape.png", category: "Chill Places", description: "Beautiful beaches, yoga retreats, rice terraces, and affordable luxury." },
-    { name: "Jaipur, India", image: "/images/trending/jaipur_palace.png", category: "Chill Places", description: "The Pink City, famous for its majestic palaces and vibrant culture." },
-    { name: "Jaisalmer", image: "/images/trending/jaisalmer_fort_desert.png", category: "Adventure", description: "The Golden City of India, known for its desert safari and forts." },
-    { name: "Ladakh", image: "/images/trending/ladakh_lake.png", category: "Adventure", description: "Rugged mountains, crystal clear lakes, and high-altitude adventure." },
-    { name: "Tawang", image: "/images/trending/tawang_monastery.png", category: "Adventure", description: "Hidden gem of Arunachal Pradesh with majestic monasteries and snowy passes." },
-    { name: "Kyoto, Japan", image: "/images/trending/kyoto.png", category: "Chill Places", description: "Ancient temples, traditional tea houses, and sublime zen gardens." },
-    { name: "Santorini, Greece", image: "/images/trending/santorini.png", category: "Chill Places", description: "Iconic white buildings with blue domes overlooking the crystal clear Aegean Sea." },
-    { name: "Machu Picchu, Peru", image: "/images/trending/machu_picchu.png", category: "Adventure", description: "The Lost City of the Incas, hidden high in the Andes Mountains." },
-    { name: "Iceland", image: "/images/trending/iceland.png", category: "Adventure", description: "Land of fire and ice, featuring volcanoes, geysers, hot springs, and lava fields." },
-    { name: "Dubai, UAE", image: "/images/trending/dubai.png", category: "Chill Places", description: "Ultramodern architecture, luxury shopping, and lively nightlife scene." },
-    { name: "Paris, France", image: "/images/trending/paris.png", category: "Chill Places", description: "The City of Light, known for romance, gastronomy, and art." },
-    { name: "Kaziranga", image: "/images/trending/kaziranga_rhino.png", category: "Adventure", description: "Home of the one-horned rhino and vibrant biodiversity in Assam." },
-    { name: "Shillong", image: "/images/trending/shillong_hills.png", category: "Chill Places", description: "Scotland of the East, known for its rolling hills and waterfalls." },
-    { name: "Spiti Valley", image: "/images/trending/spiti_valley.png", category: "Adventure", description: "Cold desert mountain valley famous for its stunning landscapes and monasteries." },
-    { name: "Rio Carnival", image: "/images/trending/rio_carnival.png", category: "Adventure", description: "Experience the world's biggest party with vibrant colors and samba." },
-    { name: "Kasol", image: "/images/trending/kasol_parvati.png", category: "Chill Places", description: "Mini Israel of India, sitting by the Parvati river with varied trekking trails." },
-    { name: "Gokarna", image: "/images/trending/gokarna_beach.png", category: "Solo-Friendly", description: "Peaceful beaches and temples, perfect for a solo spiritual retreat." },
-    { name: "Pondicherry", image: "/images/trending/pondicherry_street.png", category: "Chill Places", description: "French colonial charm, serene beaches, and peaceful vibes." },
-    { name: "Venice", image: "/images/trending/venice_canals.png", category: "Chill Places", description: "Timeless canals and romantic gondola rides in the floating city." },
-    { name: "Meghalaya", image: "/images/trending/meghalaya_rootbridge.png", category: "Adventure", description: "Abode of Clouds, living root bridges, and mesmerizing waterfalls." },
-    { name: "Coorg", image: "/images/trending/coorg_hills.png", category: "Chill Places", description: "The Scotland of India, known for its coffee plantations and misty hills." },
-    { name: "Munnar", image: "/images/trending/munnar_tea.png", category: "Chill Places", description: "Famous hill station with tea gardens, misty peaks, and serene vibes." },
-    { name: "Thailand", image: "/images/trending/thailand_beach.png", category: "Chill Places", description: "Tropical paradise with stunning islands and vibrant night markets." },
-    { name: "Rishikesh", image: "/images/trending/rishikesh_rafting.png", category: "Adventure", description: "Yoga capital of the world and thrill of white water rafting." },
-    { name: "Varkala", image: "/images/trending/varkala_cliff.png", category: "Solo-Friendly", description: "A beautiful coastal town with cliffs adjacent to the Arabian Sea." },
-    { name: "Gulmarg", image: "/images/trending/snowy_mountains.png", category: "Adventure", description: "Premier skiing destination with breathtaking snow-capped peaks." },
-    { name: "Goa Party", image: "/images/trending/goa_party.png", category: "Solo-Friendly", description: "The ultimate beach party destination with a friendly vibe." },
-    { name: "Andaman", image: "/images/trending/andaman_beach.png", category: "Chill Places", description: "Pristine white sand beaches and turquoise blue waters." },
-    { name: "Kerala", image: "/images/trending/kerala_backwaters.png", category: "Chill Places", description: "God's own country with serene backwaters and lush greenery." },
-    { name: "Manali", image: "/images/trending/manali_trek.png", category: "Adventure", description: "A high-altitude resort town for backpacking and trekking." },
-    { name: "Vietnam", image: "/images/trending/vietnam_street.png", category: "Solo-Friendly", description: "Rich history, bustling cities, and incredible street food." },
+    { name: "Bali, Indonesia", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474941/tripsang/trending/tripsang/trending/bali_landscape.jpg", category: "Chill Places", description: "Beautiful beaches, yoga retreats, rice terraces, and affordable luxury." },
+    { name: "Jaipur, India", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474951/tripsang/trending/tripsang/trending/jaipur_palace.jpg", category: "Chill Places", description: "The Pink City, famous for its majestic palaces and vibrant culture." },
+    { name: "Jaisalmer", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474953/tripsang/trending/tripsang/trending/jaisalmer_fort_desert.jpg", category: "Adventure", description: "The Golden City of India, known for its desert safari and forts." },
+    { name: "Ladakh", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474960/tripsang/trending/tripsang/trending/ladakh_lake.jpg", category: "Adventure", description: "Rugged mountains, crystal clear lakes, and high-altitude adventure." },
+    { name: "Tawang", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474981/tripsang/trending/tripsang/trending/tawang_monastery.jpg", category: "Adventure", description: "Hidden gem of Arunachal Pradesh with majestic monasteries and snowy passes." },
+    { name: "Kyoto, Japan", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474957/tripsang/trending/tripsang/trending/kyoto.jpg", category: "Chill Places", description: "Ancient temples, traditional tea houses, and sublime zen gardens." },
+    { name: "Santorini, Greece", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474975/tripsang/trending/tripsang/trending/santorini.jpg", category: "Chill Places", description: "Iconic white buildings with blue domes overlooking the crystal clear Aegean Sea." },
+    { name: "Machu Picchu, Peru", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474961/tripsang/trending/tripsang/trending/machu_picchu.jpg", category: "Adventure", description: "The Lost City of the Incas, hidden high in the Andes Mountains." },
+    { name: "Iceland", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474949/tripsang/trending/tripsang/trending/iceland.jpg", category: "Adventure", description: "Land of fire and ice, featuring volcanoes, geysers, hot springs, and lava fields." },
+    { name: "Dubai, UAE", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474944/tripsang/trending/tripsang/trending/dubai.jpg", category: "Chill Places", description: "Ultramodern architecture, luxury shopping, and lively nightlife scene." },
+    { name: "Paris, France", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474968/tripsang/trending/tripsang/trending/paris.jpg", category: "Chill Places", description: "The City of Light, known for romance, gastronomy, and art." },
+    { name: "Kaziranga", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474955/tripsang/trending/tripsang/trending/kaziranga_rhino.jpg", category: "Adventure", description: "Home of the one-horned rhino and vibrant biodiversity in Assam." },
+    { name: "Shillong", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474976/tripsang/trending/tripsang/trending/shillong_hills.jpg", category: "Chill Places", description: "Scotland of the East, known for its rolling hills and waterfalls." },
+    { name: "Spiti Valley", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474980/tripsang/trending/tripsang/trending/spiti_valley.jpg", category: "Adventure", description: "Cold desert mountain valley famous for its stunning landscapes and monasteries." },
+    { name: "Rio Carnival", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474972/tripsang/trending/tripsang/trending/rio_carnival.jpg", category: "Adventure", description: "Experience the world's biggest party with vibrant colors and samba." },
+    { name: "Kasol", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474954/tripsang/trending/tripsang/trending/kasol_parvati.jpg", category: "Chill Places", description: "Mini Israel of India, sitting by the Parvati river with varied trekking trails." },
+    { name: "Gokarna", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474948/tripsang/trending/tripsang/trending/gokarna_beach.jpg", category: "Solo-Friendly", description: "Peaceful beaches and temples, perfect for a solo spiritual retreat." },
+    { name: "Pondicherry", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474970/tripsang/trending/tripsang/trending/pondicherry_street.jpg", category: "Chill Places", description: "French colonial charm, serene beaches, and peaceful vibes." },
+    { name: "Venice", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474985/tripsang/trending/tripsang/trending/venice_canals.jpg", category: "Chill Places", description: "Timeless canals and romantic gondola rides in the floating city." },
+    { name: "Meghalaya", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474965/tripsang/trending/tripsang/trending/meghalaya_rootbridge.jpg", category: "Adventure", description: "Abode of Clouds, living root bridges, and mesmerizing waterfalls." },
+    { name: "Coorg", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474942/tripsang/trending/tripsang/trending/coorg_hills.jpg", category: "Chill Places", description: "The Scotland of India, known for its coffee plantations and misty hills." },
+    { name: "Munnar", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474966/tripsang/trending/tripsang/trending/munnar_tea.jpg", category: "Chill Places", description: "Famous hill station with tea gardens, misty peaks, and serene vibes." },
+    { name: "Thailand", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474983/tripsang/trending/tripsang/trending/thailand_beach.jpg", category: "Chill Places", description: "Tropical paradise with stunning islands and vibrant night markets." },
+    { name: "Rishikesh", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474973/tripsang/trending/tripsang/trending/rishikesh_rafting.jpg", category: "Adventure", description: "Yoga capital of the world and thrill of white water rafting." },
+    { name: "Varkala", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474984/tripsang/trending/tripsang/trending/varkala_cliff.jpg", category: "Solo-Friendly", description: "A beautiful coastal town with cliffs adjacent to the Arabian Sea." },
+    { name: "Gulmarg", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474978/tripsang/trending/tripsang/trending/snowy_mountains.jpg", category: "Adventure", description: "Premier skiing destination with breathtaking snow-capped peaks." },
+    { name: "Goa Party", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474946/tripsang/trending/tripsang/trending/goa_party.jpg", category: "Solo-Friendly", description: "The ultimate beach party destination with a friendly vibe." },
+    { name: "Andaman", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474939/tripsang/trending/tripsang/trending/andaman_beach.jpg", category: "Chill Places", description: "Pristine white sand beaches and turquoise blue waters." },
+    { name: "Kerala", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474956/tripsang/trending/tripsang/trending/kerala_backwaters.jpg", category: "Chill Places", description: "God's own country with serene backwaters and lush greenery." },
+    { name: "Manali", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474963/tripsang/trending/tripsang/trending/manali_trek.jpg", category: "Adventure", description: "A high-altitude resort town for backpacking and trekking." },
+    { name: "Vietnam", image: "https://res.cloudinary.com/dacs14pjr/image/upload/v1770474987/tripsang/trending/tripsang/trending/vietnam_street.jpg", category: "Solo-Friendly", description: "Rich history, bustling cities, and incredible street food." },
 ];
 
 export default function TrendingDestinations() {
@@ -114,6 +114,7 @@ export default function TrendingDestinations() {
                                 src={item.image || item.img || '/images/trending/placeholder.png'}
                                 alt={item.name}
                                 fill
+                                loading="lazy"
                                 className="object-cover transition-transform duration-700 group-hover:scale-110"
                                 sizes="288px"
                             />

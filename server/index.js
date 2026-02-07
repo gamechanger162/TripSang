@@ -504,7 +504,7 @@ io.on('connection', (socket) => {
     });
 
     // Send Community Message
-    socket.on('send_community_message', async ({ communityId, message, type, imageUrl }) => {
+    socket.on('send_community_message', async ({ communityId, message, type, imageUrl, replyTo }) => {
         try {
             const Community = (await import('./models/Community.js')).default;
             const CommunityMessage = (await import('./models/CommunityMessage.js')).default;
@@ -519,14 +519,24 @@ io.on('connection', (socket) => {
                 return socket.emit('error', { message: 'Community chat only supports text and images' });
             }
 
-            const savedMessage = await CommunityMessage.create({
+            let savedMessage = await CommunityMessage.create({
                 communityId,
                 sender: socket.user._id,
                 message: message || '',
                 type: type || 'text',
                 imageUrl: type === 'image' ? imageUrl : null,
+                replyTo: replyTo || null,
                 timestamp: new Date()
             });
+
+            // Populate replyTo if exists
+            if (savedMessage.replyTo) {
+                savedMessage = await savedMessage.populate({
+                    path: 'replyTo',
+                    select: 'sender message type imageUrl',
+                    populate: { path: 'sender', select: 'name' }
+                });
+            }
 
             // Update community lastMessage
             community.lastMessage = {
@@ -546,7 +556,14 @@ io.on('connection', (socket) => {
                 message: savedMessage.message,
                 type: savedMessage.type,
                 imageUrl: savedMessage.imageUrl,
-                timestamp: savedMessage.timestamp
+                timestamp: savedMessage.timestamp,
+                replyTo: savedMessage.replyTo ? {
+                    _id: savedMessage.replyTo._id,
+                    senderName: savedMessage.replyTo.sender?.name || 'Unknown',
+                    message: savedMessage.replyTo.message,
+                    type: savedMessage.replyTo.type,
+                    imageUrl: savedMessage.replyTo.imageUrl
+                } : null
             };
 
             // Broadcast to all community members in the room

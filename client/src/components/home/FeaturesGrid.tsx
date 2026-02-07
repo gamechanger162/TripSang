@@ -91,6 +91,7 @@ export default function FeaturesGrid() {
                                 src="/images/home/gallery_cover.png"
                                 fill
                                 alt="Gallery"
+                                loading="lazy"
                                 className="object-cover absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity duration-500 scale-100 group-hover:scale-105"
                             />
                             <div className="relative z-10 mt-auto">

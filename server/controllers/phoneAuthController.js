@@ -118,6 +118,11 @@ export const phoneLogin = async (req, res) => {
 
             await user.save();
 
+            // Send welcome email for new users
+            import('../utils/email.js').then(({ sendWelcomeEmail }) => {
+                sendWelcomeEmail(user.email, user.name);
+            }).catch(err => console.error('Failed to send welcome email:', err));
+
             console.log('New user created via phone login:', user.email);
         } else {
             // Existing user - verify phone is verified

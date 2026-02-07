@@ -39,6 +39,13 @@ interface Message {
     type: 'text' | 'image';
     imageUrl?: string;
     timestamp: string;
+    replyTo?: {
+        _id: string;
+        senderName: string;
+        message: string;
+        type: string;
+        imageUrl?: string;
+    };
 }
 
 export default function CommunityPage() {
@@ -49,6 +56,7 @@ export default function CommunityPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
     const [inputValue, setInputValue] = useState('');
+    const [replyingTo, setReplyingTo] = useState<Message | null>(null);
     const [sending, setSending] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [isCreator, setIsCreator] = useState(false);
@@ -161,8 +169,11 @@ export default function CommunityPage() {
         socket.emit('send_community_message', {
             communityId: id,
             message: messageText,
-            type: 'text'
+            type: 'text',
+            replyTo: replyingTo?._id
         });
+
+        setReplyingTo(null);
     };
 
     const handleImageUpload = async (file: File) => {
@@ -177,8 +188,10 @@ export default function CommunityPage() {
                     communityId: id,
                     message: '',
                     type: 'image',
-                    imageUrl: response.url
+                    imageUrl: response.url,
+                    replyTo: replyingTo?._id
                 });
+                setReplyingTo(null);
             }
         } catch (error) {
             toast.error('Failed to upload image');
@@ -204,6 +217,15 @@ export default function CommunityPage() {
         } finally {
             setLeaving(false);
         }
+    };
+
+    const handleReply = (message: Message) => {
+        setReplyingTo(message);
+        inputRef.current?.focus();
+    };
+
+    const handleCancelReply = () => {
+        setReplyingTo(null);
     };
 
     if (status === 'loading' || loading) {
@@ -322,6 +344,8 @@ export default function CommunityPage() {
                                     showAvatar={true}
                                     index={index}
                                     enableSwipeGestures={false}
+                                    onReply={() => handleReply(msg)}
+                                    replyTo={msg.replyTo}
                                 />
                             ))
                         )}
@@ -383,6 +407,12 @@ export default function CommunityPage() {
                     placeholder="Message the community..."
                     disabled={sending}
                     isUploading={uploading}
+                    replyingTo={replyingTo ? {
+                        senderName: replyingTo.senderName,
+                        message: replyingTo.message,
+                        type: replyingTo.type
+                    } : null}
+                    onCancelReply={handleCancelReply}
                 />
             </div>
         </div>

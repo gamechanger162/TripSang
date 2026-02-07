@@ -13,6 +13,7 @@ export default function CallToAction() {
                         src="/images/home/footer_bg.png"
                         alt="Adventure awaits"
                         fill
+                        loading="lazy"
                         className="object-cover brightness-50"
                     />
                 </div>

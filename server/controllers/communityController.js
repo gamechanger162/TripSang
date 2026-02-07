@@ -243,6 +243,11 @@ export const getCommunityMessages = async (req, res) => {
 
         const messages = await CommunityMessage.find(query)
             .populate('sender', 'name profilePicture')
+            .populate({
+                path: 'replyTo',
+                select: 'sender message type imageUrl',
+                populate: { path: 'sender', select: 'name' }
+            })
             .sort({ timestamp: -1 })
             .limit(parseInt(limit))
             .lean();
@@ -256,7 +261,14 @@ export const getCommunityMessages = async (req, res) => {
             message: msg.message,
             type: msg.type,
             imageUrl: msg.imageUrl,
-            timestamp: msg.timestamp
+            timestamp: msg.timestamp,
+            replyTo: msg.replyTo ? {
+                _id: msg.replyTo._id,
+                senderName: msg.replyTo.sender?.name || 'Unknown',
+                message: msg.replyTo.message,
+                type: msg.replyTo.type,
+                imageUrl: msg.replyTo.imageUrl
+            } : null
         }));
 
         res.status(200).json({

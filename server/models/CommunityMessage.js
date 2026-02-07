@@ -25,6 +25,11 @@ const communityMessageSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    replyTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CommunityMessage',
+        default: null
+    },
     timestamp: {
         type: Date,
         default: Date.now
