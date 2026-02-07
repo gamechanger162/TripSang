@@ -75,7 +75,7 @@ const connectDB = async () => {
 };
 
 import jwt from 'jsonwebtoken';
-import { Message, User } from './models/index.js';
+import { Message, User, Trip } from './models/index.js';
 
 // Socket.io Middleware for Authentication
 io.use(async (socket, next) => {
