@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import UserReviews from '@/components/reviews/UserReviews';
 import ReportUserModal from '@/components/ReportUserModal';
 import Link from 'next/link';
-import { userAPI, friendAPI } from '@/lib/api';
+import { userAPI, friendAPI, tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Flag } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
@@ -49,11 +49,14 @@ export default function UserProfilePage() {
     const [friendsCount, setFriendsCount] = useState(0);
     const [friendLoading, setFriendLoading] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
+    const [loadingTrips, setLoadingTrips] = useState(true);
 
     useEffect(() => {
         if (userId) {
             fetchUserProfile();
             fetchFriendsCount();
+            fetchUpcomingTrips();
         }
     }, [userId]);
 
@@ -78,6 +81,25 @@ export default function UserProfilePage() {
             setError('Failed to load profile');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUpcomingTrips = async () => {
+        try {
+            setLoadingTrips(true);
+            // Use tripAPI to get user's trips by their ID
+            const response = await userAPI.getTrips();
+            if (response.success) {
+                const now = new Date();
+                const upcoming = (response.trips || []).filter(
+                    (t: any) => new Date(t.startDate) >= now
+                ).slice(0, 5); // Get first 5 upcoming trips
+                setUpcomingTrips(upcoming);
+            }
+        } catch (error) {
+            console.error('Error fetching trips:', error);
+        } finally {
+            setLoadingTrips(false);
         }
     };
 

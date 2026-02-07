@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Lock, Globe, Loader2 } from 'lucide-react';
+import { X, Camera, Lock, Globe, Loader2, ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { communityAPI } from '@/lib/api';
+import { communityAPI, uploadAPI } from '@/lib/api';
+import Image from 'next/image';
 
 interface CreateCommunityModalProps {
     isOpen: boolean;
@@ -20,12 +21,56 @@ const CATEGORIES = [
 
 export default function CreateCommunityModal({ isOpen, onClose, onSuccess }: CreateCommunityModalProps) {
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         category: 'Other',
-        isPrivate: true
+        isPrivate: true,
+        logo: ''
     });
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image must be less than 5MB');
+            return;
+        }
+
+        try {
+            setUploading(true);
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => setLogoPreview(e.target?.result as string);
+            reader.readAsDataURL(file);
+
+            // Upload
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', file);
+            const response = await uploadAPI.uploadImage(formDataUpload as any);
+
+            if (response.success && response.url) {
+                setFormData(p => ({ ...p, logo: response.url }));
+                toast.success('Logo uploaded!');
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (error) {
+            toast.error('Failed to upload logo');
+            setLogoPreview(null);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +92,8 @@ export default function CreateCommunityModal({ isOpen, onClose, onSuccess }: Cre
             if (response.success) {
                 toast.success('Community created successfully!');
                 onSuccess(response.community);
-                setFormData({ name: '', description: '', category: 'Other', isPrivate: true });
+                setFormData({ name: '', description: '', category: 'Other', isPrivate: true, logo: '' });
+                setLogoPreview(null);
                 onClose();
             } else {
                 toast.error(response.message || 'Failed to create community');
@@ -90,6 +136,44 @@ export default function CreateCommunityModal({ isOpen, onClose, onSuccess }: Cre
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            {/* Logo Upload */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Community Logo
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="relative w-20 h-20 rounded-xl border-2 border-dashed border-gray-600 hover:border-primary-500 transition-colors flex items-center justify-center overflow-hidden bg-gray-800"
+                                    >
+                                        {uploading ? (
+                                            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                                        ) : logoPreview ? (
+                                            <Image
+                                                src={logoPreview}
+                                                alt="Logo preview"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <Camera className="w-6 h-6 text-gray-400" />
+                                        )}
+                                    </button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleLogoUpload}
+                                        className="hidden"
+                                    />
+                                    <div className="text-sm text-gray-400">
+                                        <p>Click to upload a logo</p>
+                                        <p className="text-xs">PNG, JPG up to 5MB</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">

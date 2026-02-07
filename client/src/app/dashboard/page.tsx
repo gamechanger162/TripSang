@@ -217,8 +217,14 @@ export default function UserDashboard() {
                                         {pendingReviews.length} pending
                                     </span>
                                 </div>
-                                <div className="p-4 space-y-3">
-                                    {pendingReviews.slice(0, 5).map((review) => (
+                                <div
+                                    className="p-4 space-y-3 max-h-96 overflow-y-auto"
+                                    style={{
+                                        scrollbarWidth: 'thin',
+                                        scrollbarColor: '#4B5563 transparent'
+                                    }}
+                                >
+                                    {pendingReviews.map((review) => (
                                         <div
                                             key={`${review.trip._id}-${review.traveler._id}`}
                                             className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
@@ -236,12 +242,28 @@ export default function UserDashboard() {
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">{review.trip.title}</p>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleReviewClick(review)}
-                                                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
-                                            >
-                                                Review
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPendingReviews(prev => prev.filter(r =>
+                                                            r.trip._id !== review.trip._id || r.traveler._id !== review.traveler._id
+                                                        ));
+                                                    }}
+                                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                                    title="Skip this review"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleReviewClick(review)}
+                                                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                                >
+                                                    Review
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

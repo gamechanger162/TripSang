@@ -49,9 +49,10 @@ interface ChatRoomProps {
     startPoint: { lat: number; lng: number; name: string };
     endPoint?: { lat: number; lng: number; name: string };
     initialWaypoints?: any[];
+    onJoin?: () => void;
 }
 
-export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], startPoint, endPoint, initialWaypoints = [] }: ChatRoomProps) {
+export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], startPoint, endPoint, initialWaypoints = [], onJoin }: ChatRoomProps) {
     const { data: session } = useSession();
     const { socketUrl } = useEnv();
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -432,12 +433,16 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                     {/* Join Squad Button */}
                     <button
                         onClick={() => {
-                            // Scroll to the join button section on the trip page
-                            const joinBtn = document.querySelector('[data-join-squad]');
-                            if (joinBtn) {
-                                joinBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                (joinBtn as HTMLElement).classList.add('ring-4', 'ring-violet-500/50');
-                                setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-violet-500/50'), 2000);
+                            if (onJoin) {
+                                onJoin();
+                            } else {
+                                // Scroll to the join button section on the trip page
+                                const joinBtn = document.querySelector('[data-join-squad]');
+                                if (joinBtn) {
+                                    joinBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    (joinBtn as HTMLElement).classList.add('ring-4', 'ring-violet-500/50');
+                                    setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-violet-500/50'), 2000);
+                                }
                             }
                         }}
                         className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 text-white rounded-2xl font-semibold hover:from-violet-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:-translate-y-1 group"

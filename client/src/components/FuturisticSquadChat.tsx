@@ -59,6 +59,7 @@ interface FuturisticSquadChatProps {
     startPoint: { lat: number; lng: number; name: string };
     endPoint?: { lat: number; lng: number; name: string };
     initialWaypoints?: any[];
+    onJoin?: () => void;
 }
 
 export default function FuturisticSquadChat({
@@ -67,7 +68,8 @@ export default function FuturisticSquadChat({
     squadMembers = [],
     startPoint,
     endPoint,
-    initialWaypoints = []
+    initialWaypoints = [],
+    onJoin
 }: FuturisticSquadChatProps) {
     const { data: session } = useSession();
     const { socketUrl } = useEnv();
@@ -321,11 +323,16 @@ export default function FuturisticSquadChat({
                         </p>
                         <button
                             onClick={() => {
-                                const joinBtn = document.querySelector('[data-join-squad]');
-                                if (joinBtn) {
-                                    joinBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    (joinBtn as HTMLElement).classList.add('ring-4', 'ring-teal-500/50');
-                                    setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-teal-500/50'), 2000);
+                                if (onJoin) {
+                                    onJoin();
+                                } else {
+                                    // Fallback to scrolling to the join button on the page
+                                    const joinBtn = document.querySelector('[data-join-squad]');
+                                    if (joinBtn) {
+                                        joinBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        (joinBtn as HTMLElement).classList.add('ring-4', 'ring-teal-500/50');
+                                        setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-teal-500/50'), 2000);
+                                    }
                                 }
                             }}
                             className="px-8 py-3 bg-gradient-to-r from-teal-500 to-orange-500 text-white rounded-2xl font-semibold shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 transition-all hover:-translate-y-1"

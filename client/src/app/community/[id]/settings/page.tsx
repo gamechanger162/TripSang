@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { communityAPI } from '@/lib/api';
+import { communityAPI, uploadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Shield, Trash2, Check, X, Loader2, Save, Lock, Globe } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Trash2, Check, X, Loader2, Save, Lock, Globe, Camera } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -49,9 +49,39 @@ export default function CommunitySettingsPage() {
         name: '',
         description: '',
         category: '',
-        isPrivate: true
+        isPrivate: true,
+        logo: ''
     });
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            const reader = new FileReader();
+            reader.onload = (e) => setLogoPreview(e.target?.result as string);
+            reader.readAsDataURL(file);
+
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', file);
+            const response = await uploadAPI.uploadImage(formDataUpload as any);
+
+            if (response.success && response.url) {
+                setFormData(p => ({ ...p, logo: response.url }));
+                toast.success('Logo uploaded!');
+            }
+        } catch (error) {
+            toast.error('Failed to upload logo');
+            setLogoPreview(null);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -81,8 +111,12 @@ export default function CommunitySettingsPage() {
                     name: response.community.name,
                     description: response.community.description,
                     category: response.community.category,
-                    isPrivate: response.community.isPrivate
+                    isPrivate: response.community.isPrivate,
+                    logo: response.community.logo || ''
                 });
+                if (response.community.logo) {
+                    setLogoPreview(response.community.logo);
+                }
             } else {
                 toast.error(response.message || 'Failed to load community');
                 router.push('/messages');
@@ -211,8 +245,8 @@ export default function CommunitySettingsPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === tab.id
-                                    ? 'border-primary-500 text-primary-400'
-                                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                                ? 'border-primary-500 text-primary-400'
+                                : 'border-transparent text-gray-400 hover:text-gray-300'
                                 }`}
                         >
                             {tab.label}
@@ -327,6 +361,44 @@ export default function CommunitySettingsPage() {
                     {activeTab === 'settings' && (
                         <div className="space-y-8">
                             <form onSubmit={handleUpdateSettings} className="space-y-6 bg-gray-800/40 p-6 rounded-2xl border border-gray-700/50">
+                                {/* Logo Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                                        Community Logo
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="relative w-20 h-20 rounded-xl border-2 border-dashed border-gray-600 hover:border-primary-500 transition-colors flex items-center justify-center overflow-hidden bg-gray-900"
+                                        >
+                                            {uploading ? (
+                                                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                                            ) : logoPreview ? (
+                                                <Image
+                                                    src={logoPreview}
+                                                    alt="Logo preview"
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <Camera className="w-6 h-6 text-gray-400" />
+                                            )}
+                                        </button>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleLogoUpload}
+                                            className="hidden"
+                                        />
+                                        <div className="text-sm text-gray-400">
+                                            <p>Click to upload logo</p>
+                                            <p className="text-xs">PNG, JPG up to 5MB</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-300 mb-2">
                                         Community Name

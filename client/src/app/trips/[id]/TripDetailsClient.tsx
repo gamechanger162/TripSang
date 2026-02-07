@@ -567,6 +567,7 @@ export function TripDetailsClient() {
                                 name: trip.endPoint.name
                             } : undefined}
                             initialWaypoints={trip.waypoints}
+                            onJoin={handleJoinSquad}
                         />
 
                         {/* Trip Memories */}
