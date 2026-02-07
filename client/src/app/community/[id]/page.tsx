@@ -23,6 +23,7 @@ interface Community {
     description: string;
     category: string;
     isPrivate: boolean;
+    logo?: string;
     coverImage?: string;
     memberCount: number;
     creator: CommunityMember;
@@ -236,9 +237,9 @@ export default function CommunityPage() {
                     href={`/community/${id}/settings`}
                     className="flex items-center gap-3 flex-1 min-w-0 hover:bg-gray-700/50 rounded-lg p-2 -m-2 transition-colors"
                 >
-                    {community.coverImage ? (
+                    {(community.logo || community.coverImage) ? (
                         <Image
-                            src={community.coverImage}
+                            src={(community.logo || community.coverImage) as string}
                             alt={community.name}
                             width={44}
                             height={44}

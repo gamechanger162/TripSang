@@ -139,7 +139,7 @@ function SearchPageContent() {
         <ExcitingBackground variant="dashboard" className="min-h-screen">
             <div className="min-h-screen bg-gradient-to-b from-transparent to-gray-900/10">
                 {/* Header */}
-                <div className="bg-white dark:bg-dark-800 shadow-sm sticky top-0 z-40">
+                <div className="bg-white dark:bg-dark-800 shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                         <div className="flex flex-col md:flex-row md:items-center gap-4">
                             {/* Search Summary */}

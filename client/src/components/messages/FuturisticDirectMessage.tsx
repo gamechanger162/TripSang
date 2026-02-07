@@ -155,6 +155,7 @@ export default function FuturisticDirectMessage({
                 title={receiverName}
                 avatarImage={receiverImage}
                 isConnected={connected}
+                backHref="/messages"
             />
 
             {/* Connection warning */}

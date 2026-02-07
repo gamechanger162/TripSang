@@ -133,7 +133,7 @@ export default function CreateCommunityModal({ isOpen, onClose, onSuccess }: Cre
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
                             {/* Logo Upload */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">

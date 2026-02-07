@@ -139,10 +139,10 @@ export default function UserDashboard() {
                             <div className="p-5">
                                 <div className="flex items-center">
                                     <div className="bg-primary-100 rounded-full p-2 relative h-16 w-16">
-                                        {session.user.image ? (
+                                        {(session.user.image || (session.user as any)?.profilePicture) ? (
                                             <img
                                                 className="h-full w-full rounded-full object-cover"
-                                                src={session.user.image}
+                                                src={session.user.image || (session.user as any)?.profilePicture}
                                                 alt=""
                                             />
                                         ) : (

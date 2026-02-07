@@ -730,9 +730,10 @@ interface GlassHeaderProps {
     avatarImage?: string;
     isConnected?: boolean;
     rightContent?: ReactNode;
+    backHref?: string;
 }
 
-export function GlassHeader({ title, subtitle, avatarIcon, avatarImage, isConnected, rightContent }: GlassHeaderProps) {
+export function GlassHeader({ title, subtitle, avatarIcon, avatarImage, isConnected, rightContent, backHref }: GlassHeaderProps) {
     return (
         <div
             className="relative z-10 px-4 py-4 flex items-center justify-between"
@@ -741,6 +742,13 @@ export function GlassHeader({ title, subtitle, avatarIcon, avatarImage, isConnec
             }}
         >
             <div className="flex items-center gap-3">
+                {backHref && (
+                    <Link href={backHref} className="mr-1 p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+                        <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </Link>
+                )}
                 <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-orange-400 flex items-center justify-center overflow-hidden">
                     {avatarImage ? (
                         <Image src={avatarImage} alt={title} fill className="object-cover" />
