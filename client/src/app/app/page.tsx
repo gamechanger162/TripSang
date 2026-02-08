@@ -10,7 +10,7 @@ import { MessageCircle, Sparkles, Radio } from 'lucide-react';
 
 interface SelectedConversation {
     id: string;
-    type: 'dm';
+    type: 'dm' | 'squad';
 }
 
 export default function AppPage() {
@@ -56,7 +56,7 @@ export default function AppPage() {
 
     if (!session) return null;
 
-    const handleSelectConversation = (id: string, type: 'dm') => {
+    const handleSelectConversation = (id: string, type: 'dm' | 'squad') => {
         setSelectedConversation({ id, type });
     };
 
