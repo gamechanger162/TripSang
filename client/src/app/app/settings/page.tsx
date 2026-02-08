@@ -25,18 +25,14 @@ export default function SettingsPage() {
     const [notifications, setNotifications] = useState(true);
     const [sounds, setSounds] = useState(true);
 
-    if (status === 'loading') {
-        return (
-            <div className="flex items-center justify-center w-full h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500" />
-            </div>
-        );
-    }
-
-    if (!session) {
+    // Redirect if not authenticated
+    if (status === 'unauthenticated') {
         router.push('/auth/signin?callbackUrl=/app/settings');
         return null;
     }
+
+    // Don't render while loading or no session
+    if (!session) return null;
 
     const user = session.user as any;
 

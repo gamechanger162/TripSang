@@ -32,29 +32,8 @@ export default function AppPage() {
         }
     }, [status, router]);
 
-    if (status === 'loading') {
-        return (
-            <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-900 via-gray-950 to-black">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center gap-4"
-                >
-                    <div className="relative">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500/20 to-emerald-500/20 animate-pulse" />
-                        <motion.div
-                            className="absolute inset-0 rounded-full border-2 border-teal-500/50"
-                            animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        />
-                    </div>
-                    <p className="text-gray-400 text-sm">Loading...</p>
-                </motion.div>
-            </div>
-        );
-    }
-
-    if (!session) return null;
+    // Don't render if not authenticated (still checking or redirecting)
+    if (status === 'unauthenticated' || !session) return null;
 
     const handleSelectConversation = (id: string, type: 'dm' | 'squad') => {
         setSelectedConversation({ id, type });
