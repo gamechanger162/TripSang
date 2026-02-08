@@ -1,125 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { tripAPI } from '@/lib/api';
 import GlassCard from '@/components/app/ui/GlassCard';
 import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
-import { useEnv } from '@/hooks/useEnv';
-import { socketManager } from '@/lib/socketManager';
+import { useSquads } from '@/contexts/SquadContext';
 import { motion } from 'framer-motion';
 import { Users, MapPin, Calendar, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-interface Squad {
-    _id: string;
-    title: string;
-    destination: string;
-    startDate: string;
-    endDate: string;
-    coverPhoto?: string;
-    coverImage?: string;
-    photos?: string[];
-    creator: {
-        _id: string;
-        name: string;
-        profilePicture?: string;
-        isVerified?: boolean;
-    };
-    squad: Array<{
-        _id: string;
-        name: string;
-        profilePicture?: string;
-    }>;
-    unreadCount?: number;
-    updatedAt?: string;
-}
-
 export default function SquadsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const { apiUrl, socketUrl } = useEnv();
-    const [squads, setSquads] = useState<Squad[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { squads, loading } = useSquads();
 
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.push('/auth/signin?callbackUrl=/app/squads');
         }
     }, [status, router]);
-
-    useEffect(() => {
-        const fetchSquads = async () => {
-            try {
-                // Use tripAPI which handles auth tokens (session or localStorage)
-                const response = await tripAPI.getMyTrips();
-
-                if (response.success || response.trips) {
-                    const fetched = response.trips || [];
-                    console.log('📋 Fetched Squads Order:', fetched.map((s: any) => `${s.title} (${s.updatedAt})`));
-                    setSquads(fetched);
-                }
-            } catch (error) {
-                console.error('Failed to fetch squads:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (status === 'authenticated') {
-            fetchSquads();
-        }
-    }, [status]);
-
-    // Socket integration for real-time updates
-    const token = session?.user?.accessToken;
-
-    useEffect(() => {
-        const currentToken = token || localStorage.getItem('token');
-
-        // Don't attempt socket connection without auth token
-        if (!currentToken || !session?.user?.id) return;
-
-        const socket = socketManager.connect(socketUrl, currentToken);
-
-        const handleReceiveMessage = (message: any) => {
-            console.log('🔔 Client received squad_list_update:', message);
-            // Check if message belongs to one of our squads
-            // Payload via squad_list_update has tripId
-            if (!message.tripId) return;
-
-            setSquads(prev => {
-                const existingIndex = prev.findIndex(s => s._id === message.tripId);
-                console.log('   -> matching squad index:', existingIndex);
-
-                if (existingIndex === -1) {
-                    // New squad interaction? Fetch to be safe
-                    return prev;
-                }
-
-                const updatedSquads = [...prev];
-                const squad = updatedSquads[existingIndex];
-
-                // Remove from current position
-                updatedSquads.splice(existingIndex, 1);
-
-                // Add to top with incremented unread count (ephemeral)
-                updatedSquads.unshift({
-                    ...squad,
-                    unreadCount: (squad.unreadCount || 0) + 1
-                });
-
-                return updatedSquads;
-            });
-        };
-
-        socketManager.on('squad_list_update', handleReceiveMessage);
-
-        return () => {
-            socketManager.off('squad_list_update', handleReceiveMessage);
-        };
-    }, [socketUrl, token, session?.user?.id]);
 
     // Don't render if not authenticated
     if (status === 'unauthenticated' || !session) return null;
