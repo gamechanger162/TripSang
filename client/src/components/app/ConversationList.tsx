@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { Virtuoso } from 'react-virtuoso';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
@@ -217,9 +218,11 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                     <div className="relative flex-shrink-0">
                         <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/10 group-hover:ring-white/20 transition-all">
                             {conv.avatar && !failedImages.has(conv._id) ? (
-                                <img
+                                <Image
                                     src={conv.avatar}
                                     alt={conv.name}
+                                    width={48}
+                                    height={48}
                                     className="w-12 h-12 object-cover"
                                     onError={() => {
                                         // Track failed images to show fallback

@@ -26,6 +26,7 @@ import { useEnv } from '@/hooks/useEnv';
 import VerifiedBadge from './ui/VerifiedBadge';
 import GlassCard from './ui/GlassCard';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 // Dynamic import for map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('@/components/CollaborativeMap'), {
@@ -58,10 +59,27 @@ interface ChatViewProps {
     isMobile: boolean;
 }
 
+import { useSquads } from '@/contexts/SquadContext';
+
 export default function ChatView({ conversationId, conversationType, onBack, isMobile }: ChatViewProps) {
     const { data: session } = useSession(); // Access session data
     const router = useRouter();
     const { apiUrl, socketUrl } = useEnv();
+    const { markAsRead, setActiveSquadId } = useSquads();
+
+    // Mark as read if squad and set active squad
+    useEffect(() => {
+        if (conversationType === 'squad' && conversationId) {
+            markAsRead(conversationId);
+            setActiveSquadId(conversationId);
+        }
+
+        return () => {
+            if (conversationType === 'squad') {
+                setActiveSquadId(null);
+            }
+        };
+    }, [conversationId, conversationType, markAsRead, setActiveSquadId]);
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const socketRef = useRef<Socket | null>(null);
@@ -615,7 +633,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
                 <div className="header-info">
                     {conversationInfo?.avatar ? (
-                        <img src={conversationInfo.avatar} alt="" className="header-avatar" />
+                        <Image src={conversationInfo.avatar} alt="" width={40} height={40} className="header-avatar object-cover" />
                     ) : (
                         <div className="header-avatar-placeholder">
                             {conversationInfo?.name?.charAt(0) || '?'}
@@ -1346,12 +1364,14 @@ function MessageBubble({
 
             {/* Profile Picture for received messages - always show */}
             {!isOwn && (
-                <img
+                <Image
                     src={
                         message.senderProfilePicture ||
                         `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2306b6d4'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3E${(message.senderName || 'U').charAt(0).toUpperCase()}%3C/text%3E%3C/svg%3E`
                     }
                     alt={message.senderName}
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full object-cover mr-2 shrink-0 self-end"
                 />
             )}

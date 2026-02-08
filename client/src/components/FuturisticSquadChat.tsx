@@ -22,6 +22,7 @@ import {
     PinnedBanner,
     springConfig,
 } from './chat/FuturisticUI';
+import { useSquads } from '@/contexts/SquadContext';
 
 // Dynamic import for Map
 const CollaborativeMap = dynamic(() => import('./CollaborativeMap'), {
@@ -72,6 +73,15 @@ export default function FuturisticSquadChat({
     onJoin
 }: FuturisticSquadChatProps) {
     const { data: session } = useSession();
+    const { markAsRead } = useSquads(); // Use context
+
+    // Mark as read on enlist
+    useEffect(() => {
+        if (tripId) {
+            markAsRead(tripId);
+        }
+    }, [tripId, markAsRead]);
+
     const { socketUrl } = useEnv();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);

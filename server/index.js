@@ -529,20 +529,35 @@ io.on('connection', (socket) => {
 
     // Join Community Room
     socket.on('join_community', async ({ communityId }) => {
+        console.log(`🔌 Request to join community: ${communityId} by ${socket.user.name} (${socket.user._id})`);
         try {
-            if (!communityId) return;
+            if (!communityId) {
+                console.error('❌ No communityId provided');
+                return socket.emit('error', { message: 'Community ID required' });
+            }
 
             const Community = (await import('./models/Community.js')).default;
             const community = await Community.findById(communityId);
 
-            if (!community || !community.members.includes(socket.user._id)) {
+            if (!community) {
+                console.error(`❌ Community not found: ${communityId}`);
+                return socket.emit('error', { message: 'Community not found' });
+            }
+
+            console.log(`✅ Found community: ${community.name}. Checking membership...`);
+            const isMember = community.members.some(m => m.toString() === socket.user._id.toString());
+
+            if (!isMember) {
+                console.error(`❌ User ${socket.user._id} is NOT a member of ${communityId}`);
                 return socket.emit('error', { message: 'Not a member of this community' });
             }
 
             socket.join(`community_${communityId}`);
-            console.log(`🏘️ ${socket.user.name} joined community: ${community.name}`);
+            console.log(`🏘️ ${socket.user.name} successfully joined community room: community_${communityId}`);
+            socket.emit('joined_community', { communityId, name: community.name });
         } catch (error) {
-            console.error('Join community error:', error);
+            console.error('❌ Join community CRITICAL error:', error);
+            socket.emit('error', { message: 'Server error joining community: ' + error.message });
         }
     });
 
@@ -561,7 +576,7 @@ io.on('connection', (socket) => {
             const CommunityMessage = (await import('./models/CommunityMessage.js')).default;
 
             const community = await Community.findById(communityId);
-            if (!community || !community.members.includes(socket.user._id)) {
+            if (!community || !community.members.some(m => m.toString() === socket.user._id.toString())) {
                 return socket.emit('error', { message: 'Not a member' });
             }
 

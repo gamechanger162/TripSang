@@ -33,6 +33,9 @@ interface SquadContextType {
     squads: Squad[];
     loading: boolean;
     refreshSquads: () => Promise<void>;
+    unreadCount: number;
+    markAsRead: (squadId: string) => void;
+    setActiveSquadId: (squadId: string | null) => void;
 }
 
 const SquadContext = createContext<SquadContextType | undefined>(undefined);
@@ -51,8 +54,11 @@ export function SquadProvider({ children }: { children: ReactNode }) {
     const [squads, setSquads] = useState<Squad[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [activeSquadId, setActiveSquadId] = useState<string | null>(null);
+
     const token = session?.user?.accessToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
 
+    // ... (fetchSquads remains same)
     const fetchSquads = useCallback(async () => {
         try {
             const response = await tripAPI.getMyTrips();
@@ -91,9 +97,13 @@ export function SquadProvider({ children }: { children: ReactNode }) {
 
                 // Remove from current position and add to top
                 updatedSquads.splice(existingIndex, 1);
+
+                // Only increment unread count if NOT currently viewing this squad
+                const shouldIncrement = message.tripId !== activeSquadId;
+
                 updatedSquads.unshift({
                     ...squad,
-                    unreadCount: (squad.unreadCount || 0) + 1,
+                    unreadCount: shouldIncrement ? (squad.unreadCount || 0) + 1 : 0,
                     updatedAt: message.timestamp
                 });
 
@@ -106,10 +116,19 @@ export function SquadProvider({ children }: { children: ReactNode }) {
         return () => {
             socketManager.off('squad_list_update', handleSquadUpdate);
         };
-    }, [socketUrl, token, session?.user?.id]);
+    }, [socketUrl, token, session?.user?.id, activeSquadId]);
+
+    // Calculate total unread count
+    const unreadCount = squads.reduce((acc, squad) => acc + (squad.unreadCount || 0), 0);
+
+    const markAsRead = useCallback((squadId: string) => {
+        setSquads(prev => prev.map(s =>
+            s._id === squadId ? { ...s, unreadCount: 0 } : s
+        ));
+    }, []);
 
     return (
-        <SquadContext.Provider value={{ squads, loading, refreshSquads: fetchSquads }}>
+        <SquadContext.Provider value={{ squads, loading, refreshSquads: fetchSquads, unreadCount, markAsRead, setActiveSquadId }}>
             {children}
         </SquadContext.Provider>
     );

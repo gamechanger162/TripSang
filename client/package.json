@@ -18,7 +18,6 @@
         "date-fns": "^4.1.0",
         "firebase": "^10.7.1",
         "framer-motion": "^11.18.2",
-        "idb": "^8.0.3",
         "leaflet": "^1.9.4",
         "leaflet-routing-machine": "^3.2.12",
         "lucide-react": "^0.563.0",

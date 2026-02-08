@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
-import { createWorker } from 'tesseract.js';
+// import { createWorker } from 'tesseract.js'; // Dynamically imported
 import { uploadAPI, userAPI } from '@/lib/api';
 
 export default function IDVerificationPage() {
@@ -82,6 +82,7 @@ export default function IDVerificationPage() {
         const toastId = toast.loading('Scanning front document...');
 
         try {
+            const { createWorker } = await import('tesseract.js');
             const worker = await createWorker('eng');
 
             // Perform OCR on FRONT document

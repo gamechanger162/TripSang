@@ -9,6 +9,11 @@ import { communityAPI, uploadAPI } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
 import { useEnv } from '@/hooks/useEnv';
 import toast from 'react-hot-toast';
+import dynamic from 'next/dynamic';
+
+const CommunityDetailsModal = dynamic(() => import('@/components/CommunityDetailsModal'), {
+    ssr: false
+});
 
 interface Message {
     _id: string;
@@ -26,6 +31,13 @@ interface Community {
     name: string;
     logo?: string;
     memberCount: number;
+    description?: string;
+    coverImage?: string;
+    category?: string;
+    creator?: {
+        name: string;
+        profilePicture?: string;
+    };
 }
 
 export default function CommunityChatPage() {
@@ -34,6 +46,7 @@ export default function CommunityChatPage() {
     const router = useRouter();
     const { apiUrl, socketUrl } = useEnv();
     const [isMobile, setIsMobile] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [community, setCommunity] = useState<Community | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
@@ -105,11 +118,22 @@ export default function CommunityChatPage() {
             reconnectionDelay: 1000
         });
 
-        socketRef.current.emit('join_community', { communityId: id });
+        socketRef.current.on('connect', () => {
+            console.log('✅ Socket connected:', socketRef.current?.id);
+            console.log('🔌 Joining community:', id);
+            socketRef.current?.emit('join_community', { communityId: id });
+        });
 
-        socketRef.current.on('community_message', (message: Message) => {
-            setMessages(prev => [...prev, message]);
+        socketRef.current.on('receive_community_message', (message: Message) => {
+            setMessages(prev => {
+                if (prev.some(m => m._id === message._id)) return prev;
+                return [...prev, message];
+            });
             scrollToBottom();
+        });
+
+        socketRef.current.on('error', (err: any) => {
+            console.error('❌ Socket error:', err);
         });
 
         return () => {
@@ -136,9 +160,9 @@ export default function CommunityChatPage() {
                 type: 'text'
             });
 
-            if (response.success) {
+            if (response.success && response.message) {
                 setNewMessage('');
-                // Message will come back via socket
+                setMessages(prev => [...prev, response.message]);
             }
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -155,11 +179,15 @@ export default function CommunityChatPage() {
         try {
             const uploadResponse = await uploadAPI.uploadFile(file);
             if (uploadResponse.success && uploadResponse.url) {
-                await communityAPI.sendMessage(id as string, {
+                const response = await communityAPI.sendMessage(id as string, {
                     message: '',
                     type: 'image',
                     imageUrl: uploadResponse.url
                 });
+
+                if (response.success && response.message) {
+                    setMessages(prev => [...prev, response.message]);
+                }
             }
         } catch (error) {
             console.error('Failed to upload image:', error);
@@ -199,19 +227,30 @@ export default function CommunityChatPage() {
                     <ArrowLeft size={20} />
                 </button>
 
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center overflow-hidden">
-                    {community?.logo ? (
-                        <img src={community.logo} alt={community.name} className="w-full h-full object-cover" />
-                    ) : (
-                        <Users size={20} className="text-white" />
-                    )}
-                </div>
+                <div
+                    className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setShowDetailsModal(true)}
+                >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center overflow-hidden">
+                        {community?.logo ? (
+                            <img src={community.logo} alt={community.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <Users size={20} className="text-white" />
+                        )}
+                    </div>
 
-                <div>
-                    <h2 className="text-white font-semibold">{community?.name || 'Community'}</h2>
-                    <p className="text-xs text-gray-400">{community?.memberCount || 0} members</p>
+                    <div>
+                        <h2 className="text-white font-semibold">{community?.name || 'Community'}</h2>
+                        <p className="text-xs text-gray-400">{community?.memberCount || 0} members</p>
+                    </div>
                 </div>
             </div>
+
+            <CommunityDetailsModal
+                isOpen={showDetailsModal}
+                onClose={() => setShowDetailsModal(false)}
+                community={community}
+            />
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -8,16 +8,21 @@ import { GlassButton } from '@/components/app/ui/GlassCard';
 import { useEnv } from '@/hooks/useEnv';
 import { communityAPI, userAPI, paymentAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
-import { Globe, Users, Lock, Crown, ChevronRight, Plus } from 'lucide-react';
+import { Globe, Users, Lock, Crown, ChevronRight, Plus, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
-import CreateCommunityModal from '@/components/community/CreateCommunityModal';
+import dynamic from 'next/dynamic';
+
+const CreateCommunityModal = dynamic(() => import('@/components/community/CreateCommunityModal'), {
+    ssr: false
+});
 
 interface Community {
     _id: string;
     name: string;
     description: string;
-    avatar?: string;
+    logo?: string;
     coverImage?: string;
     memberCount: number;
     category: string;
@@ -66,7 +71,17 @@ export default function CommunitiesPage() {
                 } else {
                     // Discover communities with search
                     const response = await communityAPI.discover(undefined, debouncedSearch);
-                    data = response.communities || [];
+                    data = response.communities || []; // discover returns { publicCommunities, pendingCommunities }, but frontend state is simple array for now. Wait, need to check API response structure.
+                    // The discover API returns { success: true, publicCommunities: [], pendingCommunities: [] }
+                    // My state expects Community[]. 
+                    // Let's adjust this.
+                    if (response.publicCommunities) {
+                        data = response.publicCommunities;
+                    } else if (Array.isArray(response)) {
+                        data = response;
+                    } else {
+                        data = [];
+                    }
                 }
 
                 setCommunities(data);
@@ -145,11 +160,11 @@ export default function CommunitiesPage() {
 
     return (
         <>
-            <div className="communities-content">
-                <div className="communities-header">
+            <div className="flex-1 p-6 overflow-y-auto pb-20 flex flex-col gap-6">
+                <div className="flex items-start justify-between">
                     <div>
-                        <h1>Communities</h1>
-                        <p>Join clubs and connect with fellow travelers</p>
+                        <h1 className="text-2xl font-bold text-white mb-1">Communities</h1>
+                        <p className="text-white/60 text-sm">Join clubs and connect with fellow travelers</p>
                     </div>
                     <GlassButton onClick={handleCreateCommunity} variant="primary">
                         <Plus size={18} className="mr-2" />
@@ -158,16 +173,22 @@ export default function CommunitiesPage() {
                 </div>
 
                 {/* Filter Tabs & Search */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-center">
-                    <div className="filter-tabs">
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                    <div className="flex gap-2">
                         <button
-                            className={`tab ${filter === 'all' ? 'active' : ''}`}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === 'all'
+                                ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                                : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                                }`}
                             onClick={() => setFilter('all')}
                         >
                             Discover
                         </button>
                         <button
-                            className={`tab ${filter === 'joined' ? 'active' : ''}`}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === 'joined'
+                                ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                                : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                                }`}
                             onClick={() => setFilter('joined')}
                         >
                             Joined
@@ -175,28 +196,28 @@ export default function CommunitiesPage() {
                     </div>
 
                     {filter === 'all' && (
-                        <div className="search-wrapper">
+                        <div className="w-full max-w-[300px]">
                             <input
                                 type="text"
                                 placeholder="Search communities..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
+                                className="w-full px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white text-sm outline-none focus:bg-white/10 focus:border-teal-500/50 transition-all"
                             />
                         </div>
                     )}
                 </div>
 
                 {loading ? (
-                    <div className="communities-loading">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="skeleton-community" />
+                            <div key={i} className="h-[360px] rounded-3xl bg-white/10 animate-pulse" />
                         ))}
                     </div>
                 ) : communities.length === 0 ? (
-                    <div className="empty-communities">
-                        <Globe size={48} className="empty-icon" />
-                        <h3>
+                    <div className="flex flex-col items-center justify-center py-20 text-center text-white/60">
+                        <Globe size={48} className="text-white/30 mb-4" />
+                        <h3 className="text-lg font-semibold text-white mb-2">
                             {searchQuery ? 'No communities match your search'
                                 : filter === 'joined' ? 'No communities joined yet'
                                     : 'No communities found'}
@@ -207,7 +228,7 @@ export default function CommunitiesPage() {
                         </p>
                     </div>
                 ) : (
-                    <div className="communities-grid">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {communities.map((community, index) => (
                             <motion.div
                                 key={community._id}
@@ -215,50 +236,68 @@ export default function CommunitiesPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                             >
-                                <Link href={`/app/communities/${community._id}`}>
-                                    <GlassCard padding="none" hover className="community-card">
-                                        {/* Cover */}
-                                        <div className="community-cover">
-                                            {community.coverImage ? (
-                                                <img src={community.coverImage} alt={community.name} />
+                                <Link href={`/app/communities/${community._id}`} className="block h-full">
+                                    <GlassCard padding="none" hover className="h-[360px] relative overflow-hidden rounded-[24px]">
+                                        {/* Full Background Image */}
+                                        <div className="absolute inset-0 w-full h-full group">
+                                            {community.coverImage || community.logo ? (
+                                                <Image
+                                                    src={community.coverImage || community.logo || ''}
+                                                    alt={community.name}
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                />
                                             ) : (
-                                                <div className="cover-gradient" />
+                                                <div className="w-full h-full bg-gradient-to-br from-teal-500/40 to-purple-500/40" />
                                             )}
-
-                                            {/* Avatar */}
-                                            <div className="community-avatar">
-                                                {community.avatar ? (
-                                                    <img src={community.avatar} alt={community.name} />
-                                                ) : (
-                                                    <Globe size={24} />
-                                                )}
-                                            </div>
-
-                                            {/* Premium Badge */}
-                                            {community.isPremium && (
-                                                <div className="premium-badge">
-                                                    <Crown size={12} />
-                                                    Premium
-                                                </div>
-                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                                         </div>
 
-                                        {/* Info */}
-                                        <div className="community-info">
-                                            <h3>{community.name}</h3>
-                                            <p className="community-desc">{community.description}</p>
+                                        {/* Content Overlay */}
+                                        <div className="absolute bottom-0 left-0 w-full p-6 z-10">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                {community.logo ? (
+                                                    <Image
+                                                        src={community.logo}
+                                                        alt="Logo"
+                                                        width={40}
+                                                        height={40}
+                                                        className="w-10 h-10 rounded-full border-2 border-white/20 object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full border-2 border-white/20 bg-white/10 flex items-center justify-center">
+                                                        <MapPin size={18} className="text-pink-500 fill-pink-500/20" />
+                                                    </div>
+                                                )}
+                                                <h3 className="text-2xl font-bold text-white leading-tight shadow-sm">
+                                                    {community.name}
+                                                </h3>
+                                            </div>
 
-                                            <div className="community-meta">
-                                                <span className="category">{community.category}</span>
-                                                <span className="members">
+                                            <p className="text-sm text-white/80 mb-4 line-clamp-2 leading-relaxed pl-1">
+                                                {community.description}
+                                            </p>
+
+                                            <div className="flex items-center gap-2 pl-1">
+                                                <span className="flex items-center gap-1.5 text-xs text-white/70 font-medium">
                                                     <Users size={14} />
-                                                    {community.memberCount}
+                                                    {community.memberCount} members
                                                 </span>
                                                 {community.isJoined && (
-                                                    <span className="joined-badge">Joined</span>
+                                                    <span className="text-[11px] px-2.5 py-1 bg-teal-500/30 border border-teal-500/40 rounded-full text-teal-300 font-semibold backdrop-blur-sm ml-auto">
+                                                        Joined
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Premium Badge (Top Right) */}
+                                        {community.isPremium && (
+                                            <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 bg-amber-500/90 rounded-full text-[11px] font-bold text-white z-20 backdrop-blur-sm shadow-md">
+                                                <Crown size={12} />
+                                                Premium
+                                            </div>
+                                        )}
                                     </GlassCard>
                                 </Link>
                             </motion.div>
@@ -266,245 +305,6 @@ export default function CommunitiesPage() {
                     </div>
                 )}
             </div>
-
-            <style jsx>{`
-                .communities-layout {
-                    display: flex;
-                    width: 100%;
-                    height: 100%;
-                }
-                
-                .communities-content {
-                    flex: 1;
-                    padding: 24px;
-                    overflow-y: auto;
-                    padding-bottom: 80px;
-                }
-                
-                @media (min-width: 768px) {
-                    .communities-content {
-                        padding-bottom: 24px;
-                    }
-                }
-                
-                .communities-header {
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    margin-bottom: 24px;
-                }
-                
-                .communities-header h1 {
-                    font-size: 24px;
-                    font-weight: 700;
-                    color: white;
-                    margin-bottom: 4px;
-                }
-                
-                .communities-header p {
-                    color: rgba(255, 255, 255, 0.6);
-                    font-size: 14px;
-                }
-                
-                .filter-tabs {
-                    display: flex;
-                    gap: 8px;
-                }
-                
-                .search-wrapper {
-                    width: 100%;
-                    max-width: 300px;
-                }
-                
-                .search-input {
-                    width: 100%;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    color: white;
-                    font-size: 14px;
-                    outline: none;
-                    transition: all 0.2s;
-                }
-                
-                .search-input:focus {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(20, 184, 166, 0.5);
-                }
-                
-                .tab {
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: rgba(255, 255, 255, 0.6);
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    transition: all 0.2s;
-                }
-                
-                .tab:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                }
-                
-                .tab.active {
-                    background: rgba(20, 184, 166, 0.2);
-                    border-color: rgba(20, 184, 166, 0.3);
-                    color: #14b8a6;
-                }
-                
-                .communities-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-                    gap: 16px;
-                }
-                
-                .community-cover {
-                    height: 80px;
-                    position: relative;
-                    overflow: hidden;
-                    border-radius: 16px 16px 0 0;
-                }
-                
-                .community-cover img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                
-                .cover-gradient {
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(135deg, rgba(20, 184, 166, 0.4), rgba(139, 92, 246, 0.4));
-                }
-                
-                .community-avatar {
-                    position: absolute;
-                    bottom: -20px;
-                    left: 16px;
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 12px;
-                    background: linear-gradient(135deg, #14b8a6, #0d9488);
-                    border: 3px solid #1a1a24;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    overflow: hidden;
-                }
-                
-                .community-avatar img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                
-                .premium-badge {
-                    position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
-                    background: linear-gradient(135deg, #f59e0b, #d97706);
-                    border-radius: 6px;
-                    font-size: 10px;
-                    font-weight: 600;
-                    color: white;
-                }
-                
-                .community-info {
-                    padding: 28px 16px 16px;
-                }
-                
-                .community-info h3 {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: white;
-                    margin-bottom: 4px;
-                }
-                
-                .community-desc {
-                    font-size: 13px;
-                    color: rgba(255, 255, 255, 0.6);
-                    margin-bottom: 12px;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 2;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
-                }
-                
-                .community-meta {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                
-                .category {
-                    font-size: 12px;
-                    padding: 4px 8px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 6px;
-                    color: rgba(255, 255, 255, 0.7);
-                }
-                
-                .members {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    font-size: 12px;
-                    color: rgba(255, 255, 255, 0.6);
-                }
-                
-                .joined-badge {
-                    font-size: 11px;
-                    padding: 3px 8px;
-                    background: rgba(20, 184, 166, 0.2);
-                    border: 1px solid rgba(20, 184, 166, 0.3);
-                    border-radius: 6px;
-                    color: #14b8a6;
-                    margin-left: auto;
-                }
-                
-                .empty-communities {
-                    text-align: center;
-                    padding: 60px 20px;
-                    color: rgba(255, 255, 255, 0.6);
-                }
-                
-                .empty-icon {
-                    margin: 0 auto 16px;
-                    color: rgba(255, 255, 255, 0.3);
-                }
-                
-                .empty-communities h3 {
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: white;
-                    margin-bottom: 8px;
-                }
-                
-                .communities-loading {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-                    gap: 16px;
-                }
-                
-                .skeleton-community {
-                    height: 180px;
-                    border-radius: 16px;
-                    background: rgba(255, 255, 255, 0.1);
-                    animation: pulse 1.5s infinite;
-                }
-                
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-            `}</style>
 
             {/* Create Community Modal */}
             <CreateCommunityModal

@@ -28,10 +28,13 @@ interface NavRailProps {
     unreadSquads?: number;
 }
 
-export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0 }: NavRailProps) {
+import { useSquads } from '@/contexts/SquadContext';
+
+export default function NavRail({ unreadDMs: propUnreadDMs = 0 }: NavRailProps) {
     const { data: session } = useSession();
     const pathname = usePathname();
     const [unreadDMs, setUnreadDMs] = useState(propUnreadDMs);
+    const { unreadCount: unreadSquads } = useSquads();
 
     useEffect(() => {
         const fetchUnread = async () => {

@@ -285,6 +285,11 @@ export const sendCommunityMessage = async (req, res) => {
             } : null
         };
 
+        // Broadcast to all community members via socket
+        if (io) {
+            io.to(`community_${communityId}`).emit('receive_community_message', transformedMessage);
+        }
+
         res.json({ success: true, message: transformedMessage });
     } catch (error) {
         console.error('Send community message error:', error);

@@ -9,6 +9,7 @@ import { useSquads } from '@/contexts/SquadContext';
 import { motion } from 'framer-motion';
 import { Users, MapPin, Calendar, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SquadsPage() {
     const { data: session, status } = useSession();
@@ -68,7 +69,12 @@ export default function SquadsPage() {
                                         {/* Cover Image */}
                                         <div className="squad-cover">
                                             {(squad.coverPhoto || squad.coverImage || (squad.photos && squad.photos[0])) ? (
-                                                <img src={squad.coverPhoto || squad.coverImage || squad.photos?.[0]} alt={squad.title} />
+                                                <Image
+                                                    src={squad.coverPhoto || squad.coverImage || squad.photos?.[0] || ''}
+                                                    alt={squad.title}
+                                                    fill
+                                                    className="object-cover"
+                                                />
                                             ) : (
                                                 <div className="cover-placeholder">
                                                     <MapPin size={32} />
@@ -104,7 +110,13 @@ export default function SquadsPage() {
                                                             style={{ zIndex: 4 - i }}
                                                         >
                                                             {member.profilePicture ? (
-                                                                <img src={member.profilePicture} alt={member.name} />
+                                                                <Image
+                                                                    src={member.profilePicture}
+                                                                    alt={member.name}
+                                                                    width={28}
+                                                                    height={28}
+                                                                    className="object-cover w-full h-full"
+                                                                />
                                                             ) : (
                                                                 <span>{member.name.charAt(0)}</span>
                                                             )}

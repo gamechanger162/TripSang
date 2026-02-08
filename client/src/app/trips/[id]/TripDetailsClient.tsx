@@ -6,15 +6,20 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { tripAPI } from '@/lib/api';
-import FuturisticSquadChat from '@/components/FuturisticSquadChat';
-import TripMemories from '@/components/TripMemories';
+// FuturisticSquadChat is heavy (socket.io, framer-motion), so we lazy load it
+const FuturisticSquadChat = dynamic(() => import('@/components/FuturisticSquadChat'), {
+    loading: () => <div className="h-96 w-full flex items-center justify-center bg-gray-100 dark:bg-dark-800 rounded-xl">Loading Chat...</div>,
+    ssr: false
+});
+
 import GoogleAd from '@/components/GoogleAd';
-import EditTripModal from '@/components/EditTripModal';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import { Map as MapIcon, X } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { isPremiumUser } from '@/utils/linkify';
+
+const EditTripModal = dynamic(() => import('@/components/EditTripModal'), { ssr: false });
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('@/components/CollaborativeMap'), {
@@ -570,12 +575,7 @@ export function TripDetailsClient() {
                             onJoin={handleJoinSquad}
                         />
 
-                        {/* Trip Memories */}
-                        <TripMemories
-                            tripId={tripId}
-                            isSquadMember={isSquadMember}
-                            tripEnded={new Date(trip.endDate) < new Date()}
-                        />
+
                     </div>
 
                     {/* Sidebar */}
