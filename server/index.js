@@ -175,8 +175,18 @@ io.on('connection', (socket) => {
             io.to(tripId).emit('receive_message', populatedMessage);
 
             // Fetch Trip to get squad members for list updates
-            const trip = await Trip.findById(tripId).select('squadMembers');
+            // Also update trip's updatedAt to ensure it jumps to top of list on refresh
+            const now = new Date();
+            const trip = await Trip.findByIdAndUpdate(
+                tripId,
+                { $set: { updatedAt: now } },
+                { new: true, runValidators: false }
+            ).select('squadMembers updatedAt title');
+
+            console.log(`📝 Updated trip "${trip?.title}" updatedAt to ${now.toISOString()}, saved: ${trip?.updatedAt?.toISOString()}`);
+
             if (trip && trip.squadMembers) {
+                console.log(`📢 Broadcasting squad update to ${trip.squadMembers.length} members for trip ${tripId}`);
                 trip.squadMembers.forEach(memberId => {
                     // Send list update to user's personal room
                     io.to(`user_${memberId}`).emit('squad_list_update', {
@@ -186,7 +196,10 @@ io.on('connection', (socket) => {
                         senderName: socket.user.name,
                         unreadCount: 1 // Hint for frontend to increment
                     });
+                    console.log(`   -> Sent to user_${memberId}`);
                 });
+            } else {
+                console.log('⚠️ Trip not found or no squad members for broadcast');
             }
 
         } catch (error) {
@@ -331,7 +344,7 @@ io.on('connection', (socket) => {
             const { Conversation } = await import('./models/index.js');
             const conversation = await Conversation.findById(conversationId);
 
-            if (!conversation || !conversation.participants.includes(socket.user._id)) {
+            if (!conversation || !conversation.participants.some(p => p.toString() === socket.user._id.toString())) {
                 return socket.emit('error', { message: 'Unauthorized access to conversation' });
             }
 
@@ -390,7 +403,7 @@ io.on('connection', (socket) => {
 
             // Verify conversation exists and user is participant
             const conversation = await Conversation.findById(conversationId);
-            if (!conversation || !conversation.participants.includes(socket.user._id)) {
+            if (!conversation || !conversation.participants.some(p => p.toString() === socket.user._id.toString())) {
                 console.error('Unauthorized conversation access:', conversationId);
                 return socket.emit('error', { message: 'Unauthorized' });
             }

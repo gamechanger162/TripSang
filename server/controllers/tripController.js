@@ -865,7 +865,10 @@ export const getMyTrips = async (req, res) => {
         })
             .populate('creator', 'name profilePicture')
             .populate('squadMembers', 'name profilePicture')
-            .sort({ startDate: -1 });
+            .sort('-updatedAt');
+
+        console.log('DEBUG: getMyTrips RAW sort result:', trips.map(t => `${t.title} | ${t.updatedAt}`));
+
 
         res.status(200).json({
             success: true,

@@ -169,7 +169,7 @@ export default function FuturisticSquadChat({
             newSocket.emit('leave_room', { tripId });
             newSocket.disconnect();
         };
-    }, [tripId, isSquadMember, session, socketUrl]);
+    }, [tripId, isSquadMember, session?.user?.id, socketUrl]);
 
     const handleTyping = () => {
         if (!socket) return;

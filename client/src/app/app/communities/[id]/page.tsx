@@ -116,7 +116,7 @@ export default function CommunityChatPage() {
             socketRef.current?.emit('leave_community', { communityId: id });
             socketRef.current?.disconnect();
         };
-    }, [socketUrl, id, status, session]);
+    }, [socketUrl, id, status, session?.user?.id]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -157,7 +157,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         } finally {
             setLoading(false);
         }
-    }, [apiUrl, conversationId, conversationType, session]);
+    }, [apiUrl, conversationId, conversationType, session?.user?.id]);
 
     useEffect(() => {
         fetchMessages();
@@ -306,7 +306,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             socketManager.off('message_unpinned', handleMessageUnpinned);
             socketManager.off('error', handleSocketError);
         };
-    }, [socketUrl, conversationId, conversationType, session]);
+    }, [socketUrl, conversationId, conversationType, session?.user?.id]);
 
     // Auto-scroll to bottom when messages load initially
     useEffect(() => {
@@ -339,7 +339,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             }
         };
         checkBlockStatus();
-    }, [conversationType, conversationInfo, apiUrl, session]);
+    }, [conversationType, conversationInfo, apiUrl, session?.user?.id]);
 
     // Mark conversation as read
     useEffect(() => {
@@ -361,7 +361,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             }
         };
         markAsRead();
-    }, [conversationId, conversationType, loading, messages.length, apiUrl, session]);
+    }, [conversationId, conversationType, loading, messages.length, apiUrl, session?.user?.id]);
 
     // Send message (no optimistic update to prevent duplication)
     const sendMessage = async () => {

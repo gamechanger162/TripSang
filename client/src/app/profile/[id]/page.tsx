@@ -64,7 +64,7 @@ export default function UserProfilePage() {
         if (userId && session) {
             fetchFriendStatus();
         }
-    }, [userId, session]);
+    }, [userId, session?.user?.id]);
 
     const fetchUserProfile = async () => {
         try {

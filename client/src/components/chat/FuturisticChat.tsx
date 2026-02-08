@@ -615,8 +615,8 @@ function DynamicInputBar({ onSend, onTyping, replyingTo, onCancelReply, disabled
                         onClick={handleSend}
                         disabled={!message.trim() || disabled}
                         className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${message.trim()
-                                ? 'bg-gradient-to-r from-teal-500 to-teal-600 shadow-lg shadow-teal-500/30'
-                                : 'bg-white/10'
+                            ? 'bg-gradient-to-r from-teal-500 to-teal-600 shadow-lg shadow-teal-500/30'
+                            : 'bg-white/10'
                             }`}
                     >
                         <Send className={`w-4 h-4 ${message.trim() ? 'text-white' : 'text-white/30'}`} />
@@ -731,7 +731,7 @@ export default function FuturisticChat({
         return () => {
             newSocket.disconnect();
         };
-    }, [session, socketUrl, tripId]);
+    }, [session?.user?.id, socketUrl, tripId]);
 
     const handleSend = (message: string, type: 'text' | 'image' | 'voice') => {
         if (!socket || !session) return;

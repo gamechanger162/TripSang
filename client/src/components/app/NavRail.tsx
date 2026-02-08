@@ -51,7 +51,7 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
             const interval = setInterval(fetchUnread, 30000);
             return () => clearInterval(interval);
         }
-    }, [session]);
+    }, [session?.user?.id]);
 
     const navItems: NavItem[] = [
         { icon: <MessageCircle size={24} />, label: 'DMs', href: '/app', badge: unreadDMs },

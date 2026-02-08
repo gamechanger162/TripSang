@@ -94,7 +94,7 @@ export function TripDetailsClient() {
             console.log('Squad Members:', trip.squadMembers);
             console.log('Is Creator:', trip.creator._id.toString() === userId?.toString());
         }
-    }, [trip, session, userId]);
+    }, [trip, session?.user?.id, userId]);
 
     const isCreator = Boolean(userId && trip?.creator?._id && trip.creator._id.toString() === userId?.toString());
 

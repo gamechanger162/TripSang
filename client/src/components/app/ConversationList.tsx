@@ -158,7 +158,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
         return () => {
             socketManager.off('receive_dm', handleReceiveDM);
         };
-    }, [socketUrl, session, fetchConversations, selectedId]);
+    }, [socketUrl, session?.user?.id, fetchConversations, selectedId]);
 
     const filteredConversations = conversations.filter(conv =>
         conv.name.toLowerCase().includes(searchQuery.toLowerCase())

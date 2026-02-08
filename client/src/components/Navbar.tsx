@@ -148,7 +148,7 @@ export default function Navbar() {
 
             return () => { newSocket.disconnect(); };
         }
-    }, [status, session, update]);
+    }, [status, session?.user?.accessToken, update]);
 
     // Polling for counts (only on main site, not in chat app)
     useEffect(() => {

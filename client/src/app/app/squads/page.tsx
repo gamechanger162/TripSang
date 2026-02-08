@@ -33,6 +33,7 @@ interface Squad {
         profilePicture?: string;
     }>;
     unreadCount?: number;
+    updatedAt?: string;
 }
 
 export default function SquadsPage() {
@@ -55,7 +56,9 @@ export default function SquadsPage() {
                 const response = await tripAPI.getMyTrips();
 
                 if (response.success || response.trips) {
-                    setSquads(response.trips || []);
+                    const fetched = response.trips || [];
+                    console.log('📋 Fetched Squads Order:', fetched.map((s: any) => `${s.title} (${s.updatedAt})`));
+                    setSquads(fetched);
                 }
             } catch (error) {
                 console.error('Failed to fetch squads:', error);
@@ -70,19 +73,25 @@ export default function SquadsPage() {
     }, [status]);
 
     // Socket integration for real-time updates
-    useEffect(() => {
-        const token = session?.user?.accessToken || localStorage.getItem('token');
-        const socket = socketManager.connect(socketUrl, token || undefined);
+    const token = session?.user?.accessToken;
 
-        if (!socket || !session?.user?.id) return;
+    useEffect(() => {
+        const currentToken = token || localStorage.getItem('token');
+
+        // Don't attempt socket connection without auth token
+        if (!currentToken || !session?.user?.id) return;
+
+        const socket = socketManager.connect(socketUrl, currentToken);
 
         const handleReceiveMessage = (message: any) => {
+            console.log('🔔 Client received squad_list_update:', message);
             // Check if message belongs to one of our squads
             // Payload via squad_list_update has tripId
             if (!message.tripId) return;
 
             setSquads(prev => {
                 const existingIndex = prev.findIndex(s => s._id === message.tripId);
+                console.log('   -> matching squad index:', existingIndex);
 
                 if (existingIndex === -1) {
                     // New squad interaction? Fetch to be safe
@@ -110,7 +119,7 @@ export default function SquadsPage() {
         return () => {
             socketManager.off('squad_list_update', handleReceiveMessage);
         };
-    }, [socketUrl, session]);
+    }, [socketUrl, token, session?.user?.id]);
 
     // Don't render if not authenticated
     if (status === 'unauthenticated' || !session) return null;

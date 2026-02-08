@@ -115,7 +115,7 @@ export default function CommunityPage() {
         });
 
         setSocket(newSocket);
-    }, [session, id]);
+    }, [session?.user?.id, id]);
 
     const loadCommunity = async () => {
         try {
