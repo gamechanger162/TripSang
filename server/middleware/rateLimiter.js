@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 /**
  * Rate limiter for OTP requests
@@ -14,10 +14,10 @@ export const otpRateLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Use phone number + IP as key
+    // Use phone number + IP as key (IPv6 compatible)
     keyGenerator: (req) => {
         const phoneNumber = req.body.phoneNumber || '';
-        const ip = req.ip || req.connection.remoteAddress || '';
+        const ip = ipKeyGenerator(req); // Use helper for IPv6 compatibility
         return `${phoneNumber}-${ip}`;
     },
     handler: (req, res) => {
@@ -71,7 +71,7 @@ export const linkAccountRateLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
-        const userId = req.user?._id || req.ip;
+        const userId = req.user?._id || ipKeyGenerator(req); // Use helper for IPv6 compatibility
         return `link-${userId}`;
     }
 });
