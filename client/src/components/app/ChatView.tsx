@@ -274,7 +274,9 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         prev.map(m => m._id === tempId ? data.message : m)
                     );
                 } else {
-                    throw new Error('Failed to send message');
+                    const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    toast.error(error.message || 'Failed to send message');
+                    throw new Error(error.message || 'Failed to send message');
                 }
             } else {
                 // Squad messages use Socket.IO
@@ -350,6 +352,9 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 if (response.ok) {
                     const data = await response.json();
                     setMessages(prev => [...prev, data.message]);
+                } else {
+                    const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    toast.error(error.message || 'Failed to send image');
                 }
             } else {
                 // Squad images use Socket.IO
@@ -362,6 +367,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             }
         } catch (error) {
             console.error('Image upload failed:', error);
+            toast.error('Failed to send image');
         }
     };
 

@@ -49,13 +49,15 @@ router.post('/:id/messages', async (req, res) => {
 
         const { Community, CommunityMessage } = await import('../models/index.js');
 
-        // Verify user is a member
+        // Verify user is a member (use toString for ObjectId comparison)
         const community = await Community.findById(communityId);
         if (!community) {
             return res.status(404).json({ success: false, message: 'Community not found' });
         }
 
-        const isMember = community.members.includes(userId);
+        const isMember = community.members.some(memberId =>
+            memberId.toString() === userId.toString()
+        );
         if (!isMember) {
             return res.status(403).json({ success: false, message: 'You must be a member to send messages' });
         }
