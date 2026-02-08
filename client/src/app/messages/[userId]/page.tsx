@@ -114,7 +114,7 @@ export default function ChatPage() {
             <div className="min-h-screen flex items-center justify-center bg-gray-900">
                 <div className="text-center">
                     <p className="text-gray-600 dark:text-gray-400 mb-4">User not found</p>
-                    <Link href="/messages" className="btn-primary">
+                    <Link href="/app" className="btn-primary">
                         Back to Messages
                     </Link>
                 </div>

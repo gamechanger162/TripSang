@@ -38,7 +38,7 @@ export default function MobileNav() {
 
                 {/* Chat */}
                 <Link
-                    href="/messages"
+                    href="/app"
                     className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive('/messages') ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'}`}
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

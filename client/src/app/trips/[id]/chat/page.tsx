@@ -96,7 +96,7 @@ export default function TripChatPage() {
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-900">
                 <div className="text-center">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Trip not found</h2>
-                    <Link href="/messages" className="text-primary-600 hover:underline">
+                    <Link href="/app" className="text-primary-600 hover:underline">
                         Back to Messages
                     </Link>
                 </div>

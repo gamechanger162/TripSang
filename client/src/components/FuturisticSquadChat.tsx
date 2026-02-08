@@ -355,7 +355,7 @@ export default function FuturisticSquadChat({
                 subtitle={`${squadMembers.length} members • ${connected ? 'Live' : 'Connecting...'}`}
                 avatarIcon={<Users className="w-5 h-5 text-white" />}
                 isConnected={connected}
-                backHref="/messages"
+                backHref="/app"
                 rightContent={
                     <motion.button
                         whileTap={{ scale: 0.9 }}

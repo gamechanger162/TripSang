@@ -254,7 +254,7 @@ export default function CommunityPage() {
             {/* Header */}
             <div className="flex items-center gap-4 px-4 py-3 bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50 z-10">
                 <Link
-                    href="/messages"
+                    href="/app"
                     className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5 text-gray-300" />

@@ -126,7 +126,7 @@ export default function DiscoverCommunitiesPage() {
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
                     <Link
-                        href="/messages"
+                        href="/app"
                         className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-300" />
@@ -160,8 +160,8 @@ export default function DiscoverCommunitiesPage() {
                             key={category}
                             onClick={() => setSelectedCategory(category)}
                             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${selectedCategory === category
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                 }`}
                         >
                             {category}

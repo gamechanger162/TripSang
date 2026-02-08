@@ -167,7 +167,7 @@ export default function FuturisticDirectMessage({
                 title={receiverName}
                 avatarImage={receiverImage}
                 isConnected={connected}
-                backHref="/messages"
+                backHref="/app"
                 rightContent={
                     <div className="flex items-center gap-2">
                         <Link

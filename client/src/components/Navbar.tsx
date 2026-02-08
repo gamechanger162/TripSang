@@ -228,7 +228,7 @@ export default function Navbar() {
                                     onClose={() => setNotificationsOpen(false)}
                                 />
                                 <IconLink href="/friends" iconPath={ICONS.friends} count={pendingFriendsCount} linkColor={linkColor} onClick={() => setNotificationsOpen(false)} />
-                                <IconLink href="/messages" iconPath={ICONS.messages} count={unreadCount} linkColor={linkColor} onClick={() => setNotificationsOpen(false)} />
+                                <IconLink href="/app" iconPath={ICONS.messages} count={unreadCount} linkColor={linkColor} onClick={() => setNotificationsOpen(false)} />
                             </>
                         )}
 
@@ -263,7 +263,7 @@ export default function Navbar() {
                                     isMobile
                                 />
                                 <MobileIconLink href="/friends" iconPath={ICONS.friends} count={pendingFriendsCount} menuIconColor={menuIconColor} onClick={() => setNotificationsOpen(false)} />
-                                <MobileIconLink href="/messages" iconPath={ICONS.messages} count={unreadCount} menuIconColor={menuIconColor} onClick={() => setNotificationsOpen(false)} />
+                                <MobileIconLink href="/app" iconPath={ICONS.messages} count={unreadCount} menuIconColor={menuIconColor} onClick={() => setNotificationsOpen(false)} />
                             </>
                         )}
 
