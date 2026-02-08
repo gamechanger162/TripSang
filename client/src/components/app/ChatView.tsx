@@ -170,21 +170,50 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
         setSending(true);
         try {
-            socketRef.current?.emit('send_message', {
-                tripId: conversationId,
-                message: optimisticMessage.message,
-                type: 'text',
-                replyTo: replyTo ? {
-                    senderName: replyTo.senderName,
-                    message: replyTo.message
-                } : undefined
-            });
+            if (conversationType === 'dm') {
+                // DM messages use REST API
+                const token = session?.user?.accessToken || localStorage.getItem('token');
+                const response = await fetch(`${apiUrl}/api/messages/${conversationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: optimisticMessage.message,
+                        type: 'text',
+                        replyTo: replyTo?._id
+                    })
+                });
 
-            // Remove pending state
-            setMessages(prev =>
-                prev.map(m => m._id === tempId ? { ...m, isPending: false } : m)
-            );
+                if (response.ok) {
+                    const data = await response.json();
+                    // Replace optimistic message with real one
+                    setMessages(prev =>
+                        prev.map(m => m._id === tempId ? { ...data.message, isPending: false } : m)
+                    );
+                } else {
+                    throw new Error('Failed to send message');
+                }
+            } else {
+                // Squad/Community messages use socket
+                socketRef.current?.emit('send_message', {
+                    tripId: conversationId,
+                    message: optimisticMessage.message,
+                    type: 'text',
+                    replyTo: replyTo ? {
+                        senderName: replyTo.senderName,
+                        message: replyTo.message
+                    } : undefined
+                });
+
+                // Remove pending state
+                setMessages(prev =>
+                    prev.map(m => m._id === tempId ? { ...m, isPending: false } : m)
+                );
+            }
         } catch (error) {
+            console.error('Failed to send message:', error);
             // Remove failed message
             setMessages(prev => prev.filter(m => m._id !== tempId));
         } finally {

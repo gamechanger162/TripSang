@@ -89,7 +89,7 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
                     {navItems.map((item) => {
                         const active = isActive(item.href);
                         return (
-                            <Link key={item.href} href={item.href} className="w-full">
+                            <Link key={item.href} href={item.href} prefetch={false} className="w-full">
                                 <motion.div
                                     className={`
                                         relative flex flex-col items-center justify-center gap-1 py-3 rounded-xl cursor-pointer transition-all duration-200
@@ -99,7 +99,6 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
                                         }
                                     `}
                                     whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
                                 >
                                     {/* Active Pill Indicator */}
                                     <AnimatePresence>
@@ -153,7 +152,7 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
                     <span className="text-[10px] font-medium">Home</span>
                 </Link>
 
-                {navItems.slice(0, 3).map((item) => {
+                {navItems.slice(0, 4).map((item) => {
                     const active = isActive(item.href);
                     return (
                         <Link

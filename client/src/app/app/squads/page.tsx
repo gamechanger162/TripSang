@@ -165,9 +165,9 @@ export default function SquadsPage() {
                                                             )}
                                                         </div>
                                                     ))}
-                                                    {squad.squad.length > 4 && (
+                                                    {(squad.squad || []).length > 4 && (
                                                         <div className="member-avatar more">
-                                                            +{squad.squad.length - 4}
+                                                            +{(squad.squad || []).length - 4}
                                                         </div>
                                                     )}
                                                 </div>

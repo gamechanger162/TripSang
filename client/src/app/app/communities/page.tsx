@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { Globe, Users, Lock, Crown, ChevronRight, Plus } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import CreateCommunityModal from '@/components/community/CreateCommunityModal';
 
 interface Community {
     _id: string;
@@ -34,6 +35,7 @@ export default function CommunitiesPage() {
     const [filter, setFilter] = useState<'all' | 'joined'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -122,7 +124,14 @@ export default function CommunitiesPage() {
             router.push('/my-plan');
             return;
         }
-        router.push('/community/create');
+        // Open the create community modal instead of redirecting
+        setShowCreateModal(true);
+    };
+
+    const handleCommunityCreated = (newCommunity: any) => {
+        // Add the new community to the list
+        setCommunities(prev => [newCommunity, ...prev]);
+        setShowCreateModal(false);
     };
 
     if (status === 'loading') {
@@ -499,6 +508,13 @@ export default function CommunitiesPage() {
                     50% { opacity: 0.5; }
                 }
             `}</style>
+
+            {/* Create Community Modal */}
+            <CreateCommunityModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={handleCommunityCreated}
+            />
         </div>
     );
 }
