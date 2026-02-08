@@ -68,7 +68,7 @@ export default function SquadChatPage() {
             )}
 
             {/* Chat View - Full Width */}
-            <div className="flex-1 h-full pb-16 md:pb-0">
+            <div className="flex-1 h-full">
                 <ChatView
                     conversationId={id as string}
                     conversationType="squad"

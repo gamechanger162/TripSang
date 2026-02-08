@@ -24,9 +24,23 @@ export const getConversations = async (req, res) => {
                     p => p && p._id && p._id.toString() !== userId.toString()
                 );
 
-                // Skip if no valid other user found
+                // Handle deleted users
                 if (!otherUser) {
-                    return null;
+                    return {
+                        _id: conv._id,
+                        otherUser: {
+                            _id: 'deleted',
+                            name: 'Deleted User',
+                            profilePicture: '/assets/default-user.png'
+                        },
+                        lastMessage: conv.lastMessage ? {
+                            text: conv.lastMessage.text || '',
+                            timestamp: conv.lastMessage.timestamp,
+                            isOwnMessage: conv.lastMessage.sender?.toString() === userId.toString()
+                        } : null,
+                        unreadCount: 0,
+                        updatedAt: conv.updatedAt
+                    };
                 }
 
                 return {
@@ -44,8 +58,7 @@ export const getConversations = async (req, res) => {
                     unreadCount: conv.unreadCount.get(userId.toString()) || 0,
                     updatedAt: conv.updatedAt
                 };
-            })
-            .filter(conv => conv !== null); // Remove null entries
+            });
 
         res.status(200).json({
             success: true,
@@ -183,22 +196,26 @@ export const getMessageHistory = async (req, res) => {
             .sort({ timestamp: -1 })
             .skip(skip)
             .limit(limit)
-            .populate('sender', 'name')
+            .populate('sender', 'name profilePicture')
             .populate({
                 path: 'replyTo',
                 select: 'sender message type imageUrl',
-                populate: { path: 'sender', select: 'name' }
+                populate: { path: 'sender', select: 'name profilePicture' }
             })
             .lean();
 
-        // Transform messages to include senderName for both message and replyTo
+        // Transform messages to include senderName and senderProfilePicture for both message and replyTo
         messages = messages.map(msg => {
-            // Add senderName from populated sender
+            // Add senderName and senderProfilePicture from populated sender
             if (msg.sender && typeof msg.sender === 'object') {
                 msg.senderName = msg.sender.name || 'Unknown';
+                msg.senderProfilePicture = msg.sender.profilePicture || null;
+                msg.senderId = msg.sender._id; // Keep sender ID for frontend
                 msg.sender = msg.sender._id; // Flatten back to ID for consistency
             } else {
                 msg.senderName = 'Unknown';
+                msg.senderProfilePicture = null;
+                msg.senderId = msg.sender;
             }
             // Handle replyTo senderName
             if (msg.replyTo) {
@@ -214,9 +231,30 @@ export const getMessageHistory = async (req, res) => {
         // Reverse to show oldest first
         messages.reverse();
 
+        // Get conversation with participants populated to identify the other user
+        const conversationWithParticipants = await Conversation.findById(conversationId).populate('participants', 'name profilePicture');
+
+        let conversationData = null;
+        if (conversationWithParticipants) {
+            // Find the other participant
+            const otherUser = conversationWithParticipants.participants.find(
+                p => p._id.toString() !== userId.toString()
+            );
+
+            conversationData = {
+                _id: conversationWithParticipants._id,
+                participants: conversationWithParticipants.participants,
+                otherUserId: otherUser?._id,
+                name: otherUser?.name || 'Unknown User',
+                avatar: otherUser?.profilePicture,
+                type: 'dm'
+            };
+        }
+
         res.status(200).json({
             success: true,
             messages,
+            conversation: conversationData,
             pagination: {
                 currentPage: page,
                 totalPages: Math.ceil(total / limit),

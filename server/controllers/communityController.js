@@ -69,7 +69,10 @@ export const getMyCommunities = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            communities
+            communities: communities.map(c => ({
+                ...c,
+                creator: c.creator || { name: 'Deleted User', profilePicture: '/assets/default-user.png' }
+            }))
         });
     } catch (error) {
         console.error('Get communities error:', error);
@@ -114,9 +117,13 @@ export const discoverCommunities = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            publicCommunities,
+            publicCommunities: publicCommunities.map(c => ({
+                ...c,
+                creator: c.creator || { name: 'Deleted User', profilePicture: '/assets/default-user.png' }
+            })),
             pendingCommunities: pendingCommunities.map(c => ({
                 ...c,
+                creator: c.creator || { name: 'Deleted User', profilePicture: '/assets/default-user.png' },
                 hasPendingRequest: true
             }))
         });
@@ -218,6 +225,74 @@ export const getCommunityDetails = async (req, res) => {
 };
 
 /**
+ * Send a message to a community
+ * POST /api/communities/:id/messages
+ */
+export const sendCommunityMessage = async (req, res) => {
+    try {
+        const { id: communityId } = req.params;
+        const { message, type = 'text', imageUrl, replyTo } = req.body;
+        const userId = req.user._id;
+
+        // Verify user is a member
+        const community = await Community.findById(communityId);
+        if (!community) {
+            return res.status(404).json({ success: false, message: 'Community not found' });
+        }
+
+        const isMember = community.members.some(memberId =>
+            memberId.toString() === userId.toString()
+        );
+
+        if (!isMember) {
+            return res.status(403).json({ success: false, message: 'You must be a member to send messages' });
+        }
+
+        // Create message
+        const newMessage = await CommunityMessage.create({
+            communityId,
+            sender: userId, // Correct field name matching schema
+            message,
+            type,
+            imageUrl,
+            replyTo: replyTo || null
+        });
+
+        const populatedMessage = await CommunityMessage.findById(newMessage._id)
+            .populate('sender', 'name profilePicture')
+            .populate({
+                path: 'replyTo',
+                select: 'sender message type imageUrl',
+                populate: { path: 'sender', select: 'name' }
+            });
+
+        // Transform for response consistency
+        const transformedMessage = {
+            _id: populatedMessage._id,
+            sender: populatedMessage.sender._id,
+            senderName: populatedMessage.sender.name,
+            senderProfilePicture: populatedMessage.sender.profilePicture,
+            message: populatedMessage.message,
+            type: populatedMessage.type,
+            imageUrl: populatedMessage.imageUrl,
+            timestamp: populatedMessage.timestamp,
+            replyTo: populatedMessage.replyTo ? {
+                _id: populatedMessage.replyTo._id,
+                senderName: populatedMessage.replyTo.sender?.name || 'Deleted User',
+                message: populatedMessage.replyTo.message,
+                type: populatedMessage.replyTo.type,
+                imageUrl: populatedMessage.replyTo.imageUrl
+            } : null
+        };
+
+        res.json({ success: true, message: transformedMessage });
+    } catch (error) {
+        console.error('Send community message error:', error);
+        res.status(500).json({ success: false, message: 'Failed to send message', error: error.message });
+    }
+};
+
+/**
  * Get community messages
  * GET /api/communities/:id/messages
  */
@@ -255,16 +330,16 @@ export const getCommunityMessages = async (req, res) => {
         // Transform messages
         const transformedMessages = messages.reverse().map(msg => ({
             _id: msg._id,
-            sender: msg.sender?._id || null, // Handle deleted users
-            senderName: msg.sender?.name || 'Unknown User',
-            senderProfilePicture: msg.sender?.profilePicture || null,
+            sender: msg.sender?._id || 'deleted', // Handle deleted users
+            senderName: msg.sender?.name || 'Deleted User',
+            senderProfilePicture: msg.sender?.profilePicture || '/assets/default-user.png',
             message: msg.message,
             type: msg.type,
             imageUrl: msg.imageUrl,
             timestamp: msg.timestamp,
             replyTo: msg.replyTo ? {
                 _id: msg.replyTo._id,
-                senderName: msg.replyTo.sender?.name || 'Unknown',
+                senderName: msg.replyTo.sender?.name || 'Deleted User',
                 message: msg.replyTo.message,
                 type: msg.replyTo.type,
                 imageUrl: msg.replyTo.imageUrl

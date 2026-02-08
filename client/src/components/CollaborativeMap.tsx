@@ -6,6 +6,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
+// Force hide routing machine container as we only want the path
+import '@/styles/map-overrides.css';
 import { socket } from '@/lib/websocket';
 import toast from 'react-hot-toast';
 import { Share2, ExternalLink } from 'lucide-react';
@@ -83,32 +85,56 @@ function RoutingMachine({ waypoints, startPoint, endPoint }: { waypoints: Waypoi
     useEffect(() => {
         if (!map) return;
 
+        // Filter invalid waypoints specifically for routing to avoid OSRM crashes/errors
+        const validWaypoints = (waypoints || []).filter(wp =>
+            wp && typeof wp.lat === 'number' && typeof wp.lng === 'number'
+        );
+
+        // Ensure startPoint is valid
+        if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') return;
+
         const points = [
             L.latLng(startPoint.lat, startPoint.lng),
-            ...waypoints.map(wp => L.latLng(wp.lat, wp.lng)),
-            ...(endPoint ? [L.latLng(endPoint.lat, endPoint.lng)] : [])
+            ...validWaypoints.map(wp => L.latLng(wp.lat, wp.lng)),
+            ...(endPoint && typeof endPoint.lat === 'number' && typeof endPoint.lng === 'number'
+                ? [L.latLng(endPoint.lat, endPoint.lng)]
+                : [])
         ];
 
         if (routingControlRef.current) {
-            routingControlRef.current.setWaypoints(points);
+            try {
+                routingControlRef.current.setWaypoints(points);
+            } catch (e) {
+                console.warn('Failed to update waypoints', e);
+            }
         } else {
-            routingControlRef.current = (L as any).Routing.control({
-                waypoints: points,
-                lineOptions: {
-                    styles: [{ color: '#6366f1', opacity: 0.8, weight: 6 }]
-                },
-                serviceUrl: 'https://router.project-osrm.org/route/v1',
-                show: false, // Hide the itenerary text box
-                addWaypoints: false,
-                routeWhileDragging: false,
-                fitSelectedRoutes: true,
-                showAlternatives: false,
-                createMarker: function () { return null; } // Hide default markers so we can use our custom ones
-            }).addTo(map);
+            try {
+                routingControlRef.current = (L as any).Routing.control({
+                    waypoints: points,
+                    lineOptions: {
+                        styles: [{ color: '#6366f1', opacity: 0.8, weight: 6 }]
+                    },
+                    // Use OpenStreetMap routing service instead of OSRM demo server to avoid demo restrictions
+                    serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
+                    show: false,
+                    addWaypoints: false,
+                    routeWhileDragging: false,
+                    fitSelectedRoutes: true,
+                    showAlternatives: false,
+                    createMarker: function () { return null; }
+                }).addTo(map);
+
+                // Handle routing errors gracefully
+                routingControlRef.current.on('routingerror', function (e: any) {
+                    console.warn('Routing error:', e);
+                });
+            } catch (e) {
+                console.error('Failed to initialize Routing Machine', e);
+            }
         }
 
         return () => {
-            // Cleanup: Removing control can sometimes cause React lifecycle issues with Leaflet, keeping careful watch
+            // Cleanup provided by Leaflet usually, but we keep ref for updates
         };
     }, [map, waypoints, startPoint, endPoint]);
 
@@ -123,6 +149,11 @@ function MapEvents({ onMapClick }: { onMapClick: (e: L.LeafletMouseEvent) => voi
 }
 
 const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isReadOnly = false }: CollaborativeMapProps) => {
+    // Safety check for startPoint
+    if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') {
+        return <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-900/50">Invalid map coordinates</div>;
+    }
+
     const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints || []);
     const [socketConnected, setSocketConnected] = useState(false);
 
@@ -251,7 +282,7 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                 )}
 
                 {/* User Added Waypoints (Numbered) */}
-                {waypoints.map((wp, idx) => (
+                {waypoints.filter(wp => wp && typeof wp.lat === 'number' && typeof wp.lng === 'number').map((wp, idx) => (
                     <Marker key={idx} position={[wp.lat, wp.lng]} icon={createCustomIcon('stop', idx + 1)}>
                         <Popup>
                             <div className="flex flex-col gap-2">

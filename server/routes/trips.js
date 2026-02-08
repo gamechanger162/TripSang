@@ -162,6 +162,7 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
                 title: trip.title,
                 coverPhoto: trip.coverPhoto,
                 _id: trip._id,
+                creator: trip.creator, // Return creator ID
                 // Include location for map integration
                 startPoint: trip.startPoint,
                 endPoint: trip.endPoint,
@@ -173,7 +174,8 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
                 senderName: pinnedMessage.senderId?.name || pinnedMessage.senderName,
                 type: pinnedMessage.type,
                 imageUrl: pinnedMessage.imageUrl,
-                timestamp: pinnedMessage.timestamp
+                timestamp: pinnedMessage.timestamp,
+                pinnedBy: trip.pinnedBy // Return who pinned it
             } : null
         });
     } catch (error) {

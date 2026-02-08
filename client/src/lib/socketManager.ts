@@ -31,7 +31,9 @@ class SocketManager {
     /**
      * Initialize the socket connection (call once on app load)
      */
-    connect(socketUrl: string): Socket | null {
+    connect(socketUrl: string, authToken?: string): Socket | null {
+        // Updated to accept token
+
         // Already connected to same URL
         if (this.socket?.connected && this.socketUrl === socketUrl) {
             return this.socket;
@@ -43,7 +45,7 @@ class SocketManager {
         }
 
         this.socketUrl = socketUrl;
-        const token = localStorage.getItem('token');
+        const token = authToken || localStorage.getItem('token');
         if (!token) {
             console.warn('SocketManager: No auth token');
             return null;

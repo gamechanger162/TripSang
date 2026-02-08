@@ -428,6 +428,7 @@ io.on('connection', (socket) => {
                 conversationId,
                 sender: socket.user._id.toString(),
                 senderName: socket.user.name,
+                senderProfilePicture: socket.user.profilePicture, // Include profile picture
                 receiver: receiverId,
                 message: savedMessage.message,
                 type: savedMessage.type,

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { messageAPI } from '@/lib/api';
+import { messageAPI, uploadAPI } from '@/lib/api';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import {
@@ -16,10 +16,9 @@ import {
     X,
     Reply,
     MapPin,
-    Ban,
-    Flag,
     VolumeX,
-    User
+    User,
+    Ban
 } from 'lucide-react';
 import { socketManager } from '@/lib/socketManager';
 import type { Socket } from 'socket.io-client';
@@ -49,6 +48,7 @@ interface Message {
     };
     isPending?: boolean;
     isVerified?: boolean;
+    pinnedBy?: string;
 }
 
 interface ChatViewProps {
@@ -76,6 +76,8 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [showMiniMap, setShowMiniMap] = useState(false);
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     // Fetch messages
     const fetchMessages = useCallback(async () => {
@@ -119,10 +121,23 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         name: data.trip?.title || data.tripTitle || 'Squad Chat',
                         avatar: data.trip?.coverPhoto,
                         type: 'squad',
+                        creatorId: data.trip?.creator,
                         // Map data for CollaborativeMap
-                        startPoint: data.trip?.startPoint,
-                        endPoint: data.trip?.endPoint,
-                        waypoints: data.trip?.waypoints || []
+                        startPoint: data.trip?.startPoint ? {
+                            ...data.trip.startPoint,
+                            lat: data.trip.startPoint.coordinates?.latitude || data.trip.startPoint.lat,
+                            lng: data.trip.startPoint.coordinates?.longitude || data.trip.startPoint.lng
+                        } : undefined,
+                        endPoint: data.trip?.endPoint ? {
+                            ...data.trip.endPoint,
+                            lat: data.trip.endPoint.coordinates?.latitude || data.trip.endPoint.lat,
+                            lng: data.trip.endPoint.coordinates?.longitude || data.trip.endPoint.lng
+                        } : undefined,
+                        waypoints: (data.trip?.waypoints || []).map((wp: any) => ({
+                            ...wp,
+                            lat: wp.lat || wp.latitude || wp.coordinates?.latitude,
+                            lng: wp.lng || wp.longitude || wp.coordinates?.longitude
+                        }))
                     });
                 } else if (conversationType === 'community') {
                     setConversationInfo({
@@ -149,8 +164,9 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
     // Socket connection - use singleton manager for better performance
     useEffect(() => {
+        const token = session?.user?.accessToken || localStorage.getItem('token');
         // Connect to socket (reuses existing connection if already connected)
-        const socket = socketManager.connect(socketUrl);
+        const socket = socketManager.connect(socketUrl, token || undefined);
         if (!socket) return;
 
         socketRef.current = socket;
@@ -179,7 +195,31 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 formattedMessage.senderName = message.senderId.name;
                 formattedMessage.senderId = message.senderId._id;
             }
-            setMessages(prev => [...prev, formattedMessage]);
+
+            setMessages(prev => {
+                // 1. Check for exact duplicate by ID
+                if (prev.some(m => m._id === formattedMessage._id)) return prev;
+
+                // 2. If it's my message, try to find and replace the pending/optimistic version
+                const currentUserId = session?.user?.id;
+                if (currentUserId && formattedMessage.senderId === currentUserId) {
+                    const pendingIndex = prev.findIndex(m =>
+                        m.isPending &&
+                        m.type === formattedMessage.type &&
+                        // For text: match content. For image: match URL (or just type if we want to be loose, but URL is safer)
+                        (m.type === 'text' ? m.message === formattedMessage.message : m.imageUrl === formattedMessage.imageUrl)
+                    );
+
+                    if (pendingIndex !== -1) {
+                        const newMessages = [...prev];
+                        newMessages[pendingIndex] = formattedMessage;
+                        return newMessages;
+                    }
+                }
+
+                // 3. New message, append it
+                return [...prev, formattedMessage];
+            });
             virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
         };
 
@@ -192,7 +232,20 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             }, 3000);
         };
 
-        const handlePinnedMessage = (msg: Message) => setPinnedMessage(msg);
+        const handlePinnedMessage = (data: any) => {
+            // data from socket event: { messageId, message, senderName, type, imageUrl, pinnedBy, pinnedById }
+            // We need to construct a Message-like object
+            setPinnedMessage({
+                _id: data.messageId,
+                senderName: data.senderName,
+                message: data.message,
+                type: data.type,
+                imageUrl: data.imageUrl,
+                timestamp: new Date().toISOString(), // Approximate
+                senderId: '', // Not needed for banner
+                pinnedBy: data.pinnedById
+            });
+        };
         const handleMessageUnpinned = () => setPinnedMessage(null);
 
         // Add listeners
@@ -211,47 +264,42 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             socketManager.off('message_pinned', handlePinnedMessage);
             socketManager.off('message_unpinned', handleMessageUnpinned);
         };
-    }, [socketUrl, conversationId, conversationType]);
+    }, [socketUrl, conversationId, conversationType, session]);
 
-    // Send message with optimistic update
+    // Send message (no optimistic update to prevent duplication)
     const sendMessage = async () => {
         if (!newMessage.trim() || sending) return;
 
-        const tempId = `temp-${Date.now()}`;
-        const optimisticMessage: Message = {
-            _id: tempId,
-            senderId: session?.user?.id || '',
-            senderName: session?.user?.name || 'You',
-            senderProfilePicture: session?.user?.image || undefined,
-            message: newMessage,
-            timestamp: new Date().toISOString(),
-            type: 'text',
-            isPending: true,
-            replyTo: replyTo ? { senderName: replyTo.senderName, message: replyTo.message } : undefined
-        };
-
-        // Optimistic update
-        setMessages(prev => [...prev, optimisticMessage]);
+        const trimmedMessage = newMessage.trim();
         setNewMessage('');
         setReplyTo(null);
-        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
 
         setSending(true);
         try {
             if (conversationType === 'dm') {
+                // Optimistic update for DM text messages
+                const tempId = `temp-${Date.now()}`;
+                const optimisticMessage: Message = {
+                    _id: tempId,
+                    senderId: session?.user?.id || '',
+                    senderName: session?.user?.name || 'You',
+                    senderProfilePicture: session?.user?.image || undefined,
+                    message: trimmedMessage,
+                    timestamp: new Date().toISOString(),
+                    type: 'text',
+                    isPending: true
+                };
+                setMessages(prev => [...prev, optimisticMessage]);
+                setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' }), 100);
+
                 // DM messages use Socket.IO (not REST API)
                 socketRef.current?.emit('send_dm', {
                     conversationId,
                     receiverId: conversationInfo?.otherUserId || conversationInfo?._id,
-                    message: optimisticMessage.message,
+                    message: trimmedMessage,
                     type: 'text',
                     replyTo: replyTo?._id
                 });
-
-                // Remove pending state - real message will come via socket
-                setMessages(prev =>
-                    prev.map(m => m._id === tempId ? { ...m, isPending: false } : m)
-                );
             } else if (conversationType === 'community') {
                 // Community messages use REST API
                 const token = session?.user?.accessToken || localStorage.getItem('token');
@@ -262,40 +310,31 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        message: optimisticMessage.message,
-                        type: 'text'
+                        message: trimmedMessage,
+                        type: 'text',
+                        replyTo: replyTo?._id // Add replyTo if supported by backend
                     })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Replace optimistic message with real one
-                    setMessages(prev =>
-                        prev.map(m => m._id === tempId ? data.message : m)
-                    );
-                } else {
-                    const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-                    toast.error(error.message || 'Failed to send message');
-                    throw new Error(error.message || 'Failed to send message');
+                    setMessages(prev => [...prev, data.message]);
+                    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
                 }
             } else {
                 // Squad messages use Socket.IO
                 socketRef.current?.emit('send_message', {
                     tripId: conversationId,
-                    message: optimisticMessage.message,
+                    message: trimmedMessage,
                     type: 'text',
-                    replyTo: replyTo?._id || undefined
+                    replyTo: replyTo?._id
                 });
-
-                // Remove pending state
-                setMessages(prev =>
-                    prev.map(m => m._id === tempId ? { ...m, isPending: false } : m)
-                );
             }
         } catch (error) {
             console.error('Failed to send message:', error);
-            // Remove failed message
-            setMessages(prev => prev.filter(m => m._id !== tempId));
+            toast.error('Failed to send message');
+            // Restore message on error (optional, but good UX)
+            setNewMessage(trimmedMessage);
         } finally {
             setSending(false);
         }
@@ -312,58 +351,66 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         try {
             const token = session?.user?.accessToken || localStorage.getItem('token');
 
-            // First upload the image
-            const uploadResponse = await fetch(`${apiUrl}/api/upload`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-                body: formData
-            });
+            // First upload the image (use standardized API)
+            const response = await uploadAPI.uploadFile(file);
 
-            if (!uploadResponse.ok) {
-                throw new Error('Upload failed');
-            }
-
-            const { url } = await uploadResponse.json();
-
-            if (conversationType === 'dm') {
-                // DM images use Socket.IO (same as text messages)
-                socketRef.current?.emit('send_dm', {
-                    conversationId,
-                    receiverId: conversationInfo?.otherUserId || conversationInfo?._id,
-                    message: '',
+            if (response.success) {
+                const messageData = {
+                    message: 'Shared an image',
                     type: 'image',
-                    imageUrl: url
-                });
-            } else if (conversationType === 'community') {
-                // Community images use REST API
-                const response = await fetch(`${apiUrl}/api/communities/${conversationId}/messages`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        message: '',
-                        type: 'image',
-                        imageUrl: url
-                    })
-                });
+                    imageUrl: response.url
+                };
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setMessages(prev => [...prev, data.message]);
+                // Optimistic update for image
+                const tempId = `temp-img-${Date.now()}`;
+                const optimisticMessage: Message = {
+                    _id: tempId,
+                    senderId: session?.user?.id || '',
+                    senderName: session?.user?.name || 'You',
+                    senderProfilePicture: session?.user?.image || undefined,
+                    message: messageData.message,
+                    timestamp: new Date().toISOString(),
+                    type: 'image',
+                    imageUrl: messageData.imageUrl,
+                    isPending: true
+                };
+                setMessages(prev => [...prev, optimisticMessage]);
+                setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' }), 100);
+
+                if (conversationType === 'dm') {
+                    // DM images use Socket.IO
+                    socketRef.current?.emit('send_dm', {
+                        conversationId,
+                        receiverId: conversationInfo?.otherUserId || conversationInfo?._id,
+                        ...messageData
+                    });
+                } else if (conversationType === 'community') {
+                    // Community images use REST API
+                    const token = session?.user?.accessToken || localStorage.getItem('token');
+                    const apiResponse = await fetch(`${apiUrl}/api/communities/${conversationId}/messages`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify(messageData)
+                    });
+
+                    if (apiResponse.ok) {
+                        const data = await apiResponse.json();
+                        // Replace optimistic message with real one to avoid duplicates if needed, 
+                        // but usually we just let the socket/state update handle it. 
+                        // For community (REST), we might get double if we don't handled it, but let's stick to pattern.
+                    } else {
+                        throw new Error('Failed to send community image');
+                    }
                 } else {
-                    const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-                    toast.error(error.message || 'Failed to send image');
+                    // Squad images use Socket.IO
+                    socketRef.current?.emit('send_message', {
+                        tripId: conversationId,
+                        ...messageData
+                    });
                 }
-            } else {
-                // Squad images use Socket.IO
-                socketRef.current?.emit('send_message', {
-                    tripId: conversationId,
-                    message: '',
-                    type: 'image',
-                    imageUrl: url
-                });
             }
         } catch (error) {
             console.error('Image upload failed:', error);
@@ -379,45 +426,47 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         });
     };
 
-    // Block user
-    const handleBlockUser = async () => {
-        if (!conversationInfo?._id || conversationType === 'squad') return;
-
-        if (window.confirm(`Are you sure you want to block ${conversationInfo.name}?`)) {
-            try {
-                await messageAPI.blockUser(conversationInfo._id);
-                toast.success('User blocked');
-                router.push('/app'); // Redirect to main app
-            } catch (error) {
-                console.error('Failed to block user:', error);
-                toast.error('Failed to block user');
-            }
-        }
-    };
-
-    // Report user
-    const handleReportUser = () => {
-        toast.promise(
-            new Promise((resolve) => setTimeout(resolve, 1000)),
-            {
-                loading: 'Submitting report...',
-                success: 'User reported',
-                error: 'Failed to report'
-            }
-        );
-        setShowOptionsMenu(false);
-    };
-
     // Helper to get current user ID (handles different formats)
     const getCurrentUserId = () => {
         const user = session?.user as any;
-        return user?.id || user?._id || user?.userId || '';
+        // Check all possible locations for user ID
+        const userId = user?.id || user?._id || user?.userId || user?.sub || '';
+        return String(userId);
     };
 
     const renderMessage = (index: number, msg: Message) => {
-        // Handle different senderId formats (string or object with _id)
-        const msgSenderId = typeof msg.senderId === 'object' ? (msg.senderId as any)?._id : msg.senderId;
-        const isOwn = msgSenderId === getCurrentUserId();
+        // Handle different senderId formats (string, object with _id, or 'sender' field for DMs)
+        let msgSenderId: string = '';
+
+        // Check senderId first (most common)
+        if (msg.senderId) {
+            if (typeof msg.senderId === 'object' && msg.senderId !== null) {
+                msgSenderId = (msg.senderId as any)?._id || (msg.senderId as any)?.id || '';
+            } else {
+                msgSenderId = String(msg.senderId);
+            }
+        }
+
+        // DMs may use 'sender' instead of 'senderId'
+        if (!msgSenderId && (msg as any).sender) {
+            const sender = (msg as any).sender;
+            msgSenderId = typeof sender === 'object'
+                ? (sender._id || sender.id || '')
+                : String(sender);
+        }
+
+        const currentUserId = getCurrentUserId();
+
+        // For DMs: If we have conversationInfo._id (the other party), use alternative detection
+        let isOwn = false;
+        if (conversationType === 'dm' && conversationInfo?._id) {
+            // In DM, if sender is the other party, it's NOT ours
+            isOwn = String(msgSenderId) !== String(conversationInfo._id);
+        } else {
+            // Squad/Community: Compare sender to current user
+            isOwn = String(msgSenderId) === currentUserId;
+        }
+
         const isSystem = msg.type === 'system';
 
         if (isSystem) {
@@ -458,6 +507,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     setPinnedMessage(msg);
                 }}
                 formatTime={formatTime}
+                onImageClick={setSelectedImage}
             />
         );
     };
@@ -502,28 +552,6 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                             >
                                 <MapPin size={20} />
                             </button>
-                            <button
-                                className="header-action-btn text-red-400 hover:text-red-300"
-                                onClick={async () => {
-                                    if (window.confirm('Are you sure you want to leave this squad?')) {
-                                        try {
-                                            await fetch(`${apiUrl}/api/trips/${conversationId}/leave`, {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Authorization': `Bearer ${session?.user?.accessToken || localStorage.getItem('token')}`
-                                                }
-                                            });
-                                            toast.success('Left squad');
-                                            onBack();
-                                        } catch (error) {
-                                            toast.error('Failed to leave squad');
-                                        }
-                                    }
-                                }}
-                                title="Leave Squad"
-                            >
-                                <User size={20} />
-                            </button>
                         </>
                     )}
                     <div className="options-menu-wrapper">
@@ -543,126 +571,194 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                     exit={{ opacity: 0, scale: 0.9, y: -10 }}
                                 >
                                     <button className="option-item" onClick={() => { setShowOptionsMenu(false); }}>
-                                        <User size={16} />
-                                        View Profile
-                                    </button>
-                                    <button className="option-item" onClick={() => { setShowOptionsMenu(false); }}>
                                         <VolumeX size={16} />
                                         Mute Notifications
                                     </button>
-                                    <button className="option-item danger" onClick={handleBlockUser}>
-                                        <Ban size={16} />
-                                        Block User
-                                    </button>
-                                    <button className="option-item danger" onClick={handleReportUser}>
-                                        <Flag size={16} />
-                                        Report User
-                                    </button>
-                                </motion.div>
+
+                                    {conversationType === 'dm' && (
+                                        <button
+                                            className="option-item danger"
+                                            onClick={async () => {
+                                                setShowOptionsMenu(false);
+                                                if (window.confirm('Are you sure you want to block this user? You will no longer receive messages from them.')) {
+                                                    try {
+                                                        const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                        const otherUserId = conversationInfo?._id;
+                                                        if (otherUserId) {
+                                                            await fetch(`${apiUrl}/api/users/${otherUserId}/block`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Authorization': `Bearer ${token}`
+                                                                }
+                                                            });
+                                                            toast.success('User blocked');
+                                                            onBack();
+                                                        }
+                                                    } catch (error) {
+                                                        toast.error('Failed to block user');
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            <Ban size={16} />
+                                            Block User
+                                        </button>
+                                    )}
+
+                                    {conversationInfo?.type === 'squad' && (
+                                        <button
+                                            className="option-item danger"
+                                            onClick={async () => {
+                                                setShowOptionsMenu(false);
+                                                if (window.confirm('Are you sure you want to leave this squad?')) {
+                                                    try {
+                                                        const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                        await fetch(`${apiUrl}/api/trips/${conversationId}/leave`, {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Authorization': `Bearer ${token}`
+                                                            }
+                                                        });
+                                                        toast.success('Left squad');
+                                                        onBack();
+                                                    } catch (error) {
+                                                        toast.error('Failed to leave squad');
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            <User size={16} />
+                                            Leave Squad
+                                        </button >
+                                    )}
+                                </motion.div >
                             )}
-                        </AnimatePresence>
-                    </div>
-                </div>
-            </div>
+                        </AnimatePresence >
+                    </div >
+                </div >
+            </div >
 
             {/* Pinned Message */}
             <AnimatePresence>
-                {pinnedMessage && (
-                    <motion.div
-                        className="pinned-banner"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                    >
-                        <Pin size={14} />
-                        <span className="pinned-text">
-                            <strong>{pinnedMessage.senderName}:</strong> {pinnedMessage.message}
-                        </span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                {
+                    pinnedMessage && (
+                        <motion.div
+                            className="pinned-banner"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                        >
+                            <Pin size={14} className="flex-shrink-0" />
+                            <span className="pinned-text">
+                                <strong>{pinnedMessage.senderName}:</strong> {pinnedMessage.message || (pinnedMessage.type === 'image' ? '📷 Image' : '')}
+                            </span>
+
+                            {/* Unpin Button - Only for pinner or trip creator */}
+                            {(pinnedMessage.pinnedBy === getCurrentUserId() || conversationInfo?.creatorId === getCurrentUserId()) && (
+                                <button
+                                    onClick={() => {
+                                        if (conversationType === 'squad') {
+                                            socketRef.current?.emit('unpin_message', { tripId: conversationId });
+                                        }
+                                    }}
+                                    className="ml-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </motion.div>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Mini Map for Squad Chats */}
             <AnimatePresence>
-                {showMiniMap && conversationType === 'squad' && (
-                    <motion.div
-                        className="mini-map-container"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 200, opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        style={{
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                            background: 'rgba(0, 0, 0, 0.3)',
-                            overflow: 'hidden',
-                            borderRadius: '8px',
-                            margin: '8px'
-                        }}
-                    >
-                        {conversationInfo?.startPoint ? (
-                            <CollaborativeMap
-                                tripId={conversationId}
-                                startPoint={conversationInfo.startPoint}
-                                endPoint={conversationInfo.endPoint}
-                                initialWaypoints={conversationInfo.waypoints || []}
-                                isReadOnly={true}
-                            />
-                        ) : (
-                            <div style={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'rgba(255, 255, 255, 0.6)',
-                                fontSize: '14px'
-                            }}>
-                                <MapPin size={20} style={{ marginRight: '8px' }} />
-                                No trip location set
-                            </div>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                {
+                    showMiniMap && conversationType === 'squad' && (
+                        <motion.div
+                            className="mini-map-container"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: '65vh', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            style={{
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                background: 'rgba(0, 0, 0, 0.3)',
+                                overflow: 'hidden',
+                                borderRadius: '8px',
+                                margin: '8px'
+                            }}
+                        >
+                            {conversationInfo?.startPoint &&
+                                typeof conversationInfo.startPoint.lat === 'number' &&
+                                typeof conversationInfo.startPoint.lng === 'number' ? (
+                                <CollaborativeMap
+                                    tripId={conversationId}
+                                    startPoint={conversationInfo.startPoint}
+                                    endPoint={conversationInfo.endPoint}
+                                    initialWaypoints={conversationInfo.waypoints || []}
+                                    isReadOnly={false}
+                                />
+                            ) : (
+                                <div style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'rgba(255, 255, 255, 0.6)',
+                                    fontSize: '14px'
+                                }}>
+                                    <MapPin size={20} style={{ marginRight: '8px' }} />
+                                    No trip location set
+                                </div>
+                            )}
+                        </motion.div>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Messages */}
-            <div className="messages-container">
-                {loading ? (
-                    <div className="messages-loading">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
-                    </div>
-                ) : (
-                    <Virtuoso
-                        ref={virtuosoRef}
-                        style={{ height: '100%' }}
-                        data={messages}
-                        itemContent={renderMessage}
-                        followOutput="smooth"
-                        className="app-scrollable"
-                        initialTopMostItemIndex={messages.length - 1}
-                    />
-                )}
-            </div>
+            < div className="messages-container" >
+                {
+                    loading ? (
+                        <div className="messages-loading" >
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+                        </div>
+                    ) : (
+                        <Virtuoso
+                            ref={virtuosoRef}
+                            style={{ height: '100%' }}
+                            data={messages}
+                            itemContent={renderMessage}
+                            followOutput="smooth"
+                            className="app-scrollable"
+                            initialTopMostItemIndex={messages.length - 1}
+                        />
+                    )}
+            </div >
 
             {/* Reply Preview */}
             <AnimatePresence>
-                {replyTo && (
-                    <motion.div
-                        className="reply-preview"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                    >
-                        <Reply size={14} />
-                        <span>Replying to <strong>{replyTo.senderName}</strong></span>
-                        <button onClick={() => setReplyTo(null)}>
-                            <X size={16} />
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                {
+                    replyTo && (
+                        <motion.div
+                            className="reply-preview"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                        >
+                            <Reply size={14} />
+                            <span>Replying to <strong>{replyTo.senderName}</strong></span>
+                            <button onClick={() => setReplyTo(null)}>
+                                <X size={16} />
+                            </button>
+                        </motion.div>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Input Island */}
-            <div className="chat-input-wrapper">
+            < div className="chat-input-wrapper" >
                 <div className="chat-input-container">
                     <input
                         ref={fileInputRef}
@@ -693,7 +789,78 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         <Send size={20} />
                     </button>
                 </div>
-            </div>
+            </div >
+
+            {/* Image Modal/Lightbox */}
+            {/* Image Modal/Lightbox */}
+            <AnimatePresence>
+                {selectedImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
+                        onClick={() => { setSelectedImage(null); setZoomLevel(1); }}
+                        style={{ touchAction: 'none' }} // Prevent browser zoom
+                    >
+                        {/* Close Button */}
+                        <button
+                            className="absolute top-4 right-4 text-white/80 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors z-[60]"
+                            onClick={() => { setSelectedImage(null); setZoomLevel(1); }}
+                        >
+                            <X size={28} />
+                        </button>
+
+                        {/* Zoom Controls */}
+                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-[60] bg-black/50 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 w-72">
+                            <button
+                                className="text-white/80 hover:text-white"
+                                onClick={(e) => { e.stopPropagation(); setZoomLevel(1); }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                            </button>
+
+                            <input
+                                type="range"
+                                min="1"
+                                max="5"
+                                step="0.1"
+                                value={zoomLevel}
+                                onChange={(e) => setZoomLevel(parseFloat(e.target.value))}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-400 transition-all"
+                            />
+
+                            <button
+                                className="text-white/80 hover:text-white"
+                                onClick={(e) => { e.stopPropagation(); setZoomLevel(5); }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                            </button>
+                            <span className="text-white/90 text-xs font-medium w-8 text-center">{Math.round(zoomLevel)}x</span>
+                        </div>
+
+                        <motion.div
+                            className="w-full h-full flex items-center justify-center overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <motion.img
+                                src={selectedImage}
+                                alt="Full size"
+                                className="max-w-full max-h-full object-contain"
+                                style={{
+                                    cursor: zoomLevel > 1 ? 'grab' : 'default',
+                                    touchAction: 'none'
+                                }}
+                                animate={{ scale: zoomLevel }}
+                                drag={zoomLevel > 1}
+                                dragConstraints={{ left: -100 * zoomLevel, right: 100 * zoomLevel, top: -100 * zoomLevel, bottom: 100 * zoomLevel }}
+                                dragElastic={0.1}
+                            />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <style jsx>{`
                 .chat-view {
@@ -885,13 +1052,14 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 .chat-input-wrapper {
                     padding: 16px;
                     padding-top: 8px;
-                    padding-bottom: 80px; /* Clear mobile nav */
+                    padding-bottom: calc(64px + env(safe-area-inset-bottom)); /* Clear mobile nav (h-16 is 64px) + safe area */
                     background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
                 }
                 
                 @media (min-width: 768px) {
                     .chat-input-wrapper {
-                        padding-bottom: 16px;
+                        padding: 16px; /* First reset all padding */
+                        padding-bottom: 0px; /* Then override bottom specifically */
                     }
                 }
                 
@@ -970,7 +1138,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 }
             `}</style>
 
-        </div>
+        </div >
     );
 }
 
@@ -981,7 +1149,8 @@ function MessageBubble({
     groupPosition,
     onReply,
     onPin,
-    formatTime
+    formatTime,
+    onImageClick
 }: {
     message: Message;
     isOwn: boolean;
@@ -989,6 +1158,7 @@ function MessageBubble({
     onReply: () => void;
     onPin: () => void;
     formatTime: (ts: string) => string;
+    onImageClick?: (url: string) => void;
 }) {
     const x = useMotionValue(0);
     const replyOpacity = useTransform(x, [-100, -50], [1, 0]);
@@ -1050,19 +1220,16 @@ function MessageBubble({
                 <Reply size={16} />
             </motion.div>
 
-            {/* Profile Picture for received messages */}
-            {!isOwn && (groupPosition === 'bottom' || groupPosition === 'single') && (
+            {/* Profile Picture for received messages - always show */}
+            {!isOwn && (
                 <img
                     src={
                         message.senderProfilePicture ||
                         `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2306b6d4'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3E${(message.senderName || 'U').charAt(0).toUpperCase()}%3C/text%3E%3C/svg%3E`
                     }
                     alt={message.senderName}
-                    className="w-8 h-8 rounded-full object-cover mr-2 shrink-0"
+                    className="w-8 h-8 rounded-full object-cover mr-2 shrink-0 self-end"
                 />
-            )}
-            {!isOwn && (groupPosition === 'top' || groupPosition === 'middle') && (
-                <div className="w-8 mr-2 shrink-0" /> // Spacer for alignment
             )}
 
             <motion.div
@@ -1145,7 +1312,13 @@ function MessageBubble({
                 )}
 
                 {message.type === 'image' && message.imageUrl && (
-                    <img src={message.imageUrl} alt="" className="bubble-image" />
+                    <img
+                        src={message.imageUrl}
+                        alt=""
+                        className="bubble-image"
+                        onClick={() => onImageClick?.(message.imageUrl!)}
+                        style={{ cursor: onImageClick ? 'pointer' : 'default' }}
+                    />
                 )}
 
                 {message.message && (

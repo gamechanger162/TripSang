@@ -117,7 +117,7 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
                                     {/* Icon with Badge */}
                                     <div className="relative">
                                         {item.icon}
-                                        {item.badge && item.badge > 0 && (
+                                        {typeof item.badge === 'number' && item.badge > 0 && (
                                             <motion.span
                                                 initial={{ scale: 0 }}
                                                 animate={{ scale: 1 }}
@@ -163,7 +163,7 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
                         >
                             <div className="relative">
                                 {item.icon}
-                                {item.badge && item.badge > 0 && (
+                                {typeof item.badge === 'number' && item.badge > 0 && (
                                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full" />
                                 )}
                             </div>
