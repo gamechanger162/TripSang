@@ -181,15 +181,19 @@ export const getMessageHistory = async (req, res) => {
             });
         }
 
-        if (!conversation.participants.includes(userId)) {
+        if (!conversation.participants.some(p => p.toString() === userId.toString())) {
+            console.log('⛔ Auth failed: User not in conversation participants', { userId, participants: conversation.participants });
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to view this conversation.'
             });
         }
 
+        console.log(`📥 getMessages for conversation: ${conversationId}`);
+
         // Get total count
         const total = await DirectMessage.countDocuments({ conversationId });
+        console.log(`📥 Found total: ${total} messages`);
 
         // Get paginated messages with sender populated
         let messages = await DirectMessage.find({ conversationId })
