@@ -331,9 +331,14 @@ io.on('connection', (socket) => {
     // Send Direct Message Event
     socket.on('send_dm', async (data) => {
         try {
+            console.log('--- send_dm received ---');
+            console.log('Data:', JSON.stringify(data, null, 2));
+            console.log('Socket User:', socket.user ? socket.user._id : 'No socket user');
+
             const { conversationId, receiverId, message, type = 'text', imageUrl, replyTo } = data;
 
             if (!conversationId || !receiverId || (!message && type === 'text')) {
+                console.error('Missing required fields:', { conversationId, receiverId, message, type });
                 return socket.emit('error', { message: 'Missing required fields' });
             }
 
@@ -344,8 +349,11 @@ io.on('connection', (socket) => {
             const receiver = await User.findById(receiverId);
 
             if (!receiver) {
+                console.error('Recipient not found:', receiverId);
                 return socket.emit('error', { message: 'Recipient not found' });
             }
+
+            console.log('Sender:', sender._id, 'Receiver:', receiver._id);
 
             // Check if sender has blocked receiver
             const senderBlockedReceiver = sender.blockedUsers?.some(
@@ -368,6 +376,7 @@ io.on('connection', (socket) => {
             // Verify conversation exists and user is participant
             const conversation = await Conversation.findById(conversationId);
             if (!conversation || !conversation.participants.includes(socket.user._id)) {
+                console.error('Unauthorized conversation access:', conversationId);
                 return socket.emit('error', { message: 'Unauthorized' });
             }
 
@@ -382,9 +391,10 @@ io.on('connection', (socket) => {
                 }
             }
 
+            console.log('Creating DirectMessage...');
             const savedMessage = await DirectMessage.create({
                 conversationId,
-                sender: socket.user._id,
+                sender: socket.user._id.toString(), // Ensure sender is string
                 receiver: receiverId,
                 message: message || (type === 'image' ? 'Sent an image' : ''),
                 type,
@@ -392,6 +402,7 @@ io.on('connection', (socket) => {
                 replyTo: replyToId || undefined,
                 timestamp: new Date()
             });
+            console.log('Message saved:', savedMessage._id);
 
             // Populate replyTo if it exists
             const populatedMessage = await DirectMessage.findById(savedMessage._id)
@@ -404,11 +415,12 @@ io.on('connection', (socket) => {
             // Update conversation lastMessage and increment unread for receiver
             conversation.lastMessage = {
                 text: type === 'image' ? '📷 Sent an image' : message,
-                sender: socket.user._id,
+                sender: socket.user._id.toString(), // Ensure sender is string
                 timestamp: new Date()
             };
             conversation.incrementUnread(receiverId);
             await conversation.save();
+            console.log('Conversation updated');
 
             // Format replyTo for frontend (flatten sender.name to senderName)
             let formattedReplyTo = null;

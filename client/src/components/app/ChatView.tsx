@@ -177,12 +177,41 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         socketManager.joinRoom(conversationId, roomType);
 
         // Handler for DM messages
+        // Handler for DM messages
         const handleReceiveDM = (message: any) => {
             if (message.conversationId === conversationId) {
                 setMessages(prev => {
+                    // 1. Check for exact duplicate by ID
                     if (prev.some(m => m._id === message._id)) return prev;
+
+                    // 2. If it's my message, try to find and replace the pending/optimistic version
+                    // In DM, optimistic messages have senderId == session.user.id
+                    // Incoming message usually has sender field as ID string
+                    const currentUserId = session?.user?.id;
+
+                    // Normalize sender ID for comparison
+                    const msgSenderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
+
+                    if (currentUserId && String(msgSenderId) === String(currentUserId)) {
+                        const pendingIndex = prev.findIndex(m =>
+                            m.isPending &&
+                            m.type === message.type &&
+                            // For text: match content. For image: match URL if available
+                            (m.type === 'text' ? m.message === message.message : m.imageUrl === message.imageUrl)
+                        );
+
+                        if (pendingIndex !== -1) {
+                            const newMessages = [...prev];
+                            newMessages[pendingIndex] = message;
+                            return newMessages;
+                        }
+                    }
+
+                    // 3. New message, append it
                     return [...prev, message];
                 });
+
+                // Scroll if we're near bottom or if it's our message
                 virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
             }
         };
@@ -457,15 +486,9 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
         const currentUserId = getCurrentUserId();
 
-        // For DMs: If we have conversationInfo._id (the other party), use alternative detection
-        let isOwn = false;
-        if (conversationType === 'dm' && conversationInfo?._id) {
-            // In DM, if sender is the other party, it's NOT ours
-            isOwn = String(msgSenderId) !== String(conversationInfo._id);
-        } else {
-            // Squad/Community: Compare sender to current user
-            isOwn = String(msgSenderId) === currentUserId;
-        }
+        // Universal detection: Compare sender to current user
+        // We use loose equality or string conversion to handle number/string ID mismatches
+        const isOwn = String(msgSenderId) === String(currentUserId);
 
         const isSystem = msg.type === 'system';
 
