@@ -124,7 +124,8 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
 
     useEffect(() => {
         fetchConversations();
-    }, [fetchConversations]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only fetch on mount
 
     const filteredConversations = conversations.filter(conv =>
         conv.name.toLowerCase().includes(searchQuery.toLowerCase())

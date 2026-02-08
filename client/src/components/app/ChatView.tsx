@@ -114,7 +114,8 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
     useEffect(() => {
         fetchMessages();
-    }, [fetchMessages]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [conversationId, conversationType]); // Only fetch when conversation changes
 
     // Socket connection
     useEffect(() => {
