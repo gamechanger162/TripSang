@@ -18,7 +18,9 @@ interface Squad {
     destination: string;
     startDate: string;
     endDate: string;
+    coverPhoto?: string;
     coverImage?: string;
+    photos?: string[];
     creator: {
         _id: string;
         name: string;
@@ -122,8 +124,8 @@ export default function SquadsPage() {
                                     <GlassCard padding="none" hover className="squad-card">
                                         {/* Cover Image */}
                                         <div className="squad-cover">
-                                            {squad.coverImage ? (
-                                                <img src={squad.coverImage} alt={squad.title} />
+                                            {(squad.coverPhoto || squad.coverImage || (squad.photos && squad.photos[0])) ? (
+                                                <img src={squad.coverPhoto || squad.coverImage || squad.photos?.[0]} alt={squad.title} />
                                             ) : (
                                                 <div className="cover-placeholder">
                                                     <MapPin size={32} />

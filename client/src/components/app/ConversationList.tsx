@@ -37,7 +37,10 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
     const [error, setError] = useState<string | null>(null);
     const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-    const fetchConversations = useCallback(async () => {
+    const fetchConversations = useCallback(async (retryCount = 0) => {
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 2000;
+
         try {
             setError(null);
             const dmResponse = await messageAPI.getConversations();
@@ -64,19 +67,30 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
                 });
 
                 setConversations(dmConvos);
+                setError(null);
             } else {
                 setConversations([]);
             }
-        } catch (error) {
-            console.error('Failed to fetch conversations:', error);
+        } catch (error: any) {
+            console.error('Failed to fetch conversations:', error?.message || error);
+
+            // Retry logic
+            if (retryCount < MAX_RETRIES) {
+                console.log(`Retrying... attempt ${retryCount + 1}/${MAX_RETRIES}`);
+                setTimeout(() => fetchConversations(retryCount + 1), RETRY_DELAY);
+                return; // Don't set loading to false yet
+            }
+
+            // All retries failed
             setError('Failed to load conversations');
-            // Show toast notification instead of blank screen
-            toast.error('Connection lost. Reconnecting...', {
-                id: 'conv-error', // Prevent duplicate toasts
-                duration: 3000,
+            toast.error('Unable to connect. Please check your internet connection.', {
+                id: 'conv-error',
+                duration: 5000,
             });
         } finally {
-            setLoading(false);
+            if (retryCount >= MAX_RETRIES || retryCount === 0) {
+                setLoading(false);
+            }
         }
     }, []);
 
@@ -249,7 +263,7 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
                         </div>
                         <p className="text-gray-400 mb-4">{error}</p>
                         <motion.button
-                            onClick={fetchConversations}
+                            onClick={() => fetchConversations()}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="px-4 py-2 bg-teal-500/20 border border-teal-500/30 rounded-xl text-teal-400 text-sm font-medium"

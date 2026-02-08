@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { messageAPI } from '@/lib/api';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import {
@@ -12,7 +15,11 @@ import {
     Send,
     X,
     Reply,
-    MapPin
+    MapPin,
+    Ban,
+    Flag,
+    VolumeX,
+    User
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { useEnv } from '@/hooks/useEnv';
@@ -44,7 +51,8 @@ interface ChatViewProps {
 }
 
 export default function ChatView({ conversationId, conversationType, onBack, isMobile }: ChatViewProps) {
-    const { data: session } = useSession();
+    const { data: session } = useSession(); // Access session data
+    const router = useRouter();
     const { apiUrl, socketUrl } = useEnv();
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +67,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     const [sending, setSending] = useState(false);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [showMiniMap, setShowMiniMap] = useState(false);
+    const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
     // Fetch messages
     const fetchMessages = useCallback(async () => {
@@ -80,7 +89,9 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
             if (response.ok) {
                 const data = await response.json();
-                setMessages(data.messages || []);
+                // Reverse messages for DM so newest are at bottom
+                const msgs = data.messages || [];
+                setMessages(conversationType === 'dm' ? msgs.reverse() : msgs);
 
                 // Set conversation info based on type
                 if (conversationType === 'squad') {
@@ -234,15 +245,42 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         formData.append('image', file);
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${apiUrl}/api/upload/image`, {
+            const token = session?.user?.accessToken || localStorage.getItem('token');
+
+            // First upload the image
+            const uploadResponse = await fetch(`${apiUrl}/api/upload`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData
             });
 
-            if (response.ok) {
-                const { url } = await response.json();
+            if (!uploadResponse.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const { url } = await uploadResponse.json();
+
+            if (conversationType === 'dm') {
+                // DM images use REST API
+                const response = await fetch(`${apiUrl}/api/messages/${conversationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: '',
+                        type: 'image',
+                        imageUrl: url
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setMessages(prev => [...prev, data.message]);
+                }
+            } else {
+                // Squad images use socket
                 socketRef.current?.emit('send_message', {
                     tripId: conversationId,
                     message: '',
@@ -263,7 +301,35 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         });
     };
 
-    // Render message
+    // Block user
+    const handleBlockUser = async () => {
+        if (!conversationInfo?._id || conversationType === 'squad') return;
+
+        if (window.confirm(`Are you sure you want to block ${conversationInfo.name}?`)) {
+            try {
+                await messageAPI.blockUser(conversationInfo._id);
+                toast.success('User blocked');
+                router.push('/app'); // Redirect to main app
+            } catch (error) {
+                console.error('Failed to block user:', error);
+                toast.error('Failed to block user');
+            }
+        }
+    };
+
+    // Report user
+    const handleReportUser = () => {
+        toast.promise(
+            new Promise((resolve) => setTimeout(resolve, 1000)),
+            {
+                loading: 'Submitting report...',
+                success: 'User reported',
+                error: 'Failed to report'
+            }
+        );
+        setShowOptionsMenu(false);
+    };
+
     const renderMessage = (index: number, msg: Message) => {
         const isOwn = msg.senderId === session?.user?.id;
         const isSystem = msg.type === 'system';
@@ -295,6 +361,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 isOwn={isOwn}
                 groupPosition={groupPosition}
                 onReply={() => setReplyTo(msg)}
+                onPin={() => {
+                    setPinnedMessage(msg);
+                    // Add API call to persist pin if needed
+                }}
                 formatTime={formatTime}
             />
         );
@@ -340,9 +410,42 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                             <MapPin size={20} />
                         </button>
                     )}
-                    <button className="header-action-btn">
-                        <MoreVertical size={20} />
-                    </button>
+                    <div className="options-menu-wrapper">
+                        <button
+                            className="header-action-btn"
+                            onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                        >
+                            <MoreVertical size={20} />
+                        </button>
+
+                        <AnimatePresence>
+                            {showOptionsMenu && (
+                                <motion.div
+                                    className="options-dropdown"
+                                    initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                                >
+                                    <button className="option-item" onClick={() => { setShowOptionsMenu(false); }}>
+                                        <User size={16} />
+                                        View Profile
+                                    </button>
+                                    <button className="option-item" onClick={() => { setShowOptionsMenu(false); }}>
+                                        <VolumeX size={16} />
+                                        Mute Notifications
+                                    </button>
+                                    <button className="option-item danger" onClick={handleBlockUser}>
+                                        <Ban size={16} />
+                                        Block User
+                                    </button>
+                                    <button className="option-item danger" onClick={handleReportUser}>
+                                        <Flag size={16} />
+                                        Report User
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </div>
 
@@ -520,6 +623,50 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     color: white;
                 }
                 
+                .options-menu-wrapper {
+                    position: relative;
+                }
+                
+                .options-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    margin-top: 8px;
+                    min-width: 180px;
+                    background: rgba(30, 30, 30, 0.95);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    padding: 8px;
+                    z-index: 100;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                }
+                
+                .option-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    width: 100%;
+                    padding: 10px 12px;
+                    color: rgba(255, 255, 255, 0.9);
+                    font-size: 14px;
+                    border-radius: 8px;
+                    transition: all 0.2s;
+                    text-align: left;
+                }
+                
+                .option-item:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+                
+                .option-item.danger {
+                    color: #ef4444;
+                }
+                
+                .option-item.danger:hover {
+                    background: rgba(239, 68, 68, 0.15);
+                }
+                
                 .pinned-banner {
                     display: flex;
                     align-items: center;
@@ -668,20 +815,40 @@ function MessageBubble({
     isOwn,
     groupPosition,
     onReply,
+    onPin,
     formatTime
 }: {
     message: Message;
     isOwn: boolean;
     groupPosition: 'single' | 'top' | 'middle' | 'bottom';
     onReply: () => void;
+    onPin: () => void;
     formatTime: (ts: string) => string;
 }) {
     const x = useMotionValue(0);
     const replyOpacity = useTransform(x, [-100, -50], [1, 0]);
+    const [showActions, setShowActions] = useState(false);
 
     const handleDragEnd = () => {
         if (x.get() < -50) {
             onReply();
+        }
+    };
+
+    // Long press handler
+    const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+
+    const handleTouchStart = () => {
+        const timer = setTimeout(() => {
+            setShowActions(true);
+        }, 500);
+        setLongPressTimer(timer);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            setLongPressTimer(null);
         }
     };
 
@@ -724,15 +891,65 @@ function MessageBubble({
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.2}
                 onDragEnd={handleDragEnd}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    setShowActions(true);
+                }}
                 style={{
                     x,
                     borderRadius: getBorderRadius(),
-                    marginBottom: groupPosition === 'bottom' || groupPosition === 'single' ? '12px' : '2px'
+                    marginBottom: groupPosition === 'bottom' || groupPosition === 'single' ? '12px' : '2px',
+                    position: 'relative'
                 }}
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
             >
+                {/* Message Actions Menu */}
+                <AnimatePresence>
+                    {showActions && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowActions(false);
+                                }}
+                            />
+                            <motion.div
+                                className="absolute z-50 bg-gray-900 border border-gray-700/50 rounded-lg shadow-xl overflow-hidden min-w-[120px]"
+                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                style={isOwn ? { right: 0, top: '100%' } : { left: 0, top: '100%' }}
+                            >
+                                <button
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-white/10 flex items-center gap-2"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onReply();
+                                        setShowActions(false);
+                                    }}
+                                >
+                                    <Reply size={14} /> Reply
+                                </button>
+                                <button
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-white/10 flex items-center gap-2"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onPin();
+                                        setShowActions(false);
+                                    }}
+                                >
+                                    <Pin size={14} /> Pin
+                                </button>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+
                 {/* Show sender name only for first message in group of received messages */}
                 {!isOwn && (groupPosition === 'top' || groupPosition === 'single') && (
                     <div className="bubble-sender">
