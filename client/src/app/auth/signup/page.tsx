@@ -17,28 +17,15 @@ export default function SignUpPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
 
-    // Redirect if already authenticated
-    useEffect(() => {
-        if (status === 'authenticated') {
-            router.push('/');
-        }
-    }, [status, router]);
-
-    // Show loading while checking auth
-    if (status === 'loading' || status === 'authenticated') {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            </div>
-        );
-    }
-
+    // All hooks must be declared BEFORE any early returns
     const [loading, setLoading] = useState(false);
     const [verifyingPhone, setVerifyingPhone] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
     const [otp, setOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+    const [showTrialDialog, setShowTrialDialog] = useState(false);
+    const [trialEndsDate, setTrialEndsDate] = useState<string>('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -48,6 +35,13 @@ export default function SignUpPage() {
         mobileNumber: '',
         gender: 'prefer-not-to-say',
     });
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (status === 'authenticated') {
+            router.push('/');
+        }
+    }, [status, router]);
 
     useEffect(() => {
         // Cleanup function to reset recaptcha on unmount
@@ -62,6 +56,15 @@ export default function SignUpPage() {
             }
         };
     }, []);
+
+    // Show loading while checking auth
+    if (status === 'loading' || status === 'authenticated') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
 
     const resetRecaptcha = () => {
         if (window.recaptchaVerifier) {
@@ -181,9 +184,6 @@ export default function SignUpPage() {
             setVerifyingPhone(false);
         }
     };
-
-    const [showTrialDialog, setShowTrialDialog] = useState(false);
-    const [trialEndsDate, setTrialEndsDate] = useState<string>('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
