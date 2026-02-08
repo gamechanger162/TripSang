@@ -4,6 +4,8 @@ import { ReactNode } from 'react';
 import { SessionProvider } from 'next-auth/react';
 import MeshBackground from '@/components/app/ui/MeshBackground';
 
+import NavRail from '@/components/app/NavRail';
+
 export default function AppLayout({ children }: { children: ReactNode }) {
     return (
         <SessionProvider>
@@ -13,6 +15,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
                 {/* Main App Content */}
                 <div className="app-content">
+                    <NavRail />
                     {children}
                 </div>
 

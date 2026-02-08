@@ -56,16 +56,7 @@ export default function SquadChatPage() {
     };
 
     return (
-        <div className="flex w-full h-full overflow-hidden bg-gradient-to-br from-gray-900 via-gray-950 to-black">
-            {/* Animated Background */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-            </div>
-
-            {/* Nav Rail - hidden on mobile when in chat */}
-            {!isMobile && <NavRail />}
-
+        <>
             {/* Mobile Back Button */}
             {isMobile && (
                 <button
@@ -77,7 +68,7 @@ export default function SquadChatPage() {
             )}
 
             {/* Chat View - Full Width */}
-            <div className="flex-1 h-full">
+            <div className="flex-1 h-full pb-16 md:pb-0">
                 <ChatView
                     conversationId={id as string}
                     conversationType="squad"
@@ -85,6 +76,6 @@ export default function SquadChatPage() {
                     isMobile={isMobile}
                 />
             </div>
-        </div>
+        </>
     );
 }

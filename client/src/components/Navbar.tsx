@@ -150,9 +150,9 @@ export default function Navbar() {
         }
     }, [status, session, update]);
 
-    // Polling for counts
+    // Polling for counts (only on main site, not in chat app)
     useEffect(() => {
-        if (status === 'authenticated') {
+        if (status === 'authenticated' && !isAppRoute) {
             fetchUnreadCount();
             fetchUnreadNotifCount();
             fetchPendingFriendsCount();
@@ -164,7 +164,7 @@ export default function Navbar() {
             }, 30000);
             return () => clearInterval(interval);
         }
-    }, [status]);
+    }, [status, isAppRoute]);
 
     // Close dropdowns on outside click
     useEffect(() => {

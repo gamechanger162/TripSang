@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import NavRail from '@/components/app/NavRail';
 import ConversationList from '@/components/app/ConversationList';
 import ChatView from '@/components/app/ChatView';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,16 +65,8 @@ export default function AppPage() {
     };
 
     return (
-        <div className="flex w-full h-full overflow-hidden bg-gradient-to-br from-gray-900 via-gray-950 to-black">
-            {/* Animated Background Mesh */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px]" />
-            </div>
+        <div className="flex w-full h-full overflow-hidden pb-16 md:pb-0">
 
-            {/* Nav Rail */}
-            <NavRail />
 
             {/* Conversation List (hidden on mobile when chat is open) */}
             <AnimatePresence mode="wait">

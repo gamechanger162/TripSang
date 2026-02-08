@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import NavRail from '@/components/app/NavRail';
 import GlassCard from '@/components/app/ui/GlassCard';
 import { GlassButton } from '@/components/app/ui/GlassCard';
 import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
@@ -46,9 +45,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="settings-layout">
-            <NavRail />
-
+        <>
             <div className="settings-content">
                 <h1>Settings</h1>
 
@@ -333,6 +330,6 @@ export default function SettingsPage() {
                     background: rgba(239, 68, 68, 0.1) !important;
                 }
             `}</style>
-        </div>
+        </>
     );
 }

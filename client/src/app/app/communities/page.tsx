@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import NavRail from '@/components/app/NavRail';
 import GlassCard from '@/components/app/ui/GlassCard';
 import { GlassButton } from '@/components/app/ui/GlassCard';
 import { useEnv } from '@/hooks/useEnv';
@@ -145,9 +144,7 @@ export default function CommunitiesPage() {
     if (!session) return null;
 
     return (
-        <div className="communities-layout">
-            <NavRail />
-
+        <>
             <div className="communities-content">
                 <div className="communities-header">
                     <div>
@@ -515,6 +512,6 @@ export default function CommunitiesPage() {
                 onClose={() => setShowCreateModal(false)}
                 onSuccess={handleCommunityCreated}
             />
-        </div>
+        </>
     );
 }

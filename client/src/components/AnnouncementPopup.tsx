@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface Announcement {
     _id: string;
@@ -11,12 +12,15 @@ interface Announcement {
 }
 
 export default function AnnouncementPopup() {
+    const pathname = usePathname();
     const [announcement, setAnnouncement] = useState<Announcement | null>(null);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        fetchActiveAnnouncement();
-    }, []);
+        if (!pathname?.startsWith('/app')) {
+            fetchActiveAnnouncement();
+        }
+    }, [pathname]);
 
     const fetchActiveAnnouncement = async () => {
         try {
@@ -132,9 +136,9 @@ export default function AnnouncementPopup() {
                         <button
                             onClick={handleClose}
                             className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${announcement.type === 'info' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
-                                    announcement.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 text-white' :
-                                        announcement.type === 'success' ? 'bg-green-600 hover:bg-green-700 text-white' :
-                                            'bg-red-600 hover:bg-red-700 text-white'
+                                announcement.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 text-white' :
+                                    announcement.type === 'success' ? 'bg-green-600 hover:bg-green-700 text-white' :
+                                        'bg-red-600 hover:bg-red-700 text-white'
                                 }`}
                         >
                             Got it!

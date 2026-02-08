@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { tripAPI } from '@/lib/api';
-import NavRail from '@/components/app/NavRail';
 import GlassCard from '@/components/app/ui/GlassCard';
 import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
 import { useEnv } from '@/hooks/useEnv';
@@ -87,9 +86,7 @@ export default function SquadsPage() {
     };
 
     return (
-        <div className="squads-layout">
-            <NavRail />
-
+        <>
             <div className="squads-content">
                 <div className="squads-header">
                     <h1>Squad Chats</h1>
@@ -185,12 +182,6 @@ export default function SquadsPage() {
             </div>
 
             <style jsx>{`
-                .squads-layout {
-                    display: flex;
-                    width: 100%;
-                    height: 100%;
-                }
-                
                 .squads-content {
                     flex: 1;
                     padding: 24px;
@@ -387,6 +378,6 @@ export default function SquadsPage() {
                     50% { opacity: 0.5; }
                 }
             `}</style>
-        </div>
+        </>
     );
 }
