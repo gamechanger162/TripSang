@@ -21,7 +21,8 @@ import {
     VolumeX,
     User
 } from 'lucide-react';
-import { io, Socket } from 'socket.io-client';
+import { socketManager } from '@/lib/socketManager';
+import type { Socket } from 'socket.io-client';
 import { useEnv } from '@/hooks/useEnv';
 import VerifiedBadge from './ui/VerifiedBadge';
 import GlassCard from './ui/GlassCard';
@@ -117,80 +118,69 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [conversationId, conversationType]); // Only fetch when conversation changes
 
-    // Socket connection
+    // Socket connection - use singleton manager for better performance
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+        // Connect to socket (reuses existing connection if already connected)
+        const socket = socketManager.connect(socketUrl);
+        if (!socket) return;
 
-        socketRef.current = io(socketUrl, {
-            auth: { token },
-            transports: ['websocket', 'polling'], // Try WebSocket first, fallback to polling
-            timeout: 10000, // 10 second timeout
-            reconnection: true,
-            reconnectionAttempts: 3,
-            reconnectionDelay: 1000
-        });
+        socketRef.current = socket;
 
         // Join appropriate room based on conversation type
-        if (conversationType === 'dm') {
-            // Join DM conversation room
-            socketRef.current.emit('join_dm_conversation', { conversationId });
-        } else {
-            // Join squad/community room
-            socketRef.current.emit('join_room', { tripId: conversationId });
-        }
+        const roomType = conversationType === 'dm' ? 'dm' :
+            conversationType === 'community' ? 'community' : 'squad';
+        socketManager.joinRoom(conversationId, roomType);
 
-        // Listen for DM messages
-        socketRef.current.on('receive_dm', (message: any) => {
-            // Only add if for this conversation
+        // Handler for DM messages
+        const handleReceiveDM = (message: any) => {
             if (message.conversationId === conversationId) {
                 setMessages(prev => {
-                    // Avoid duplicates (optimistic update may already have it)
                     if (prev.some(m => m._id === message._id)) return prev;
                     return [...prev, message];
                 });
                 virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
             }
-        });
+        };
 
-        // Listen for squad/trip messages
-        socketRef.current.on('receive_message', (message: any) => {
-            // Transform if senderId is populated (object)
+        // Handler for squad/trip messages
+        const handleReceiveMessage = (message: any) => {
             let formattedMessage = { ...message };
             if (message.senderId && typeof message.senderId === 'object') {
                 formattedMessage.senderProfilePicture = message.senderId.profilePicture;
                 formattedMessage.senderName = message.senderId.name;
                 formattedMessage.senderId = message.senderId._id;
             }
-
             setMessages(prev => [...prev, formattedMessage]);
             virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-        });
+        };
 
-        socketRef.current.on('typing_squad', ({ userId, userName }) => {
+        const handleTyping = ({ userId, userName }: { userId: string; userName: string }) => {
             setTypingUsers(prev =>
                 prev.includes(userName) ? prev : [...prev, userName]
             );
             setTimeout(() => {
                 setTypingUsers(prev => prev.filter(u => u !== userName));
             }, 3000);
-        });
+        };
 
-        socketRef.current.on('pinned_message', (msg: Message) => {
-            setPinnedMessage(msg);
-        });
+        const handlePinnedMessage = (msg: Message) => setPinnedMessage(msg);
+        const handleMessageUnpinned = () => setPinnedMessage(null);
 
-        socketRef.current.on('message_unpinned', () => {
-            setPinnedMessage(null);
-        });
+        // Add listeners
+        socketManager.on('receive_dm', handleReceiveDM);
+        socketManager.on('receive_message', handleReceiveMessage);
+        socketManager.on('typing_squad', handleTyping);
+        socketManager.on('pinned_message', handlePinnedMessage);
+        socketManager.on('message_unpinned', handleMessageUnpinned);
 
         return () => {
-            if (conversationType === 'dm') {
-                socketRef.current?.emit('leave_dm_conversation', { conversationId });
-            } else {
-                socketRef.current?.emit('leave_room', { tripId: conversationId });
-            }
-            socketRef.current?.disconnect();
+            // Leave room but DON'T disconnect - other components may use the socket
+            socketManager.leaveRoom(conversationId, roomType);
+            socketManager.off('receive_dm', handleReceiveDM);
+            socketManager.off('receive_message', handleReceiveMessage);
+            socketManager.off('typing_squad', handleTyping);
+            socketManager.off('pinned_message', handlePinnedMessage);
+            socketManager.off('message_unpinned', handleMessageUnpinned);
         };
     }, [socketUrl, conversationId, conversationType]);
 
