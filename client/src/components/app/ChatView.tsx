@@ -112,7 +112,11 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
         socketRef.current = io(socketUrl, {
             auth: { token },
-            transports: ['websocket']
+            transports: ['websocket', 'polling'], // Try WebSocket first, fallback to polling
+            timeout: 10000, // 10 second timeout
+            reconnection: true,
+            reconnectionAttempts: 3,
+            reconnectionDelay: 1000
         });
 
         socketRef.current.emit('join_room', { tripId: conversationId });

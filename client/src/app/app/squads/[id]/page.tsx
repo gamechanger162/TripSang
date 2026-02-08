@@ -1,0 +1,90 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
+import NavRail from '@/components/app/NavRail';
+import ChatView from '@/components/app/ChatView';
+import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
+
+export default function SquadChatPage() {
+    const { id } = useParams();
+    const { data: session, status } = useSession();
+    const router = useRouter();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
+        if (status === 'unauthenticated') {
+            router.push('/auth/signin?callbackUrl=/app/squads');
+        }
+    }, [status, router]);
+
+    if (status === 'loading') {
+        return (
+            <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-900 via-gray-950 to-black">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center gap-4"
+                >
+                    <div className="relative">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500/20 to-emerald-500/20 animate-pulse" />
+                        <motion.div
+                            className="absolute inset-0 rounded-full border-2 border-teal-500/50"
+                            animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        />
+                    </div>
+                    <p className="text-gray-400 text-sm">Loading squad chat...</p>
+                </motion.div>
+            </div>
+        );
+    }
+
+    if (!session) return null;
+
+    const handleBack = () => {
+        router.push('/app/squads');
+    };
+
+    return (
+        <div className="flex w-full h-full overflow-hidden bg-gradient-to-br from-gray-900 via-gray-950 to-black">
+            {/* Animated Background */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+            </div>
+
+            {/* Nav Rail - hidden on mobile when in chat */}
+            {!isMobile && <NavRail />}
+
+            {/* Mobile Back Button */}
+            {isMobile && (
+                <button
+                    onClick={handleBack}
+                    className="fixed top-4 left-4 z-50 p-2 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white"
+                >
+                    <ArrowLeft size={20} />
+                </button>
+            )}
+
+            {/* Chat View - Full Width */}
+            <div className="flex-1 h-full">
+                <ChatView
+                    conversationId={id as string}
+                    conversationType="squad"
+                    onBack={handleBack}
+                    isMobile={isMobile}
+                />
+            </div>
+        </div>
+    );
+}

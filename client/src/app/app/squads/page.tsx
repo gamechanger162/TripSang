@@ -118,7 +118,7 @@ export default function SquadsPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                             >
-                                <Link href={`/trips/${squad._id}`}>
+                                <Link href={`/app/squads/${squad._id}`}>
                                     <GlassCard padding="none" hover className="squad-card">
                                         {/* Cover Image */}
                                         <div className="squad-cover">

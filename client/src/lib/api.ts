@@ -1135,6 +1135,25 @@ export const communityAPI = {
      */
     delete: async (id: string) => {
         return fetchWithAuth(`/api/communities/${id}`, { method: 'DELETE' });
+    },
+
+    /**
+     * Get community by ID (alias for getDetails)
+     * GET /api/communities/:id
+     */
+    getById: async (id: string) => {
+        return fetchWithAuth(`/api/communities/${id}`);
+    },
+
+    /**
+     * Send message to community chat
+     * POST /api/communities/:id/messages
+     */
+    sendMessage: async (id: string, data: { message: string; type: 'text' | 'image'; imageUrl?: string }) => {
+        return fetchWithAuth(`/api/communities/${id}/messages`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     }
 };
 

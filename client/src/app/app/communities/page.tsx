@@ -218,7 +218,7 @@ export default function CommunitiesPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                             >
-                                <Link href={`/community/${community._id}`}>
+                                <Link href={`/app/communities/${community._id}`}>
                                     <GlassCard padding="none" hover className="community-card">
                                         {/* Cover */}
                                         <div className="community-cover">
