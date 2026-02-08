@@ -398,12 +398,36 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
                 <div className="header-actions">
                     {conversationInfo?.type === 'squad' && (
-                        <button
-                            className="header-action-btn"
-                            onClick={() => setShowMiniMap(!showMiniMap)}
-                        >
-                            <MapPin size={20} />
-                        </button>
+                        <>
+                            <button
+                                className="header-action-btn"
+                                onClick={() => setShowMiniMap(!showMiniMap)}
+                            >
+                                <MapPin size={20} />
+                            </button>
+                            <button
+                                className="header-action-btn text-red-400 hover:text-red-300"
+                                onClick={async () => {
+                                    if (window.confirm('Are you sure you want to leave this squad?')) {
+                                        try {
+                                            await fetch(`${apiUrl}/api/trips/${conversationId}/leave`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Authorization': `Bearer ${session?.user?.accessToken || localStorage.getItem('token')}`
+                                                }
+                                            });
+                                            toast.success('Left squad');
+                                            onBack();
+                                        } catch (error) {
+                                            toast.error('Failed to leave squad');
+                                        }
+                                    }
+                                }}
+                                title="Leave Squad"
+                            >
+                                <User size={20} />
+                            </button>
+                        </>
                     )}
                     <div className="options-menu-wrapper">
                         <button
@@ -879,6 +903,18 @@ function MessageBubble({
             >
                 <Reply size={16} />
             </motion.div>
+
+            {/* Profile Picture for received messages */}
+            {!isOwn && (groupPosition === 'bottom' || groupPosition === 'single') && (
+                <img
+                    src={message.senderProfilePicture || '/assets/default-user.png'}
+                    alt={message.senderName}
+                    className="w-8 h-8 rounded-full object-cover mr-2 shrink-0"
+                />
+            )}
+            {!isOwn && (groupPosition === 'top' || groupPosition === 'middle') && (
+                <div className="w-8 mr-2 shrink-0" /> // Spacer for alignment
+            )}
 
             <motion.div
                 className={`message-bubble ${isOwn ? 'own' : ''} ${message.isPending ? 'pending' : ''}`}
