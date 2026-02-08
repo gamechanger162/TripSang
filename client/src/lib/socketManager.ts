@@ -2,6 +2,9 @@
 
 import { io, Socket } from 'socket.io-client';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SocketCallback = (...args: any[]) => void;
+
 /**
  * Socket Manager Singleton
  * Maintains a single socket connection shared across all components.
@@ -12,7 +15,7 @@ class SocketManager {
     private socket: Socket | null = null;
     private socketUrl: string = '';
     private isConnected: boolean = false;
-    private listeners: Map<string, Set<Function>> = new Map();
+    private listeners: Map<string, Set<SocketCallback>> = new Map();
     private currentRooms: Set<string> = new Set();
     private reconnectTimer: NodeJS.Timeout | null = null;
 
@@ -139,25 +142,28 @@ class SocketManager {
     /**
      * Add event listener (with deduplication)
      */
-    on(event: string, callback: Function) {
+    on(event: string, callback: SocketCallback) {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, new Set());
         }
         this.listeners.get(event)?.add(callback);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.socket?.on(event, callback as any);
     }
 
     /**
      * Remove event listener
      */
-    off(event: string, callback: Function) {
+    off(event: string, callback: SocketCallback) {
         this.listeners.get(event)?.delete(callback);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.socket?.off(event, callback as any);
     }
 
     /**
      * Emit event
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     emit(event: string, data: any) {
         this.socket?.emit(event, data);
     }
