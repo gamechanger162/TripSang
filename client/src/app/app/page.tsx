@@ -44,7 +44,7 @@ export default function AppPage() {
     };
 
     return (
-        <div className="flex w-full h-full overflow-hidden pb-16 md:pb-0">
+        <div className="flex w-full h-full overflow-hidden">
 
 
             {/* Conversation List (hidden on mobile when chat is open) */}
@@ -52,7 +52,7 @@ export default function AppPage() {
                 {(!isMobile || !selectedConversation) && (
                     <motion.div
                         key="conversation-list"
-                        className="w-full md:w-[320px] lg:w-[360px] md:min-w-[320px] lg:min-w-[360px] h-full overflow-hidden pb-16 md:pb-0"
+                        className="w-full md:w-[320px] lg:w-[360px] md:min-w-[320px] lg:min-w-[360px] h-full overflow-hidden"
                         initial={isMobile ? { x: -100, opacity: 0 } : false}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -100, opacity: 0 }}
@@ -71,7 +71,7 @@ export default function AppPage() {
                 {selectedConversation ? (
                     <motion.div
                         key="chat-view"
-                        className="flex-1 h-full overflow-hidden pb-16 md:pb-0"
+                        className="flex-1 h-full overflow-hidden"
                         initial={isMobile ? { x: 100, opacity: 0 } : false}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: 100, opacity: 0 }}

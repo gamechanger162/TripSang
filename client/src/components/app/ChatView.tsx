@@ -26,6 +26,13 @@ import type { Socket } from 'socket.io-client';
 import { useEnv } from '@/hooks/useEnv';
 import VerifiedBadge from './ui/VerifiedBadge';
 import GlassCard from './ui/GlassCard';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for map to avoid SSR issues
+const CollaborativeMap = dynamic(() => import('@/components/CollaborativeMap'), {
+    loading: () => <div className="h-full w-full flex items-center justify-center text-gray-400 text-sm">Loading Map...</div>,
+    ssr: false
+});
 
 interface Message {
     _id: string;
@@ -99,7 +106,11 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     setConversationInfo({
                         name: data.trip?.title || data.tripTitle || 'Squad Chat',
                         avatar: data.trip?.coverPhoto,
-                        type: 'squad'
+                        type: 'squad',
+                        // Map data for CollaborativeMap
+                        startPoint: data.trip?.startPoint,
+                        endPoint: data.trip?.endPoint,
+                        waypoints: data.trip?.waypoints || []
                     });
                 } else {
                     setConversationInfo(data.conversation);
@@ -170,7 +181,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         socketManager.on('receive_dm', handleReceiveDM);
         socketManager.on('receive_message', handleReceiveMessage);
         socketManager.on('typing_squad', handleTyping);
-        socketManager.on('pinned_message', handlePinnedMessage);
+        socketManager.on('message_pinned', handlePinnedMessage);
         socketManager.on('message_unpinned', handleMessageUnpinned);
 
         return () => {
@@ -179,7 +190,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             socketManager.off('receive_dm', handleReceiveDM);
             socketManager.off('receive_message', handleReceiveMessage);
             socketManager.off('typing_squad', handleTyping);
-            socketManager.off('pinned_message', handlePinnedMessage);
+            socketManager.off('message_pinned', handlePinnedMessage);
             socketManager.off('message_unpinned', handleMessageUnpinned);
         };
     }, [socketUrl, conversationId, conversationType]);
@@ -253,7 +264,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     tripId: conversationId,
                     message: optimisticMessage.message,
                     type: 'text',
-                    replyTo: replyTo ? replyTo._id : undefined
+                    replyTo: replyTo?._id || undefined
                 });
 
                 // Remove pending state
@@ -373,8 +384,16 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         setShowOptionsMenu(false);
     };
 
+    // Helper to get current user ID (handles different formats)
+    const getCurrentUserId = () => {
+        const user = session?.user as any;
+        return user?.id || user?._id || user?.userId || '';
+    };
+
     const renderMessage = (index: number, msg: Message) => {
-        const isOwn = msg.senderId === session?.user?.id;
+        // Handle different senderId formats (string or object with _id)
+        const msgSenderId = typeof msg.senderId === 'object' ? (msg.senderId as any)?._id : msg.senderId;
+        const isOwn = msgSenderId === getCurrentUserId();
         const isSystem = msg.type === 'system';
 
         if (isSystem) {
@@ -405,8 +424,14 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 groupPosition={groupPosition}
                 onReply={() => setReplyTo(msg)}
                 onPin={() => {
+                    // Emit socket event to persist pin to backend
+                    if (conversationType === 'squad') {
+                        socketRef.current?.emit('pin_message', {
+                            tripId: conversationId,
+                            messageId: msg._id
+                        });
+                    }
                     setPinnedMessage(msg);
-                    // Add API call to persist pin if needed
                 }}
                 formatTime={formatTime}
             />
@@ -543,24 +568,34 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         exit={{ height: 0, opacity: 0 }}
                         style={{
                             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                            padding: '8px',
-                            background: 'rgba(0, 0, 0, 0.3)'
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            overflow: 'hidden',
+                            borderRadius: '8px',
+                            margin: '8px'
                         }}
                     >
-                        <div style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'rgba(255, 255, 255, 0.6)',
-                            fontSize: '14px'
-                        }}>
-                            <MapPin size={20} style={{ marginRight: '8px' }} />
-                            Trip Location Map
-                            <br />
-                            <small style={{ opacity: 0.7 }}>(Map integration coming soon)</small>
-                        </div>
+                        {conversationInfo?.startPoint ? (
+                            <CollaborativeMap
+                                tripId={conversationId}
+                                startPoint={conversationInfo.startPoint}
+                                endPoint={conversationInfo.endPoint}
+                                initialWaypoints={conversationInfo.waypoints || []}
+                                isReadOnly={true}
+                            />
+                        ) : (
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'rgba(255, 255, 255, 0.6)',
+                                fontSize: '14px'
+                            }}>
+                                <MapPin size={20} style={{ marginRight: '8px' }} />
+                                No trip location set
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

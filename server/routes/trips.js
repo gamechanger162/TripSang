@@ -148,15 +148,33 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
             .sort({ timestamp: 1 })
             .limit(200);
 
+        // Get pinned message if exists
+        let pinnedMessage = null;
+        if (trip.pinnedMessage) {
+            pinnedMessage = await Message.findById(trip.pinnedMessage)
+                .populate('senderId', 'name profilePicture');
+        }
+
         res.json({
             success: true,
             messages,
             trip: {
                 title: trip.title,
                 coverPhoto: trip.coverPhoto,
-                _id: trip._id
+                _id: trip._id,
+                // Include location for map integration
+                startPoint: trip.startPoint,
+                endPoint: trip.endPoint,
+                waypoints: trip.waypoints || []
             },
-            pinnedMessage: null // TODO: Implement pinned messages
+            pinnedMessage: pinnedMessage ? {
+                _id: pinnedMessage._id,
+                message: pinnedMessage.message,
+                senderName: pinnedMessage.senderId?.name || pinnedMessage.senderName,
+                type: pinnedMessage.type,
+                imageUrl: pinnedMessage.imageUrl,
+                timestamp: pinnedMessage.timestamp
+            } : null
         });
     } catch (error) {
         console.error('Get squad chat error:', error);
