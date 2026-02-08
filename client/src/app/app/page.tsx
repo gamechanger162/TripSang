@@ -18,6 +18,7 @@ export default function AppPage() {
     const router = useRouter();
     const [selectedConversation, setSelectedConversation] = useState<SelectedConversation | null>(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -41,6 +42,7 @@ export default function AppPage() {
 
     const handleBack = () => {
         setSelectedConversation(null);
+        setRefreshTrigger(prev => prev + 1);
     };
 
     return (
@@ -61,6 +63,7 @@ export default function AppPage() {
                         <ConversationList
                             onSelectConversation={handleSelectConversation}
                             selectedId={selectedConversation?.id || null}
+                            refreshTrigger={refreshTrigger}
                         />
                     </motion.div>
                 )}

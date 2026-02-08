@@ -7,6 +7,7 @@ import { tripAPI } from '@/lib/api';
 import GlassCard from '@/components/app/ui/GlassCard';
 import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
 import { useEnv } from '@/hooks/useEnv';
+import { socketManager } from '@/lib/socketManager';
 import { motion } from 'framer-motion';
 import { Users, MapPin, Calendar, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
@@ -37,7 +38,7 @@ interface Squad {
 export default function SquadsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const { apiUrl } = useEnv();
+    const { apiUrl, socketUrl } = useEnv();
     const [squads, setSquads] = useState<Squad[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -67,6 +68,49 @@ export default function SquadsPage() {
             fetchSquads();
         }
     }, [status]);
+
+    // Socket integration for real-time updates
+    useEffect(() => {
+        const token = session?.user?.accessToken || localStorage.getItem('token');
+        const socket = socketManager.connect(socketUrl, token || undefined);
+
+        if (!socket || !session?.user?.id) return;
+
+        const handleReceiveMessage = (message: any) => {
+            // Check if message belongs to one of our squads
+            // Payload via squad_list_update has tripId
+            if (!message.tripId) return;
+
+            setSquads(prev => {
+                const existingIndex = prev.findIndex(s => s._id === message.tripId);
+
+                if (existingIndex === -1) {
+                    // New squad interaction? Fetch to be safe
+                    return prev;
+                }
+
+                const updatedSquads = [...prev];
+                const squad = updatedSquads[existingIndex];
+
+                // Remove from current position
+                updatedSquads.splice(existingIndex, 1);
+
+                // Add to top with incremented unread count (ephemeral)
+                updatedSquads.unshift({
+                    ...squad,
+                    unreadCount: (squad.unreadCount || 0) + 1
+                });
+
+                return updatedSquads;
+            });
+        };
+
+        socketManager.on('squad_list_update', handleReceiveMessage);
+
+        return () => {
+            socketManager.off('squad_list_update', handleReceiveMessage);
+        };
+    }, [socketUrl, session]);
 
     // Don't render if not authenticated
     if (status === 'unauthenticated' || !session) return null;

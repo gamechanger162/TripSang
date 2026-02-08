@@ -7,6 +7,9 @@ import { Search, Plus, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
 import VerifiedBadge from './ui/VerifiedBadge';
 import { messageAPI, tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { useSession } from 'next-auth/react';
+import { socketManager } from '@/lib/socketManager';
+import { useEnv } from '@/hooks/useEnv';
 
 interface Conversation {
     _id: string;
@@ -25,17 +28,21 @@ interface Conversation {
 interface ConversationListProps {
     onSelectConversation: (id: string, type: 'dm' | 'squad') => void;
     selectedId: string | null;
+    refreshTrigger?: number;
 }
 
 // Default fallback avatar
 const DEFAULT_AVATAR = '/assets/default-user.png';
 
-export default function ConversationList({ onSelectConversation, selectedId }: ConversationListProps) {
+export default function ConversationList({ onSelectConversation, selectedId, refreshTrigger = 0 }: ConversationListProps) {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+    const { data: session } = useSession();
+    const { socketUrl } = useEnv();
 
     const fetchConversations = useCallback(async (retryCount = 0) => {
         const MAX_RETRIES = 3;
@@ -103,7 +110,55 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
     useEffect(() => {
         fetchConversations();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Only fetch on mount
+    }, [refreshTrigger]); // Fetch on mount and when refreshTrigger changes
+
+    // Socket integration for real-time updates
+    useEffect(() => {
+        const token = session?.user?.accessToken || localStorage.getItem('token');
+        const socket = socketManager.connect(socketUrl, token || undefined);
+
+        if (!socket || !session?.user?.id) return;
+
+        const handleReceiveDM = (message: any) => {
+            setConversations(prev => {
+                // Find if conversation exists
+                const existingIndex = prev.findIndex(c => c._id === message.conversationId);
+
+                if (existingIndex === -1) {
+                    // New conversation - fetch to get full details (user name, avatar etc)
+                    fetchConversations();
+                    return prev;
+                }
+
+                // Existing conversation - update it
+                const updatedConversations = [...prev];
+                const existingConv = updatedConversations[existingIndex];
+
+                // Remove from current position
+                updatedConversations.splice(existingIndex, 1);
+
+                // Add to top with updated details
+                updatedConversations.unshift({
+                    ...existingConv,
+                    lastMessage: {
+                        text: message.message || (message.type === 'image' ? 'Sent an image' : 'New message'),
+                        timestamp: message.timestamp || new Date().toISOString(),
+                        senderId: typeof message.sender === 'object' ? message.sender._id : message.sender
+                    },
+                    // Increment unread count ONLY if not currently selected
+                    unreadCount: selectedId === message.conversationId ? 0 : (existingConv.unreadCount || 0) + 1
+                });
+
+                return updatedConversations;
+            });
+        };
+
+        socketManager.on('receive_dm', handleReceiveDM);
+
+        return () => {
+            socketManager.off('receive_dm', handleReceiveDM);
+        };
+    }, [socketUrl, session, fetchConversations, selectedId]);
 
     const filteredConversations = conversations.filter(conv =>
         conv.name.toLowerCase().includes(searchQuery.toLowerCase())

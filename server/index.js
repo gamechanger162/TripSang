@@ -174,6 +174,21 @@ io.on('connection', (socket) => {
             // Broadcast to everyone in room (including sender)
             io.to(tripId).emit('receive_message', populatedMessage);
 
+            // Fetch Trip to get squad members for list updates
+            const trip = await Trip.findById(tripId).select('squadMembers');
+            if (trip && trip.squadMembers) {
+                trip.squadMembers.forEach(memberId => {
+                    // Send list update to user's personal room
+                    io.to(`user_${memberId}`).emit('squad_list_update', {
+                        tripId,
+                        message: message || (type === 'image' ? 'Sent an image' : 'New message'),
+                        timestamp: new Date(),
+                        senderName: socket.user.name,
+                        unreadCount: 1 // Hint for frontend to increment
+                    });
+                });
+            }
+
         } catch (error) {
             console.error('Send message error:', error);
         }

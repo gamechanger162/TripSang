@@ -78,6 +78,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
+    const [isBlocked, setIsBlocked] = useState(false);
 
     // Fetch messages
     const fetchMessages = useCallback(async () => {
@@ -112,8 +113,9 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     }));
                 }
 
-                // Reverse messages for DM so newest are at bottom
-                setMessages(conversationType === 'dm' ? msgs.reverse() : msgs);
+                // API already returns [Oldest, ..., Newest] thanks to server-side reverse()
+                // So we do NOT need to reverse again for DM.
+                setMessages(msgs);
 
                 // Set conversation info based on type
                 if (conversationType === 'squad') {
@@ -277,12 +279,22 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         };
         const handleMessageUnpinned = () => setPinnedMessage(null);
 
+        const handleSocketError = (error: { message: string }) => {
+            console.error('Socket error:', error);
+            toast.error(error.message || 'An error occurred');
+
+            // If it was a message send error, remove the optimistic message
+            setMessages(prev => prev.filter(m => !m.isPending));
+            setSending(false);
+        };
+
         // Add listeners
         socketManager.on('receive_dm', handleReceiveDM);
         socketManager.on('receive_message', handleReceiveMessage);
         socketManager.on('typing_squad', handleTyping);
         socketManager.on('message_pinned', handlePinnedMessage);
         socketManager.on('message_unpinned', handleMessageUnpinned);
+        socketManager.on('error', handleSocketError);
 
         return () => {
             // Leave room but DON'T disconnect - other components may use the socket
@@ -292,8 +304,64 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             socketManager.off('typing_squad', handleTyping);
             socketManager.off('message_pinned', handlePinnedMessage);
             socketManager.off('message_unpinned', handleMessageUnpinned);
+            socketManager.off('error', handleSocketError);
         };
     }, [socketUrl, conversationId, conversationType, session]);
+
+    // Auto-scroll to bottom when messages load initially
+    useEffect(() => {
+        if (!loading && messages.length > 0) {
+            console.log("📜 Triggering initial scroll. Messages:", messages.length);
+            // Wait for next tick to ensure Virtuoso has rendered items
+            setTimeout(() => {
+                console.log("📜 Executing scroll to index:", messages.length - 1);
+                virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end' });
+            }, 300);
+        }
+    }, [loading, conversationId]);
+
+    // Check block status for DM
+    useEffect(() => {
+        const checkBlockStatus = async () => {
+            if (conversationType === 'dm' && conversationInfo?.otherUserId) {
+                try {
+                    const token = session?.user?.accessToken || localStorage.getItem('token');
+                    const response = await fetch(`${apiUrl}/api/messages/block-status/${conversationInfo.otherUserId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        setIsBlocked(data.iBlockedThem);
+                    }
+                } catch (error) {
+                    console.error('Failed to check block status:', error);
+                }
+            }
+        };
+        checkBlockStatus();
+    }, [conversationType, conversationInfo, apiUrl, session]);
+
+    // Mark conversation as read
+    useEffect(() => {
+        const markAsRead = async () => {
+            if (!loading && messages.length > 0 && conversationType === 'dm') {
+                try {
+                    const token = session?.user?.accessToken || localStorage.getItem('token');
+                    await fetch(`${apiUrl}/api/messages/mark-read`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ conversationId })
+                    });
+                } catch (error) {
+                    console.error('Failed to mark conversation as read:', error);
+                }
+            }
+        };
+        markAsRead();
+    }, [conversationId, conversationType, loading, messages.length, apiUrl, session]);
 
     // Send message (no optimistic update to prevent duplication)
     const sendMessage = async () => {
@@ -599,33 +667,67 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                     </button>
 
                                     {conversationType === 'dm' && (
-                                        <button
-                                            className="option-item danger"
-                                            onClick={async () => {
-                                                setShowOptionsMenu(false);
-                                                if (window.confirm('Are you sure you want to block this user? You will no longer receive messages from them.')) {
-                                                    try {
-                                                        const token = session?.user?.accessToken || localStorage.getItem('token');
-                                                        const otherUserId = conversationInfo?._id;
-                                                        if (otherUserId) {
-                                                            await fetch(`${apiUrl}/api/users/${otherUserId}/block`, {
-                                                                method: 'POST',
-                                                                headers: {
-                                                                    'Authorization': `Bearer ${token}`
-                                                                }
-                                                            });
-                                                            toast.success('User blocked');
-                                                            onBack();
+                                        <>
+                                            {isBlocked ? (
+                                                <button
+                                                    className="option-item"
+                                                    onClick={async () => {
+                                                        setShowOptionsMenu(false);
+                                                        try {
+                                                            const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                            const userToUnblockId = conversationInfo?.otherUserId;
+
+                                                            if (userToUnblockId) {
+                                                                await fetch(`${apiUrl}/api/messages/unblock/${userToUnblockId}`, {
+                                                                    method: 'POST',
+                                                                    headers: {
+                                                                        'Authorization': `Bearer ${token}`
+                                                                    }
+                                                                });
+                                                                toast.success('User unblocked');
+                                                                setIsBlocked(false);
+                                                            }
+                                                        } catch (error) {
+                                                            toast.error('Failed to unblock user');
                                                         }
-                                                    } catch (error) {
-                                                        toast.error('Failed to block user');
-                                                    }
-                                                }
-                                            }}
-                                        >
-                                            <Ban size={16} />
-                                            Block User
-                                        </button>
+                                                    }}
+                                                >
+                                                    <VolumeX size={16} />
+                                                    Unblock User
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="option-item danger"
+                                                    onClick={async () => {
+                                                        setShowOptionsMenu(false);
+                                                        if (window.confirm('Are you sure you want to block this user? You will no longer receive messages from them.')) {
+                                                            try {
+                                                                const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                                // For DM, conversationInfo contains otherUserId. _id is Conversation ID.
+                                                                const userToBlockId = conversationInfo?.otherUserId;
+
+                                                                if (userToBlockId) {
+                                                                    await fetch(`${apiUrl}/api/messages/block/${userToBlockId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Authorization': `Bearer ${token}`
+                                                                        }
+                                                                    });
+                                                                    toast.success('User blocked');
+                                                                    setIsBlocked(true);
+                                                                    onBack();
+                                                                }
+                                                            } catch (error) {
+                                                                toast.error('Failed to block user');
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <Ban size={16} />
+                                                    Block User
+                                                </button>
+                                            )}
+                                        </>
                                     )}
 
                                     {conversationInfo?.type === 'squad' && (
@@ -755,7 +857,6 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                             itemContent={renderMessage}
                             followOutput="smooth"
                             className="app-scrollable"
-                            initialTopMostItemIndex={messages.length - 1}
                         />
                     )}
             </div >
