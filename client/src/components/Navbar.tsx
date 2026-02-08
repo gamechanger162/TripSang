@@ -89,6 +89,7 @@ export default function Navbar() {
     const [notifications, setNotifications] = useState<any[]>([]);
 
     const isHomePage = pathname === '/';
+    const isAppRoute = pathname?.startsWith('/app');
 
     // Scroll handler
     useEffect(() => {
@@ -201,6 +202,11 @@ export default function Navbar() {
         ? 'text-gray-700 dark:text-gray-200 hover:text-primary-600'
         : 'text-gray-200 hover:text-white';
     const menuIconColor = scrolled || !isHomePage ? 'text-gray-700 dark:text-gray-200' : 'text-white';
+
+    // Hide navbar on /app routes (standalone chat app)
+    if (isAppRoute) {
+        return null;
+    }
 
     return (
         <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${navBackground}`}>

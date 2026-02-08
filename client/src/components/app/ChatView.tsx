@@ -38,11 +38,12 @@ interface Message {
 
 interface ChatViewProps {
     conversationId: string;
+    conversationType: 'dm' | 'squad' | 'community';
     onBack: () => void;
     isMobile: boolean;
 }
 
-export default function ChatView({ conversationId, onBack, isMobile }: ChatViewProps) {
+export default function ChatView({ conversationId, conversationType, onBack, isMobile }: ChatViewProps) {
     const { data: session } = useSession();
     const { apiUrl, socketUrl } = useEnv();
     const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -62,15 +63,35 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
     // Fetch messages
     const fetchMessages = useCallback(async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${apiUrl}/api/messages/${conversationId}`, {
+            const token = session?.user?.accessToken || localStorage.getItem('token');
+
+            // Use different endpoint based on conversation type
+            let endpoint: string;
+            if (conversationType === 'squad') {
+                endpoint = `${apiUrl}/api/trips/${conversationId}/chat`;
+            } else {
+                // DM conversation - use the history endpoint
+                endpoint = `${apiUrl}/api/messages/${conversationId}/history`;
+            }
+
+            const response = await fetch(endpoint, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data.messages || []);
-                setConversationInfo(data.conversation);
+
+                // Set conversation info based on type
+                if (conversationType === 'squad') {
+                    setConversationInfo({
+                        name: data.trip?.title || data.tripTitle || 'Squad Chat',
+                        avatar: data.trip?.coverPhoto,
+                        type: 'squad'
+                    });
+                } else {
+                    setConversationInfo(data.conversation);
+                }
                 setPinnedMessage(data.pinnedMessage || null);
             }
         } catch (error) {
@@ -78,7 +99,7 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
         } finally {
             setLoading(false);
         }
-    }, [apiUrl, conversationId]);
+    }, [apiUrl, conversationId, conversationType, session]);
 
     useEffect(() => {
         fetchMessages();
@@ -222,11 +243,24 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
             );
         }
 
+        // Calculate group position
+        const prevMsg = messages[index - 1];
+        const nextMsg = messages[index + 1];
+
+        const isSamePrev = prevMsg && prevMsg.senderId === msg.senderId && prevMsg.type !== 'system';
+        const isSameNext = nextMsg && nextMsg.senderId === msg.senderId && nextMsg.type !== 'system'; // Note: Virtuoso might not give easy access to next if not passed in context, but here we use the state 'messages' which is available in closure scope.
+
+        let groupPosition: 'single' | 'top' | 'middle' | 'bottom' = 'single';
+        if (!isSamePrev && isSameNext) groupPosition = 'top';
+        else if (isSamePrev && isSameNext) groupPosition = 'middle';
+        else if (isSamePrev && !isSameNext) groupPosition = 'bottom';
+
         return (
             <MessageBubble
                 key={msg._id}
                 message={msg}
                 isOwn={isOwn}
+                groupPosition={groupPosition}
                 onReply={() => setReplyTo(msg)}
                 formatTime={formatTime}
             />
@@ -333,36 +367,38 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                 )}
             </AnimatePresence>
 
-            {/* Input */}
-            <div className="chat-input-container">
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                />
-                <button
-                    className="input-action-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <ImageIcon size={20} />
-                </button>
-                <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    className="message-input"
-                />
-                <button
-                    className={`send-btn ${newMessage.trim() ? 'active' : ''}`}
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || sending}
-                >
-                    <Send size={20} />
-                </button>
+            {/* Input Island */}
+            <div className="chat-input-wrapper">
+                <div className="chat-input-container">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                    />
+                    <button
+                        className="input-action-btn"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <ImageIcon size={20} />
+                    </button>
+                    <input
+                        type="text"
+                        placeholder="Type a message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        className="message-input"
+                    />
+                    <button
+                        className={`send-btn ${newMessage.trim() ? 'active' : ''}`}
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim() || sending}
+                    >
+                        <Send size={20} />
+                    </button>
+                </div>
             </div>
 
             <style jsx>{`
@@ -370,17 +406,18 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                     height: 100%;
                     display: flex;
                     flex-direction: column;
-                    background: rgba(0, 0, 0, 0.2);
+                    background: transparent;
                 }
                 
                 .chat-header {
                     display: flex;
                     align-items: center;
-                    padding: 12px 16px;
-                    background: rgba(0, 0, 0, 0.3);
+                    padding: 12px 20px;
+                    background: rgba(255, 255, 255, 0.03);
                     backdrop-filter: blur(20px);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                     gap: 12px;
+                    z-index: 10;
                 }
                 
                 .back-btn {
@@ -400,6 +437,7 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                     height: 40px;
                     border-radius: 12px;
                     object-fit: cover;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
                 }
                 
                 .header-avatar-placeholder {
@@ -414,16 +452,18 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                 .header-name {
                     font-size: 16px;
                     font-weight: 600;
-                    color: white;
+                    color: rgba(255, 255, 255, 0.95);
                     display: flex;
                     align-items: center;
                     gap: 4px;
+                    letter-spacing: -0.01em;
                 }
                 
                 .typing-indicator {
                     font-size: 12px;
                     color: #14b8a6;
                     animation: pulse 1.5s infinite;
+                    font-weight: 500;
                 }
                 
                 .header-actions {
@@ -469,6 +509,7 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                 .messages-container {
                     flex: 1;
                     overflow: hidden;
+                    padding-bottom: 0px; 
                 }
                 
                 .messages-loading {
@@ -483,6 +524,7 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                     padding: 8px 16px;
                     color: rgba(255, 255, 255, 0.5);
                     font-size: 12px;
+                    margin: 8px 0;
                 }
                 
                 .reply-preview {
@@ -502,24 +544,32 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                     color: rgba(255, 255, 255, 0.5);
                 }
                 
+                .chat-input-wrapper {
+                    padding: 16px;
+                    padding-top: 8px;
+                    background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+                }
+                
                 .chat-input-container {
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    padding: 12px 16px;
-                    background: rgba(0, 0, 0, 0.3);
+                    padding: 8px;
+                    background: rgba(255, 255, 255, 0.07);
                     backdrop-filter: blur(20px);
-                    border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 24px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
                 }
                 
                 .input-action-btn {
-                    width: 40px;
-                    height: 40px;
+                    width: 36px;
+                    height: 36px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: rgba(255, 255, 255, 0.6);
-                    border-radius: 12px;
+                    border-radius: 50%;
                     transition: all 0.2s;
                 }
                 
@@ -530,38 +580,35 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                 
                 .message-input {
                     flex: 1;
-                    padding: 10px 16px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 20px;
+                    padding: 10px 4px;
+                    background: transparent;
+                    border: none;
                     color: white;
-                    font-size: 14px;
+                    font-size: 15px;
                     outline: none;
-                    transition: all 0.2s;
                 }
                 
                 .message-input::placeholder {
-                    color: rgba(255, 255, 255, 0.4);
-                }
-                
-                .message-input:focus {
-                    border-color: rgba(20, 184, 166, 0.5);
+                    color: rgba(255, 255, 255, 0.3);
                 }
                 
                 .send-btn {
-                    width: 40px;
-                    height: 40px;
+                    width: 36px;
+                    height: 36px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: rgba(255, 255, 255, 0.4);
-                    border-radius: 12px;
+                    border-radius: 50%;
                     transition: all 0.2s;
+                    transform: scale(0.9);
                 }
                 
                 .send-btn.active {
                     background: #14b8a6;
                     color: white;
+                    transform: scale(1);
+                    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
                 }
                 
                 .send-btn:disabled {
@@ -577,19 +624,22 @@ export default function ChatView({ conversationId, onBack, isMobile }: ChatViewP
                     50% { opacity: 0.5; }
                 }
             `}</style>
+
         </div>
     );
 }
 
-// Message Bubble Component with swipe-to-reply
+// Message Bubble Component with swipe-to-reply and smart grouping
 function MessageBubble({
     message,
     isOwn,
+    groupPosition,
     onReply,
     formatTime
 }: {
     message: Message;
     isOwn: boolean;
+    groupPosition: 'single' | 'top' | 'middle' | 'bottom';
     onReply: () => void;
     formatTime: (ts: string) => string;
 }) {
@@ -602,8 +652,32 @@ function MessageBubble({
         }
     };
 
+    // Calculate border radius based on group position and ownership
+    const getBorderRadius = () => {
+        const r = '20px';
+        const s = '4px';
+
+        if (isOwn) {
+            switch (groupPosition) {
+                case 'single': return `${r} ${r} ${r} ${r}`;
+                case 'top': return `${r} ${r} ${s} ${r}`;
+                case 'middle': return `${r} ${s} ${s} ${r}`;
+                case 'bottom': return `${r} ${s} ${r} ${r}`;
+                default: return r;
+            }
+        } else {
+            switch (groupPosition) {
+                case 'single': return `${r} ${r} ${r} ${r}`;
+                case 'top': return `${r} ${r} ${r} ${s}`;
+                case 'middle': return `${s} ${r} ${r} ${s}`;
+                case 'bottom': return `${s} ${r} ${r} ${r}`;
+                default: return r;
+            }
+        }
+    };
+
     return (
-        <div className={`message-row ${isOwn ? 'own' : ''}`}>
+        <div className={`message-row ${isOwn ? 'own' : ''} ${groupPosition}`}>
             <motion.div
                 className="reply-hint"
                 style={{ opacity: replyOpacity }}
@@ -617,9 +691,17 @@ function MessageBubble({
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.2}
                 onDragEnd={handleDragEnd}
-                style={{ x }}
+                style={{
+                    x,
+                    borderRadius: getBorderRadius(),
+                    marginBottom: groupPosition === 'bottom' || groupPosition === 'single' ? '12px' : '2px'
+                }}
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
             >
-                {!isOwn && (
+                {/* Show sender name only for first message in group of received messages */}
+                {!isOwn && (groupPosition === 'top' || groupPosition === 'single') && (
                     <div className="bubble-sender">
                         {message.senderName}
                         {message.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
@@ -646,7 +728,7 @@ function MessageBubble({
             <style jsx>{`
                 .message-row {
                     display: flex;
-                    padding: 4px 16px;
+                    padding: 0 16px;
                     position: relative;
                 }
                 
@@ -664,35 +746,38 @@ function MessageBubble({
                 
                 .message-bubble {
                     max-width: 75%;
-                    padding: 10px 14px;
-                    border-radius: 16px;
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    padding: 8px 14px;
+                    position: relative;
+                    background: rgba(255, 255, 255, 0.03);
+                    backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    transform-origin: bottom right;
                 }
                 
                 .message-bubble.own {
-                    background: rgba(20, 184, 166, 0.2);
-                    border-color: rgba(20, 184, 166, 0.3);
+                    background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(13, 148, 136, 0.2));
+                    border: 1px solid rgba(20, 184, 166, 0.2);
+                    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.1);
                 }
                 
                 .message-bubble.pending {
-                    opacity: 0.6;
+                    opacity: 0.7;
                 }
                 
                 .bubble-sender {
-                    font-size: 12px;
+                    font-size: 11px;
                     font-weight: 600;
-                    color: #14b8a6;
+                    color: rgba(20, 184, 166, 0.9);
                     margin-bottom: 4px;
                     display: flex;
                     align-items: center;
-                    gap: 4px;
+                    gap: 3px;
                 }
                 
                 .bubble-reply {
-                    font-size: 12px;
-                    color: rgba(255, 255, 255, 0.5);
+                    font-size: 11px;
+                    color: rgba(255, 255, 255, 0.6);
                     padding: 6px 10px;
                     background: rgba(0, 0, 0, 0.2);
                     border-radius: 8px;
@@ -707,18 +792,20 @@ function MessageBubble({
                 }
                 
                 .bubble-text {
-                    color: white;
-                    font-size: 14px;
-                    line-height: 1.4;
+                    color: rgba(255, 255, 255, 0.95);
+                    font-size: 15px;
+                    line-height: 1.5;
                     word-wrap: break-word;
+                    font-weight: 400;
                 }
                 
                 .bubble-time {
-                    font-size: 10px;
-                    color: rgba(255, 255, 255, 0.4);
-                    margin-top: 4px;
+                    font-size: 9px;
+                    color: rgba(255, 255, 255, 0.3);
+                    margin-top: 2px;
                     display: block;
                     text-align: right;
+                    font-weight: 500;
                 }
             `}</style>
         </div>

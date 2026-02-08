@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { motion } from 'framer-motion';
-import { Search, Plus } from 'lucide-react';
-import GlassCard from './ui/GlassCard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Plus, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
 import VerifiedBadge from './ui/VerifiedBadge';
-import { useEnv } from '@/hooks/useEnv';
+import { messageAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface Conversation {
     _id: string;
-    type: 'dm' | 'squad' | 'community';
+    type: 'dm';
     name: string;
     avatar?: string;
     lastMessage?: {
@@ -19,50 +19,71 @@ interface Conversation {
         senderId: string;
     };
     unreadCount: number;
-    participants?: Array<{
-        _id: string;
-        name: string;
-        profilePicture?: string;
-        isVerified?: boolean;
-    }>;
     isVerified?: boolean;
 }
 
 interface ConversationListProps {
-    onSelectConversation: (id: string) => void;
+    onSelectConversation: (id: string, type: 'dm') => void;
     selectedId: string | null;
 }
 
+// Default fallback avatar
+const DEFAULT_AVATAR = '/assets/default-user.png';
+
 export default function ConversationList({ onSelectConversation, selectedId }: ConversationListProps) {
-    const { apiUrl } = useEnv();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-    // Fetch conversations
     const fetchConversations = useCallback(async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${apiUrl}/api/messages/conversations`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            setError(null);
+            const dmResponse = await messageAPI.getConversations();
 
-            if (response.ok) {
-                const data = await response.json();
-                setConversations(data.conversations || []);
+            if (dmResponse && dmResponse.conversations) {
+                const dmConvos = dmResponse.conversations.map((conv: any) => ({
+                    _id: conv._id || conv.recipientId,
+                    type: 'dm' as const,
+                    name: conv.otherUser?.name || conv.recipientName || conv.name || 'Unknown',
+                    avatar: conv.otherUser?.profilePicture || conv.recipientImage || conv.recipientProfilePicture || conv.profilePicture || conv.avatar,
+                    lastMessage: conv.lastMessage ? {
+                        text: conv.lastMessage.text || conv.lastMessage.message || '',
+                        timestamp: conv.lastMessage.timestamp || conv.lastMessage.createdAt,
+                        senderId: conv.lastMessage.senderId || conv.lastMessage.sender
+                    } : undefined,
+                    unreadCount: conv.unreadCount || 0,
+                    isVerified: conv.otherUser?.isVerified || conv.recipientVerified || conv.isVerified
+                }));
+
+                dmConvos.sort((a: Conversation, b: Conversation) => {
+                    const timeA = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+                    const timeB = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+                    return timeB - timeA;
+                });
+
+                setConversations(dmConvos);
+            } else {
+                setConversations([]);
             }
         } catch (error) {
             console.error('Failed to fetch conversations:', error);
+            setError('Failed to load conversations');
+            // Show toast notification instead of blank screen
+            toast.error('Connection lost. Reconnecting...', {
+                id: 'conv-error', // Prevent duplicate toasts
+                duration: 3000,
+            });
         } finally {
             setLoading(false);
         }
-    }, [apiUrl]);
+    }, []);
 
     useEffect(() => {
         fetchConversations();
     }, [fetchConversations]);
 
-    // Filter conversations by search
     const filteredConversations = conversations.filter(conv =>
         conv.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -82,335 +103,185 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
         }
     };
 
-    const renderConversation = (index: number, conv: Conversation) => (
-        <motion.div
-            key={conv._id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.03 }}
-        >
-            <div
-                className={`conversation-item ${selectedId === conv._id ? 'selected' : ''}`}
-                onClick={() => onSelectConversation(conv._id)}
-            >
-                {/* Avatar */}
-                <div className="avatar-wrapper">
-                    {conv.avatar ? (
-                        <img src={conv.avatar} alt={conv.name} className="avatar" />
-                    ) : (
-                        <div className="avatar-placeholder">
-                            {conv.name.charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    {conv.type === 'squad' && (
-                        <div className="type-badge squad">👥</div>
-                    )}
-                    {conv.type === 'community' && (
-                        <div className="type-badge community">🌐</div>
-                    )}
-                </div>
+    const renderConversation = (index: number, conv: Conversation) => {
+        const isSelected = selectedId === conv._id;
 
-                {/* Content */}
-                <div className="conversation-content">
-                    <div className="conversation-header">
-                        <span className="conversation-name">
-                            {conv.name}
-                            {conv.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
-                        </span>
-                        {conv.lastMessage && (
-                            <span className="conversation-time">
-                                {formatTime(conv.lastMessage.timestamp)}
-                            </span>
-                        )}
+        return (
+            <motion.div
+                key={conv._id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.02, duration: 0.3 }}
+                className="px-3 py-1"
+            >
+                <motion.div
+                    onClick={() => onSelectConversation(conv._id, conv.type)}
+                    className={`
+                        group relative flex items-center gap-3 p-3 rounded-2xl cursor-pointer
+                        transition-all duration-300 ease-out
+                        ${isSelected
+                            ? 'bg-white/15 shadow-[0_0_20px_rgba(20,184,166,0.15)] border border-teal-500/30'
+                            : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
+                        }
+                    `}
+                    whileHover={{ scale: 1.01, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                >
+                    {/* Active Indicator */}
+                    {isSelected && (
+                        <motion.div
+                            layoutId="activeConversation"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-teal-400 to-teal-600 rounded-full"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                        />
+                    )}
+
+                    {/* Avatar - FIXED SIZE */}
+                    <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/10 group-hover:ring-white/20 transition-all">
+                            {conv.avatar && !failedImages.has(conv._id) ? (
+                                <img
+                                    src={conv.avatar}
+                                    alt={conv.name}
+                                    className="w-12 h-12 object-cover"
+                                    onError={() => {
+                                        // Track failed images to show fallback
+                                        setFailedImages(prev => new Set(prev).add(conv._id));
+                                    }}
+                                />
+                            ) : (
+                                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
+                                    <span className="text-white font-bold text-lg">
+                                        {conv.name.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        {/* Online Indicator (placeholder) */}
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-gray-900" />
                     </div>
-                    <div className="conversation-preview">
-                        <span className="preview-text">
-                            {conv.lastMessage?.text || 'No messages yet'}
-                        </span>
-                        {conv.unreadCount > 0 && (
-                            <span className="unread-badge">{conv.unreadCount}</span>
-                        )}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                        {/* Row 1: Name + Time */}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-semibold text-white truncate text-[15px]">
+                                    {conv.name}
+                                </span>
+                                {conv.isVerified && <VerifiedBadge size="sm" />}
+                            </div>
+                            {conv.lastMessage && (
+                                <span className="text-xs text-gray-400 flex-shrink-0">
+                                    {formatTime(conv.lastMessage.timestamp)}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Row 2: Last Message + Unread Badge */}
+                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                            <p className="text-sm text-gray-400 truncate">
+                                {conv.lastMessage?.text || 'No messages yet'}
+                            </p>
+                            {conv.unreadCount > 0 && (
+                                <motion.span
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full text-[11px] font-bold text-white flex items-center justify-center shadow-lg shadow-teal-500/30"
+                                >
+                                    {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+                                </motion.span>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </div>
-        </motion.div>
-    );
+                </motion.div>
+            </motion.div>
+        );
+    };
 
     return (
-        <div className="conversation-list-container">
+        <div className="h-full flex flex-col bg-black/20 backdrop-blur-xl border-r border-white/10">
             {/* Header */}
-            <div className="list-header">
-                <h2>Messages</h2>
-                <button className="new-chat-btn">
-                    <Plus size={20} />
-                </button>
-            </div>
+            <div className="p-4 pb-3 border-b border-white/5">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-white tracking-tight">Messages</h2>
+                    <motion.button
+                        whileHover={{ scale: 1.05, rotate: 90 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-teal-500/20 to-emerald-500/20 border border-teal-500/30 rounded-xl text-teal-400 hover:text-teal-300 transition-colors"
+                    >
+                        <Plus size={18} strokeWidth={2.5} />
+                    </motion.button>
+                </div>
 
-            {/* Search */}
-            <div className="search-wrapper">
-                <Search size={18} className="search-icon" />
-                <input
-                    type="text"
-                    placeholder="Search conversations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input"
-                />
+                {/* Search */}
+                <div className="relative">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                        type="text"
+                        placeholder="Search conversations..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all"
+                    />
+                </div>
             </div>
 
             {/* Conversation List */}
-            {loading ? (
-                <div className="loading-state">
-                    {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="skeleton-item">
-                            <div className="skeleton-avatar" />
-                            <div className="skeleton-content">
-                                <div className="skeleton-line w-3/4" />
-                                <div className="skeleton-line w-1/2" />
+            <div className="flex-1 overflow-hidden">
+                {loading ? (
+                    <div className="p-4 space-y-3">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
+                                <div className="w-12 h-12 rounded-full bg-white/10" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 bg-white/10 rounded w-3/4" />
+                                    <div className="h-3 bg-white/5 rounded w-1/2" />
+                                </div>
                             </div>
+                        ))}
+                    </div>
+                ) : error ? (
+                    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <div className="w-16 h-16 mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+                            <MessageSquare className="w-8 h-8 text-red-400" />
                         </div>
-                    ))}
-                </div>
-            ) : filteredConversations.length === 0 ? (
-                <div className="empty-list">
-                    <p>No conversations yet</p>
-                </div>
-            ) : (
-                <Virtuoso
-                    style={{ height: 'calc(100% - 120px)' }}
-                    data={filteredConversations}
-                    itemContent={renderConversation}
-                    className="app-scrollable"
-                />
-            )}
-
-            <style jsx>{`
-                .conversation-list-container {
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                    background: rgba(0, 0, 0, 0.2);
-                }
-                
-                .list-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 16px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                }
-                
-                .list-header h2 {
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: white;
-                }
-                
-                .new-chat-btn {
-                    width: 36px;
-                    height: 36px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: rgba(20, 184, 166, 0.2);
-                    border: 1px solid rgba(20, 184, 166, 0.3);
-                    border-radius: 10px;
-                    color: #14b8a6;
-                    transition: all 0.2s;
-                }
-                
-                .new-chat-btn:hover {
-                    background: rgba(20, 184, 166, 0.3);
-                }
-                
-                .search-wrapper {
-                    position: relative;
-                    padding: 0 16px 16px;
-                }
-                
-                .search-icon {
-                    position: absolute;
-                    left: 28px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: rgba(255, 255, 255, 0.4);
-                    margin-top: -8px;
-                }
-                
-                .search-input {
-                    width: 100%;
-                    padding: 10px 12px 10px 40px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 12px;
-                    color: white;
-                    font-size: 14px;
-                    outline: none;
-                    transition: all 0.2s;
-                }
-                
-                .search-input::placeholder {
-                    color: rgba(255, 255, 255, 0.4);
-                }
-                
-                .search-input:focus {
-                    border-color: rgba(20, 184, 166, 0.5);
-                    background: rgba(255, 255, 255, 0.15);
-                }
-                
-                .conversation-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 12px 16px;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                }
-                
-                .conversation-item:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                }
-                
-                .conversation-item.selected {
-                    background: rgba(20, 184, 166, 0.15);
-                }
-                
-                .avatar-wrapper {
-                    position: relative;
-                    flex-shrink: 0;
-                }
-                
-                .avatar, .avatar-placeholder {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 14px;
-                    object-fit: cover;
-                }
-                
-                .avatar-placeholder {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: linear-gradient(135deg, #14b8a6, #0d9488);
-                    color: white;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-                
-                .type-badge {
-                    position: absolute;
-                    bottom: -2px;
-                    right: -2px;
-                    width: 18px;
-                    height: 18px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 10px;
-                    background: #1a1a24;
-                    border: 2px solid #1a1a24;
-                }
-                
-                .conversation-content {
-                    flex: 1;
-                    min-width: 0;
-                }
-                
-                .conversation-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 4px;
-                }
-                
-                .conversation-name {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                }
-                
-                .conversation-time {
-                    font-size: 12px;
-                    color: rgba(255, 255, 255, 0.5);
-                }
-                
-                .conversation-preview {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                }
-                
-                .preview-text {
-                    font-size: 13px;
-                    color: rgba(255, 255, 255, 0.6);
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                    flex: 1;
-                }
-                
-                .unread-badge {
-                    min-width: 20px;
-                    height: 20px;
-                    padding: 0 6px;
-                    background: #14b8a6;
-                    border-radius: 10px;
-                    font-size: 11px;
-                    font-weight: 600;
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-left: 8px;
-                }
-                
-                .loading-state, .empty-list {
-                    padding: 16px;
-                }
-                
-                .skeleton-item {
-                    display: flex;
-                    gap: 12px;
-                    padding: 12px 0;
-                }
-                
-                .skeleton-avatar {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 14px;
-                    background: rgba(255, 255, 255, 0.1);
-                    animation: pulse 1.5s infinite;
-                }
-                
-                .skeleton-content {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                
-                .skeleton-line {
-                    height: 12px;
-                    border-radius: 6px;
-                    background: rgba(255, 255, 255, 0.1);
-                    animation: pulse 1.5s infinite;
-                }
-                
-                .empty-list {
-                    text-align: center;
-                    color: rgba(255, 255, 255, 0.5);
-                    padding-top: 40px;
-                }
-                
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-            `}</style>
+                        <p className="text-gray-400 mb-4">{error}</p>
+                        <motion.button
+                            onClick={fetchConversations}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="px-4 py-2 bg-teal-500/20 border border-teal-500/30 rounded-xl text-teal-400 text-sm font-medium"
+                        >
+                            Retry
+                        </motion.button>
+                    </div>
+                ) : filteredConversations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-teal-500/10 to-emerald-500/10 flex items-center justify-center"
+                        >
+                            <Sparkles className="w-10 h-10 text-teal-400" />
+                        </motion.div>
+                        <p className="text-gray-300 font-medium mb-1">
+                            {searchQuery ? 'No results found' : 'No conversations yet'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            Start a chat or join a trip!
+                        </p>
+                    </div>
+                ) : (
+                    <Virtuoso
+                        style={{ height: '100%' }}
+                        data={filteredConversations}
+                        itemContent={renderConversation}
+                        className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                    />
+                )}
+            </div>
         </div>
     );
 }

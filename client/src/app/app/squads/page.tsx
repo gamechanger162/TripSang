@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { tripAPI } from '@/lib/api';
 import NavRail from '@/components/app/NavRail';
 import GlassCard from '@/components/app/ui/GlassCard';
 import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
@@ -48,14 +49,11 @@ export default function SquadsPage() {
     useEffect(() => {
         const fetchSquads = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${apiUrl}/api/trips/my-trips`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                // Use tripAPI which handles auth tokens (session or localStorage)
+                const response = await tripAPI.getMyTrips();
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setSquads(data.trips || []);
+                if (response.success || response.trips) {
+                    setSquads(response.trips || []);
                 }
             } catch (error) {
                 console.error('Failed to fetch squads:', error);
@@ -64,8 +62,10 @@ export default function SquadsPage() {
             }
         };
 
-        if (session) fetchSquads();
-    }, [session, apiUrl]);
+        if (status === 'authenticated') {
+            fetchSquads();
+        }
+    }, [status]);
 
     if (status === 'loading') {
         return (
@@ -152,7 +152,7 @@ export default function SquadsPage() {
                                             {/* Squad Members */}
                                             <div className="squad-members">
                                                 <div className="member-avatars">
-                                                    {squad.squad.slice(0, 4).map((member, i) => (
+                                                    {(squad.squad || []).slice(0, 4).map((member: any, i: number) => (
                                                         <div
                                                             key={member._id}
                                                             className="member-avatar"

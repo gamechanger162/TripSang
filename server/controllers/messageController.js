@@ -17,27 +17,35 @@ export const getConversations = async (req, res) => {
             .sort({ 'lastMessage.timestamp': -1 });
 
         // Format response with other user details and unread count
-        const formattedConversations = conversations.map(conv => {
-            const otherUser = conv.participants.find(
-                p => p._id.toString() !== userId.toString()
-            );
+        // Filter out conversations where otherUser is null (deleted users, etc.)
+        const formattedConversations = conversations
+            .map(conv => {
+                const otherUser = conv.participants.find(
+                    p => p && p._id && p._id.toString() !== userId.toString()
+                );
 
-            return {
-                _id: conv._id,
-                otherUser: {
-                    _id: otherUser._id,
-                    name: otherUser.name,
-                    profilePicture: otherUser.profilePicture
-                },
-                lastMessage: conv.lastMessage.text ? {
-                    text: conv.lastMessage.text,
-                    timestamp: conv.lastMessage.timestamp,
-                    isOwnMessage: conv.lastMessage.sender?.toString() === userId.toString()
-                } : null,
-                unreadCount: conv.unreadCount.get(userId.toString()) || 0,
-                updatedAt: conv.updatedAt
-            };
-        });
+                // Skip if no valid other user found
+                if (!otherUser) {
+                    return null;
+                }
+
+                return {
+                    _id: conv._id,
+                    otherUser: {
+                        _id: otherUser._id,
+                        name: otherUser.name || 'Unknown User',
+                        profilePicture: otherUser.profilePicture || null
+                    },
+                    lastMessage: conv.lastMessage && conv.lastMessage.text ? {
+                        text: conv.lastMessage.text,
+                        timestamp: conv.lastMessage.timestamp,
+                        isOwnMessage: conv.lastMessage.sender?.toString() === userId.toString()
+                    } : null,
+                    unreadCount: conv.unreadCount.get(userId.toString()) || 0,
+                    updatedAt: conv.updatedAt
+                };
+            })
+            .filter(conv => conv !== null); // Remove null entries
 
         res.status(200).json({
             success: true,

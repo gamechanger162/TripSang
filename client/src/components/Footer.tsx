@@ -1,7 +1,17 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 const Footer = () => {
+    const pathname = usePathname();
+
+    // Hide footer on /app routes (standalone chat app)
+    if (pathname?.startsWith('/app')) {
+        return null;
+    }
+
     return (
         <footer className="bg-black border-t border-white/10 pt-16 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

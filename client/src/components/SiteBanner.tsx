@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface Announcement {
     _id: string;
@@ -12,6 +13,7 @@ interface Announcement {
 }
 
 export default function SiteBanner() {
+    const pathname = usePathname();
     const [announcement, setAnnouncement] = useState<Announcement | null>(null);
     const [isVisible, setIsVisible] = useState(false);
 
@@ -46,7 +48,8 @@ export default function SiteBanner() {
         }
     };
 
-    if (!isVisible || !announcement) {
+    // Hide on /app routes (standalone chat app) or when not visible
+    if (pathname?.startsWith('/app') || !isVisible || !announcement) {
         return null;
     }
 

@@ -7,6 +7,7 @@ import NavRail from '@/components/app/NavRail';
 import GlassCard from '@/components/app/ui/GlassCard';
 import { GlassButton } from '@/components/app/ui/GlassCard';
 import { useEnv } from '@/hooks/useEnv';
+import { communityAPI, userAPI, paymentAPI } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Globe, Users, Lock, Crown, ChevronRight, Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -31,6 +32,8 @@ export default function CommunitiesPage() {
     const [communities, setCommunities] = useState<Community[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'joined'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -38,32 +41,83 @@ export default function CommunitiesPage() {
         }
     }, [status, router]);
 
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     useEffect(() => {
         const fetchCommunities = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${apiUrl}/api/community`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+            // Guard: Wait for session to be fully loaded
+            if (status !== 'authenticated' || !session?.user) return;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setCommunities(data.communities || []);
+            try {
+                setLoading(true);
+                let data;
+
+                if (filter === 'joined') {
+                    // Get my communities
+                    const response = await communityAPI.getMyCommunities();
+                    data = response.communities || [];
+                } else {
+                    // Discover communities with search
+                    const response = await communityAPI.discover(undefined, debouncedSearch);
+                    data = response.communities || [];
                 }
+
+                setCommunities(data);
             } catch (error) {
                 console.error('Failed to fetch communities:', error);
+                // Only show toast once per error
+                if (!loading) {
+                    toast.error('Failed to load communities');
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        if (session) fetchCommunities();
-    }, [session, apiUrl]);
+        fetchCommunities();
+        // Use stable primitive values as dependencies to prevent infinite loops
+    }, [status, (session?.user as any)?.id, filter, debouncedSearch]);
 
-    const handleCreateCommunity = () => {
-        // Check if user has premium
+    const handleCreateCommunity = async () => {
         const user = session?.user as any;
-        if (!user?.subscription?.plan || user?.subscription?.plan === 'free') {
+        console.log('Debug: Checking premium status for user:', user);
+
+        // 1. Check session first (fast path)
+        let isPremium = user?.subscription?.plan === 'premium' || user?.subscription?.plan === 'pro' || user?.isPremium;
+
+        // 2. If not found in session, fetch subscription status from payment API (more reliable)
+        if (!isPremium) {
+            try {
+                const toastId = toast.loading('Verifying membership...');
+                const response = await paymentAPI.getStatus();
+                toast.dismiss(toastId);
+
+                if (response.success && response.subscription) {
+                    const sub = response.subscription;
+                    console.log('Debug: Fetched subscription:', sub);
+
+                    // Check for active subscription or valid trial
+                    const trialEnd = sub.trialEndDate || sub.trialEnds;
+                    isPremium = sub.status === 'active' ||
+                        sub.status === 'trial' ||
+                        sub.plan === 'premium' ||
+                        sub.plan === 'pro' ||
+                        (trialEnd && new Date(trialEnd) > new Date());
+                }
+            } catch (error) {
+                console.error('Failed to verify premium status:', error);
+                toast.error('Could not verify membership. Please try again.');
+                return;
+            }
+        }
+
+        if (!isPremium) {
             toast.error('Premium subscription required to create communities');
             router.push('/my-plan');
             return;
@@ -81,10 +135,6 @@ export default function CommunitiesPage() {
 
     if (!session) return null;
 
-    const filteredCommunities = filter === 'joined'
-        ? communities.filter(c => c.isJoined)
-        : communities;
-
     return (
         <div className="communities-layout">
             <NavRail />
@@ -101,20 +151,34 @@ export default function CommunitiesPage() {
                     </GlassButton>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="filter-tabs">
-                    <button
-                        className={`tab ${filter === 'all' ? 'active' : ''}`}
-                        onClick={() => setFilter('all')}
-                    >
-                        Discover
-                    </button>
-                    <button
-                        className={`tab ${filter === 'joined' ? 'active' : ''}`}
-                        onClick={() => setFilter('joined')}
-                    >
-                        Joined
-                    </button>
+                {/* Filter Tabs & Search */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-center">
+                    <div className="filter-tabs">
+                        <button
+                            className={`tab ${filter === 'all' ? 'active' : ''}`}
+                            onClick={() => setFilter('all')}
+                        >
+                            Discover
+                        </button>
+                        <button
+                            className={`tab ${filter === 'joined' ? 'active' : ''}`}
+                            onClick={() => setFilter('joined')}
+                        >
+                            Joined
+                        </button>
+                    </div>
+
+                    {filter === 'all' && (
+                        <div className="search-wrapper">
+                            <input
+                                type="text"
+                                placeholder="Search communities..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {loading ? (
@@ -123,15 +187,22 @@ export default function CommunitiesPage() {
                             <div key={i} className="skeleton-community" />
                         ))}
                     </div>
-                ) : filteredCommunities.length === 0 ? (
+                ) : communities.length === 0 ? (
                     <div className="empty-communities">
                         <Globe size={48} className="empty-icon" />
-                        <h3>{filter === 'joined' ? 'No communities joined' : 'No communities found'}</h3>
-                        <p>{filter === 'joined' ? 'Explore and join communities to connect with travelers' : 'Be the first to create a community!'}</p>
+                        <h3>
+                            {searchQuery ? 'No communities match your search'
+                                : filter === 'joined' ? 'No communities joined yet'
+                                    : 'No communities found'}
+                        </h3>
+                        <p>
+                            {filter === 'joined' ? 'Explore and join communities to connect with travelers'
+                                : 'Be the first to create a community!'}
+                        </p>
                     </div>
                 ) : (
                     <div className="communities-grid">
-                        {filteredCommunities.map((community, index) => (
+                        {communities.map((community, index) => (
                             <motion.div
                                 key={community._id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -232,7 +303,28 @@ export default function CommunitiesPage() {
                 .filter-tabs {
                     display: flex;
                     gap: 8px;
-                    margin-bottom: 24px;
+                }
+                
+                .search-wrapper {
+                    width: 100%;
+                    max-width: 300px;
+                }
+                
+                .search-input {
+                    width: 100%;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: white;
+                    font-size: 14px;
+                    outline: none;
+                    transition: all 0.2s;
+                }
+                
+                .search-input:focus {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(20, 184, 166, 0.5);
                 }
                 
                 .tab {
