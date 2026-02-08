@@ -54,16 +54,16 @@ export default function MessageBubble({ message, onReply }: MessageBubbleProps) 
 
                         {message.type === 'image' && message.imageUrl ? (
                             <div
-                                className="mb-1 rounded-lg overflow-hidden cursor-pointer"
+                                className="mb-1 rounded-lg overflow-hidden cursor-pointer max-w-[280px]"
                                 onClick={() => setViewingImage(message.imageUrl!)}
                             >
                                 <Image
                                     src={message.imageUrl}
                                     alt="Shared image"
-                                    width={300}
-                                    height={225}
+                                    width={280}
+                                    height={210}
                                     unoptimized
-                                    className="w-full h-auto object-cover hover:scale-105 transition-transform"
+                                    className="w-full h-auto max-h-[300px] object-cover hover:scale-105 transition-transform"
                                 />
                             </div>
                         ) : (
