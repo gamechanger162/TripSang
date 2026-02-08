@@ -46,6 +46,9 @@ conversationSchema.index(
     }
 );
 
+// Optimize sorting conversations by latest message
+conversationSchema.index({ participants: 1, 'lastMessage.timestamp': -1 });
+
 // Helper method: Get the other participant in the conversation
 conversationSchema.methods.getOtherParticipant = function (userId) {
     return this.participants.find(id => id.toString() !== userId.toString());

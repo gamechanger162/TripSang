@@ -103,7 +103,8 @@ const tripSchema = new mongoose.Schema({
     },
     squadMembers: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        index: true
     }],
     maxSquadSize: {
         type: Number,
@@ -219,6 +220,7 @@ tripSchema.pre('save', async function (next) {
 tripSchema.index({ creator: 1, status: 1 });
 tripSchema.index({ startDate: 1, endDate: 1 });
 tripSchema.index({ 'startPoint.name': 'text', 'endPoint.name': 'text', title: 'text' });
+tripSchema.index({ status: 1, isPublic: 1, startDate: 1 }); // Optimize public trip search
 
 // Virtual for squad size
 tripSchema.virtual('currentSquadSize').get(function () {

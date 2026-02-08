@@ -299,19 +299,84 @@ export const getAllMemories = async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        // Get public trips first
-        const publicTrips = await Trip.find({ isPublic: true }).select('_id');
-        const publicTripIds = publicTrips.map(t => t._id);
+        // Optimization: Use aggregation to filter public trips without fetching potentially thousands of IDs first
+        const pipeline = [
+            // 1. Lookup associated trip to check isPublic
+            {
+                $lookup: {
+                    from: 'trips',
+                    localField: 'trip',
+                    foreignField: '_id',
+                    as: 'tripData'
+                }
+            },
+            // 2. Unwind (preserve memories without trips if that's a valid case, though schema says required=false now)
+            {
+                $unwind: {
+                    path: '$tripData',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // 3. Match: Keep if no trip (global) OR trip is public
+            {
+                $match: {
+                    $or: [
+                        { trip: null },
+                        { 'tripData.isPublic': true }
+                    ]
+                }
+            },
+            // 4. Sort by newest
+            { $sort: { createdAt: -1 } },
+            // 5. Pagination
+            { $skip: skip },
+            { $limit: parseInt(limit) },
+            // 6. Project only ID to keep it light
+            { $project: { _id: 1 } }
+        ];
 
-        const memories = await Memory.find({ trip: { $in: publicTripIds } })
+        // Execute aggregation to get IDs
+        const aggregatedResults = await Memory.aggregate(pipeline);
+        const memoryIds = aggregatedResults.map(m => m._id);
+
+        // Fetch fully populated docs for these IDs
+        const memories = await Memory.find({ _id: { $in: memoryIds } })
             .populate('author', 'name profilePicture subscription')
             .populate('trip', 'title startPoint endPoint')
             .populate('comments.user', 'name profilePicture subscription')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
+            .sort({ createdAt: -1 }); // Ensure order is maintained
 
-        const total = await Memory.countDocuments();
+        // Get approximate total for pagination (calculating exact total with complex filter is expensive)
+        // For now, we can use a separate count aggregation or just return a simple estimate if needed.
+        // Let's do a correct count aggregation for accuracy.
+        const countPipeline = [
+            {
+                $lookup: {
+                    from: 'trips',
+                    localField: 'trip',
+                    foreignField: '_id',
+                    as: 'tripData'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$tripData',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $match: {
+                    $or: [
+                        { trip: null },
+                        { 'tripData.isPublic': true }
+                    ]
+                }
+            },
+            { $count: 'total' }
+        ];
+
+        const countResult = await Memory.aggregate(countPipeline);
+        const total = countResult.length > 0 ? countResult[0].total : 0;
 
         res.json({
             success: true,
