@@ -256,8 +256,17 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             const { url } = await uploadResponse.json();
 
             if (conversationType === 'dm') {
-                // DM images use REST API
-                const response = await fetch(`${apiUrl}/api/messages/${conversationId}`, {
+                // DM images use Socket.IO (same as text messages)
+                socketRef.current?.emit('send_dm', {
+                    conversationId,
+                    receiverId: conversationInfo?.otherUserId || conversationInfo?._id,
+                    message: '',
+                    type: 'image',
+                    imageUrl: url
+                });
+            } else if (conversationType === 'community') {
+                // Community images use REST API
+                const response = await fetch(`${apiUrl}/api/communities/${conversationId}/messages`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -275,7 +284,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     setMessages(prev => [...prev, data.message]);
                 }
             } else {
-                // Squad images use socket
+                // Squad images use Socket.IO
                 socketRef.current?.emit('send_message', {
                     tripId: conversationId,
                     message: '',
@@ -481,6 +490,38 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         <span className="pinned-text">
                             <strong>{pinnedMessage.senderName}:</strong> {pinnedMessage.message}
                         </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Mini Map for Squad Chats */}
+            <AnimatePresence>
+                {showMiniMap && conversationType === 'squad' && (
+                    <motion.div
+                        className="mini-map-container"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 200, opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            padding: '8px',
+                            background: 'rgba(0, 0, 0, 0.3)'
+                        }}
+                    >
+                        <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            fontSize: '14px'
+                        }}>
+                            <MapPin size={20} style={{ marginRight: '8px' }} />
+                            Trip Location Map
+                            <br />
+                            <small style={{ opacity: 0.7 }}>(Map integration coming soon)</small>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -907,7 +948,10 @@ function MessageBubble({
             {/* Profile Picture for received messages */}
             {!isOwn && (groupPosition === 'bottom' || groupPosition === 'single') && (
                 <img
-                    src={message.senderProfilePicture || '/assets/default-user.png'}
+                    src={
+                        message.senderProfilePicture ||
+                        `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2306b6d4'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3E${(message.senderName || 'U').charAt(0).toUpperCase()}%3C/text%3E%3C/svg%3E`
+                    }
                     alt={message.senderName}
                     className="w-8 h-8 rounded-full object-cover mr-2 shrink-0"
                 />
