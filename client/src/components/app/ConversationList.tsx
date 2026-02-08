@@ -44,15 +44,12 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
         try {
             setError(null);
 
-            // Fetch both DMs and Squads (Trips) in parallel
-            const [dmResponse, tripsResponse] = await Promise.all([
-                messageAPI.getConversations().catch(err => ({ success: false, error: err })),
-                tripAPI.getMyTrips().catch(err => ({ success: false, error: err }))
-            ]);
+            // Fetch only DM conversations (squads have their own tab)
+            const dmResponse = await messageAPI.getConversations().catch(err => ({ success: false, error: err }));
 
             let allConversations: Conversation[] = [];
 
-            // Process DMs
+            // Process DMs only
             if (dmResponse && dmResponse.conversations) {
                 const dmConvos = dmResponse.conversations.map((conv: any) => ({
                     _id: conv._id || conv.recipientId,
@@ -67,26 +64,7 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
                     unreadCount: conv.unreadCount || 0,
                     isVerified: conv.otherUser?.isVerified || conv.recipientVerified || conv.isVerified
                 }));
-                allConversations = [...allConversations, ...dmConvos];
-            }
-
-            // Process Squads (Trips)
-            if (tripsResponse && tripsResponse.success && tripsResponse.trips) {
-                const squadConvos = tripsResponse.trips.map((trip: any) => ({
-                    _id: trip._id,
-                    type: 'squad', // New type
-                    name: trip.title,
-                    avatar: trip.coverPhoto, // Trip has coverPhoto
-                    // Squads might not have lastMessage loaded here, use updatedAt or startDate
-                    lastMessage: {
-                        text: 'Tap to view squad chat',
-                        timestamp: trip.updatedAt || trip.startDate,
-                        senderId: 'system'
-                    },
-                    unreadCount: 0, // TODO: Implement unread count for squads if API supports it
-                    isVerified: false
-                }));
-                allConversations = [...allConversations, ...squadConvos];
+                allConversations = dmConvos;
             }
 
             // Sort by timestamp (newest first)

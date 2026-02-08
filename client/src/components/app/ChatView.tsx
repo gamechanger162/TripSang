@@ -195,30 +195,19 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         setSending(true);
         try {
             if (conversationType === 'dm') {
-                // DM messages use REST API
-                const token = session?.user?.accessToken || localStorage.getItem('token');
-                const response = await fetch(`${apiUrl}/api/messages/${conversationId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        message: optimisticMessage.message,
-                        type: 'text',
-                        replyTo: replyTo?._id
-                    })
+                // DM messages use Socket.IO (not REST API)
+                socketRef.current?.emit('send_dm', {
+                    conversationId,
+                    receiverId: conversationInfo?.otherUserId || conversationInfo?._id,
+                    message: optimisticMessage.message,
+                    type: 'text',
+                    replyTo: replyTo?._id
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    // Replace optimistic message with real one
-                    setMessages(prev =>
-                        prev.map(m => m._id === tempId ? { ...data.message, isPending: false } : m)
-                    );
-                } else {
-                    throw new Error('Failed to send message');
-                }
+                // Remove pending state - real message will come via socket
+                setMessages(prev =>
+                    prev.map(m => m._id === tempId ? { ...m, isPending: false } : m)
+                );
             } else {
                 // Squad/Community messages use socket
                 socketRef.current?.emit('send_message', {
