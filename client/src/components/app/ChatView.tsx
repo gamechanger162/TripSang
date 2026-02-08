@@ -132,8 +132,16 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
         socketRef.current.emit('join_room', { tripId: conversationId });
 
-        socketRef.current.on('receive_message', (message: Message) => {
-            setMessages(prev => [...prev, message]);
+        socketRef.current.on('receive_message', (message: any) => {
+            // Transform if senderId is populated (object)
+            let formattedMessage = { ...message };
+            if (message.senderId && typeof message.senderId === 'object') {
+                formattedMessage.senderProfilePicture = message.senderId.profilePicture;
+                formattedMessage.senderName = message.senderId.name;
+                formattedMessage.senderId = message.senderId._id;
+            }
+
+            setMessages(prev => [...prev, formattedMessage]);
             virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
         });
 
@@ -216,10 +224,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     tripId: conversationId,
                     message: optimisticMessage.message,
                     type: 'text',
-                    replyTo: replyTo ? {
-                        senderName: replyTo.senderName,
-                        message: replyTo.message
-                    } : undefined
+                    replyTo: replyTo ? replyTo._id : undefined
                 });
 
                 // Remove pending state

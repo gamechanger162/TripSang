@@ -87,7 +87,7 @@ io.use(async (socket, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.userId).select('name _id');
+        const user = await User.findById(decoded.userId).select('name _id profilePicture');
 
         if (!user) {
             return next(new Error('Authentication error: User not found'));
@@ -148,6 +148,12 @@ io.on('connection', (socket) => {
 
             if (!tripId || (!message && type === 'text')) return;
 
+            // Handle replyTo if it's an object (client sends object sometimes)
+            let replyToId = replyTo;
+            if (replyTo && typeof replyTo === 'object' && replyTo._id) {
+                replyToId = replyTo._id;
+            }
+
             // Save message to database
             const savedMessage = await Message.create({
                 tripId,
@@ -156,13 +162,14 @@ io.on('connection', (socket) => {
                 message: message || '', // Text might be empty for images
                 type,
                 imageUrl,
-                replyTo,
+                replyTo: replyToId,
                 timestamp: new Date()
             });
 
-            // Populate replyTo if it exists
+            // Populate replyTo and SENDER info
             const populatedMessage = await Message.findById(savedMessage._id)
-                .populate('replyTo', 'senderName message type imageUrl');
+                .populate('replyTo', 'senderName message type imageUrl')
+                .populate('senderId', 'name profilePicture'); // Ensure sender profile pic is sent
 
             // Broadcast to everyone in room (including sender)
             io.to(tripId).emit('receive_message', populatedMessage);

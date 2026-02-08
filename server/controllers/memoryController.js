@@ -299,7 +299,11 @@ export const getAllMemories = async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        const memories = await Memory.find()
+        // Get public trips first
+        const publicTrips = await Trip.find({ isPublic: true }).select('_id');
+        const publicTripIds = publicTrips.map(t => t._id);
+
+        const memories = await Memory.find({ trip: { $in: publicTripIds } })
             .populate('author', 'name profilePicture subscription')
             .populate('trip', 'title startPoint endPoint')
             .populate('comments.user', 'name profilePicture subscription')

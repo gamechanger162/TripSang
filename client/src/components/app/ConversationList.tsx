@@ -5,12 +5,12 @@ import { Virtuoso } from 'react-virtuoso';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
 import VerifiedBadge from './ui/VerifiedBadge';
-import { messageAPI } from '@/lib/api';
+import { messageAPI, tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface Conversation {
     _id: string;
-    type: 'dm';
+    type: 'dm' | 'squad';
     name: string;
     avatar?: string;
     lastMessage?: {
@@ -23,7 +23,7 @@ interface Conversation {
 }
 
 interface ConversationListProps {
-    onSelectConversation: (id: string, type: 'dm') => void;
+    onSelectConversation: (id: string, type: 'dm' | 'squad') => void;
     selectedId: string | null;
 }
 
@@ -43,14 +43,22 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
 
         try {
             setError(null);
-            const dmResponse = await messageAPI.getConversations();
 
+            // Fetch both DMs and Squads (Trips) in parallel
+            const [dmResponse, tripsResponse] = await Promise.all([
+                messageAPI.getConversations().catch(err => ({ success: false, error: err })),
+                tripAPI.getMyTrips().catch(err => ({ success: false, error: err }))
+            ]);
+
+            let allConversations: Conversation[] = [];
+
+            // Process DMs
             if (dmResponse && dmResponse.conversations) {
                 const dmConvos = dmResponse.conversations.map((conv: any) => ({
                     _id: conv._id || conv.recipientId,
                     type: 'dm' as const,
                     name: conv.otherUser?.name || conv.recipientName || conv.name || 'Unknown',
-                    avatar: conv.otherUser?.profilePicture || conv.recipientImage || conv.recipientProfilePicture || conv.profilePicture || conv.avatar,
+                    avatar: conv.otherUser?.profilePicture,
                     lastMessage: conv.lastMessage ? {
                         text: conv.lastMessage.text || conv.lastMessage.message || '',
                         timestamp: conv.lastMessage.timestamp || conv.lastMessage.createdAt,
@@ -59,18 +67,38 @@ export default function ConversationList({ onSelectConversation, selectedId }: C
                     unreadCount: conv.unreadCount || 0,
                     isVerified: conv.otherUser?.isVerified || conv.recipientVerified || conv.isVerified
                 }));
-
-                dmConvos.sort((a: Conversation, b: Conversation) => {
-                    const timeA = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-                    const timeB = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
-                    return timeB - timeA;
-                });
-
-                setConversations(dmConvos);
-                setError(null);
-            } else {
-                setConversations([]);
+                allConversations = [...allConversations, ...dmConvos];
             }
+
+            // Process Squads (Trips)
+            if (tripsResponse && tripsResponse.success && tripsResponse.trips) {
+                const squadConvos = tripsResponse.trips.map((trip: any) => ({
+                    _id: trip._id,
+                    type: 'squad', // New type
+                    name: trip.title,
+                    avatar: trip.coverPhoto, // Trip has coverPhoto
+                    // Squads might not have lastMessage loaded here, use updatedAt or startDate
+                    lastMessage: {
+                        text: 'Tap to view squad chat',
+                        timestamp: trip.updatedAt || trip.startDate,
+                        senderId: 'system'
+                    },
+                    unreadCount: 0, // TODO: Implement unread count for squads if API supports it
+                    isVerified: false
+                }));
+                allConversations = [...allConversations, ...squadConvos];
+            }
+
+            // Sort by timestamp (newest first)
+            allConversations.sort((a: Conversation, b: Conversation) => {
+                const timeA = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+                const timeB = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+                return timeB - timeA;
+            });
+
+            setConversations(allConversations);
+            setError(null);
+
         } catch (error: any) {
             console.error('Failed to fetch conversations:', error?.message || error);
 
