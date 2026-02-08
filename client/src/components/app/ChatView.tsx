@@ -131,8 +131,29 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             reconnectionDelay: 1000
         });
 
-        socketRef.current.emit('join_room', { tripId: conversationId });
+        // Join appropriate room based on conversation type
+        if (conversationType === 'dm') {
+            // Join DM conversation room
+            socketRef.current.emit('join_dm_conversation', { conversationId });
+        } else {
+            // Join squad/community room
+            socketRef.current.emit('join_room', { tripId: conversationId });
+        }
 
+        // Listen for DM messages
+        socketRef.current.on('receive_dm', (message: any) => {
+            // Only add if for this conversation
+            if (message.conversationId === conversationId) {
+                setMessages(prev => {
+                    // Avoid duplicates (optimistic update may already have it)
+                    if (prev.some(m => m._id === message._id)) return prev;
+                    return [...prev, message];
+                });
+                virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+            }
+        });
+
+        // Listen for squad/trip messages
         socketRef.current.on('receive_message', (message: any) => {
             // Transform if senderId is populated (object)
             let formattedMessage = { ...message };
@@ -164,10 +185,14 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         });
 
         return () => {
-            socketRef.current?.emit('leave_room', { tripId: conversationId });
+            if (conversationType === 'dm') {
+                socketRef.current?.emit('leave_dm_conversation', { conversationId });
+            } else {
+                socketRef.current?.emit('leave_room', { tripId: conversationId });
+            }
             socketRef.current?.disconnect();
         };
-    }, [socketUrl, conversationId]);
+    }, [socketUrl, conversationId, conversationType]);
 
     // Send message with optimistic update
     const sendMessage = async () => {
@@ -208,8 +233,32 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 setMessages(prev =>
                     prev.map(m => m._id === tempId ? { ...m, isPending: false } : m)
                 );
+            } else if (conversationType === 'community') {
+                // Community messages use REST API
+                const token = session?.user?.accessToken || localStorage.getItem('token');
+                const response = await fetch(`${apiUrl}/api/communities/${conversationId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: optimisticMessage.message,
+                        type: 'text'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Replace optimistic message with real one
+                    setMessages(prev =>
+                        prev.map(m => m._id === tempId ? data.message : m)
+                    );
+                } else {
+                    throw new Error('Failed to send message');
+                }
             } else {
-                // Squad/Community messages use socket
+                // Squad messages use Socket.IO
                 socketRef.current?.emit('send_message', {
                     tripId: conversationId,
                     message: optimisticMessage.message,
