@@ -86,6 +86,8 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             let endpoint: string;
             if (conversationType === 'squad') {
                 endpoint = `${apiUrl}/api/trips/${conversationId}/chat`;
+            } else if (conversationType === 'community') {
+                endpoint = `${apiUrl}/api/communities/${conversationId}/messages`;
             } else {
                 // DM conversation - use the history endpoint
                 endpoint = `${apiUrl}/api/messages/${conversationId}/history`;
@@ -97,8 +99,18 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
             if (response.ok) {
                 const data = await response.json();
+                let msgs = data.messages || [];
+
+                // Normalize community messages (uses 'sender' instead of 'senderId')
+                if (conversationType === 'community') {
+                    msgs = msgs.map((m: any) => ({
+                        ...m,
+                        senderId: m.sender || m.senderId,
+                        // Community already has these correctly named
+                    }));
+                }
+
                 // Reverse messages for DM so newest are at bottom
-                const msgs = data.messages || [];
                 setMessages(conversationType === 'dm' ? msgs.reverse() : msgs);
 
                 // Set conversation info based on type
@@ -111,6 +123,12 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         startPoint: data.trip?.startPoint,
                         endPoint: data.trip?.endPoint,
                         waypoints: data.trip?.waypoints || []
+                    });
+                } else if (conversationType === 'community') {
+                    setConversationInfo({
+                        name: data.community?.name || 'Community Chat',
+                        avatar: data.community?.coverImage,
+                        type: 'community'
                     });
                 } else {
                     setConversationInfo(data.conversation);
@@ -861,7 +879,14 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 .chat-input-wrapper {
                     padding: 16px;
                     padding-top: 8px;
+                    padding-bottom: 80px; /* Clear mobile nav */
                     background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+                }
+                
+                @media (min-width: 768px) {
+                    .chat-input-wrapper {
+                        padding-bottom: 16px;
+                    }
                 }
                 
                 .chat-input-container {

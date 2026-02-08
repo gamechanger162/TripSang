@@ -162,16 +162,12 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0, unreadSquads = 0
                                 }`}
                         >
                             <div className="relative">
-                                <div className={`p-1.5 rounded-lg transition-all ${active ? 'bg-teal-500/15 shadow-[0_0_12px_rgba(20,184,166,0.3)]' : ''}`}>
-                                    {item.icon}
-                                </div>
+                                {item.icon}
                                 {item.badge && item.badge > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-br from-rose-500 via-pink-500 to-rose-600 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-lg shadow-rose-500/40 border border-white/20">
-                                        {item.badge > 9 ? '9+' : item.badge}
-                                    </span>
+                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-500 rounded-full" />
                                 )}
                             </div>
-                            <span className={`text-[10px] font-medium ${active ? 'text-teal-300' : ''}`}>{item.label}</span>
+                            <span className="text-[10px] font-medium">{item.label}</span>
                         </Link>
                     );
                 })}
