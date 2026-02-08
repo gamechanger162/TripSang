@@ -149,11 +149,6 @@ function MapEvents({ onMapClick }: { onMapClick: (e: L.LeafletMouseEvent) => voi
 }
 
 const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isReadOnly = false }: CollaborativeMapProps) => {
-    // Safety check for startPoint
-    if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') {
-        return <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-900/50">Invalid map coordinates</div>;
-    }
-
     const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints || []);
     const [socketConnected, setSocketConnected] = useState(false);
 
@@ -188,6 +183,11 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
             return () => clearTimeout(timer);
         }
     }, [waypoints, tripId, isReadOnly]);
+
+    // Safety check for startPoint
+    if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') {
+        return <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-900/50">Invalid map coordinates</div>;
+    }
 
     const handleMapClick = (e: L.LeafletMouseEvent) => {
         if (isReadOnly) return;
