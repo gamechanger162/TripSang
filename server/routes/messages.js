@@ -10,7 +10,8 @@ import {
     blockUser,
     unblockUser,
     getBlockStatus,
-    getBlockedUsers
+    getBlockedUsers,
+    deleteMessage
 } from '../controllers/messageController.js';
 
 const router = express.Router();
@@ -77,5 +78,12 @@ router.post('/block/:userId', authenticate, blockUser);
  * @access  Private
  */
 router.post('/unblock/:userId', authenticate, unblockUser);
+
+/**
+ * @route   DELETE /api/messages/:messageId
+ * @desc    Delete a message
+ * @access  Private
+ */
+router.delete('/:messageId', authenticate, deleteMessage);
 
 export default router;

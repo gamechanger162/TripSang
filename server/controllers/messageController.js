@@ -486,3 +486,51 @@ export const getBlockedUsers = async (req, res) => {
         });
     }
 };
+
+/**
+ * Delete a direct message
+ * DELETE /api/messages/:messageId
+ */
+export const deleteMessage = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { messageId } = req.params;
+
+        const message = await DirectMessage.findById(messageId);
+
+        if (!message) {
+            return res.status(404).json({
+                success: false,
+                message: 'Message not found.'
+            });
+        }
+
+        // Verify user is sender
+        if (message.sender.toString() !== userId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized.'
+            });
+        }
+
+        await DirectMessage.findByIdAndDelete(messageId);
+
+        // Notify socket
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`dm_${message.conversationId}`).emit('message_deleted', { messageId });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Message deleted.'
+        });
+    } catch (error) {
+        console.error('Delete message error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete message.',
+            error: error.message
+        });
+    }
+};

@@ -15,7 +15,8 @@ import {
     removeMember,
     approveRequest,
     rejectRequest,
-    deleteCommunity
+    deleteCommunity,
+    deleteMessage
 } from '../controllers/communityController.js';
 
 const router = express.Router();
@@ -67,5 +68,8 @@ router.put('/:id/requests/:userId/reject', rejectRequest);
 
 // Delete community (admin only)
 router.delete('/:id', deleteCommunity);
+
+// Delete community message
+router.delete('/:id/messages/:messageId', deleteMessage);
 
 export default router;

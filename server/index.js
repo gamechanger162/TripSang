@@ -303,6 +303,52 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ========== MESSAGE DELETION EVENTS ==========
+    socket.on('delete_message', async ({ tripId, messageId }) => {
+        try {
+            if (!tripId || !messageId) return;
+
+            const Trip = mongoose.model('Trip');
+            const trip = await Trip.findById(tripId);
+
+            if (!trip) {
+                return socket.emit('error', { message: 'Trip not found' });
+            }
+
+            const message = await Message.findById(messageId);
+            if (!message) {
+                return socket.emit('error', { message: 'Message not found' });
+            }
+
+            // Check permissions: sender OR trip creator
+            const isSender = message.senderId.toString() === socket.user._id.toString();
+            const isCreator = trip.creator.toString() === socket.user._id.toString();
+
+            if (!isSender && !isCreator) {
+                return socket.emit('error', { message: 'Unauthorized to delete this message' });
+            }
+
+            // Delete message from DB
+            await Message.findByIdAndDelete(messageId);
+
+            // If this was the pinned message, clear it
+            if (trip.pinnedMessage && trip.pinnedMessage.toString() === messageId) {
+                trip.pinnedMessage = null;
+                trip.pinnedBy = null;
+                await trip.save();
+                io.to(tripId).emit('message_unpinned', { unpinnedBy: 'System' });
+            }
+
+            // Broadcast to all in room
+            io.to(tripId).emit('message_deleted', { messageId });
+            console.log(`🗑️ Message ${messageId} deleted in trip ${tripId} by ${socket.user.name}`);
+
+        } catch (error) {
+            console.error('Delete message error:', error);
+            socket.emit('error', { message: 'Failed to delete message' });
+        }
+    });
+
     // ========== COLLABORATIVE MAP EVENTS ==========
     socket.on('map_action', async ({ tripId, waypoints }) => {
         try {

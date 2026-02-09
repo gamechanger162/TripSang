@@ -664,3 +664,48 @@ export const deleteCommunity = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to delete community' });
     }
 };
+
+/**
+ * Delete a community message
+ * DELETE /api/communities/:id/messages/:messageId
+ */
+export const deleteMessage = async (req, res) => {
+    try {
+        const { id, messageId } = req.params;
+        const userId = req.user._id;
+
+        const message = await CommunityMessage.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+
+        const community = await Community.findById(id);
+        if (!community) {
+            return res.status(404).json({ success: false, message: 'Community not found' });
+        }
+
+        // Check if user is sender or creator/admin
+        const isSender = message.sender.toString() === userId.toString();
+        const isCreator = community.creator.toString() === userId.toString();
+
+        if (!isSender && !isCreator) {
+            return res.status(403).json({ success: false, message: 'Unauthorized to delete this message' });
+        }
+
+        await CommunityMessage.findByIdAndDelete(messageId);
+
+        // Broadcast deletion
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`community_${id}`).emit('message_deleted', { messageId });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Message deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete community message error:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete message' });
+    }
+};
