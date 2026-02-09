@@ -18,6 +18,7 @@ declare module 'next-auth' {
         token?: string;
         isMobileVerified?: boolean;
         verificationStatus?: string;
+        profilePicture?: string;
     }
 }
 
