@@ -189,26 +189,26 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.02, duration: 0.3 }}
-                className="px-3 py-1"
+                className="px-2 py-0.5"
             >
                 <motion.div
                     onClick={() => onSelectConversation(conv._id, conv.type)}
                     className={`
                         group relative flex items-center gap-3 p-3 rounded-2xl cursor-pointer
-                        transition-all duration-300 ease-out
+                        transition-all duration-300
                         ${isSelected
-                            ? 'bg-cyan-500/10 shadow-[0_0_25px_rgba(0,255,255,0.15)] border border-cyan-500/40'
-                            : 'bg-white/5 hover:bg-cyan-500/5 border border-transparent hover:border-cyan-500/20'
+                            ? 'bg-cyan-900/20 border border-cyan-500/30'
+                            : 'bg-transparent hover:bg-white/5 border border-transparent hover:border-white/5'
                         }
                     `}
-                    whileHover={{ scale: 1.01, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01, x: 2 }}
+                    whileTap={{ scale: 0.99 }}
                 >
                     {/* Active Indicator */}
                     {isSelected && (
                         <motion.div
                             layoutId="activeConversation"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full shadow-[0_0_10px_rgba(0,255,255,0.5)]"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-cyan-500 rounded-r-full shadow-[0_0_15px_rgba(6,182,212,0.6)]"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                         />
@@ -216,7 +216,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
 
                     {/* Avatar - FIXED SIZE */}
                     <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-cyan-500/30 group-hover:ring-cyan-500/50 transition-all shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+                        <div className={`w-12 h-12 rounded-full overflow-hidden transition-all duration-300 ${isSelected ? 'ring-2 ring-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'ring-1 ring-white/10 group-hover:ring-white/30'}`}>
                             {conv.avatar && !failedImages.has(conv._id) ? (
                                 <Image
                                     src={conv.avatar}
@@ -230,15 +230,13 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                                     }}
                                 />
                             ) : (
-                                <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-                                    <span className="text-white font-bold text-lg">
+                                <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                                    <span className="text-gray-400 font-bold text-lg group-hover:text-white transition-colors">
                                         {conv.name.charAt(0).toUpperCase()}
                                     </span>
                                 </div>
                             )}
                         </div>
-                        {/* Online Indicator (placeholder) */}
-                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-cyan-400 rounded-full border-2 border-gray-900 shadow-[0_0_8px_rgba(0,255,255,0.6)]" />
                     </div>
 
                     {/* Content */}
@@ -246,13 +244,13 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         {/* Row 1: Name + Time */}
                         <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-semibold text-white truncate text-[15px]">
+                                <span className={`font-medium truncate text-[15px] transition-colors ${isSelected ? 'text-cyan-100' : 'text-gray-200 group-hover:text-white'}`}>
                                     {conv.name}
                                 </span>
                                 {conv.isVerified && <VerifiedBadge size="sm" />}
                             </div>
                             {conv.lastMessage && (
-                                <span className="text-xs text-gray-400 flex-shrink-0">
+                                <span className="text-[10px] text-gray-500 flex-shrink-0 group-hover:text-gray-400 transition-colors">
                                     {formatTime(conv.lastMessage.timestamp)}
                                 </span>
                             )}
@@ -260,14 +258,16 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
 
                         {/* Row 2: Last Message + Unread Badge */}
                         <div className="flex items-center justify-between gap-2 mt-0.5">
-                            <p className="text-sm text-gray-400 truncate">
+                            <p className={`text-sm truncate transition-colors ${isSelected ? 'text-cyan-200/60' :
+                                    conv.unreadCount > 0 ? 'text-gray-100 font-medium' : 'text-gray-500 group-hover:text-gray-400'
+                                }`}>
                                 {conv.lastMessage?.text || 'No messages yet'}
                             </p>
                             {conv.unreadCount > 0 && (
                                 <motion.span
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full text-[11px] font-bold text-white flex items-center justify-center shadow-lg shadow-cyan-500/40"
+                                    className="flex-shrink-0 min-w-[20px] h-[20px] px-1 bg-cyan-500 rounded-full text-[10px] font-bold text-black flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.4)]"
                                 >
                                     {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                                 </motion.span>
@@ -280,29 +280,34 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
     };
 
     return (
-        <div className="h-full flex flex-col bg-gradient-to-b from-[rgba(0,20,40,0.9)] to-[rgba(0,10,25,0.95)] backdrop-blur-xl border-r border-cyan-500/20">
+        <div className="h-full flex flex-col bg-[#000a1f] backdrop-blur-xl border-r border-white/5 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-cyan-900/20 to-transparent pointer-events-none" />
+
             {/* Header */}
-            <div className="p-4 pb-3 border-b border-white/5">
+            <div className="p-4 pb-3 border-b border-white/5 relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-white tracking-tight" style={{ textShadow: '0 0 20px rgba(0,255,255,0.3)' }}>Messages</h2>
+                    <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">Messages</span>
+                        <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">{conversations.length}</span>
+                    </h2>
                     <motion.button
                         whileHover={{ scale: 1.05, rotate: 90 }}
                         whileTap={{ scale: 0.95 }}
-                        className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/40 rounded-xl text-cyan-400 hover:text-cyan-300 transition-colors shadow-[0_0_15px_rgba(0,255,255,0.2)]"
+                        className="w-9 h-9 flex items-center justify-center bg-white/5 hover:bg-cyan-500/10 border border-white/10 hover:border-cyan-500/30 rounded-xl text-gray-400 hover:text-cyan-400 transition-colors"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                     </motion.button>
                 </div>
 
                 {/* Search */}
-                <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500/60" />
+                <div className="relative group">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
                     <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-[rgba(0,30,50,0.6)] border border-cyan-500/20 rounded-xl text-white text-sm placeholder:text-cyan-500/40 focus:outline-none focus:border-cyan-500/50 focus:bg-[rgba(0,40,60,0.6)] focus:shadow-[0_0_20px_rgba(0,255,255,0.1)] transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-cyan-500/40 focus:bg-black/40 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all"
                     />
                 </div>
             </div>

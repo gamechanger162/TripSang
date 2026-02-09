@@ -57,6 +57,12 @@ export const useDMSocket = (conversationId?: string): UseDMSocketReturn => {
             setMessages(prev => [...prev, message]);
         });
 
+        // Listen for message deletion
+        socketInstance.on('message_deleted', ({ messageId }: { messageId: string }) => {
+            console.log('🗑️ Message deleted:', messageId);
+            setMessages(prev => prev.filter(msg => msg._id !== messageId));
+        });
+
         // Listen for typing indicators
         socketInstance.on('user_typing_dm', ({ userName, isTyping }: { userName: string; isTyping: boolean }) => {
             setIsTyping(isTyping);

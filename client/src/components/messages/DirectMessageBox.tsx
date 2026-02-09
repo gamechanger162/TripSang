@@ -28,6 +28,8 @@ export default function DirectMessageBox({
     const [isUploading, setIsUploading] = useState(false);
 
     const [replyingTo, setReplyingTo] = useState<DirectMessage | null>(null);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,6 +72,37 @@ export default function DirectMessageBox({
     // We can pass onReply prop to MessageBubble if we modify it
     const handleReply = (message: DirectMessage) => {
         setReplyingTo(message);
+    };
+
+    const toggleSelection = (messageId: string) => {
+        setSelectedMessageIds(prev =>
+            prev.includes(messageId)
+                ? prev.filter(id => id !== messageId)
+                : [...prev, messageId]
+        );
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!selectedMessageIds.length) return;
+
+        const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedMessageIds.length} messages?`);
+        if (!confirmDelete) return;
+
+        try {
+            // Delete messages one by one since we don't have a bulk delete endpoint yet
+            // Or we could update API to support bulk delete
+            await Promise.all(selectedMessageIds.map(id => messageAPI.deleteMessage(id)));
+
+            // Remove from local state
+            setMessages(prev => prev.filter(m => !selectedMessageIds.includes(m._id)));
+
+            toast.success('Messages deleted successfully');
+            setIsSelectionMode(false);
+            setSelectedMessageIds([]);
+        } catch (error) {
+            console.error('Failed to delete messages:', error);
+            toast.error('Failed to delete some messages');
+        }
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,8 +165,32 @@ export default function DirectMessageBox({
                 </div>
             )}
 
+            {/* Header / Selection Mode Bar */}
+            {isSelectionMode ? (
+                <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => { setIsSelectionMode(false); setSelectedMessageIds([]); }}
+                            className="p-1 hover:bg-gray-700 rounded-full text-gray-400"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <span className="text-white font-medium">{selectedMessageIds.length} Selected</span>
+                    </div>
+                    <button
+                        onClick={handleDeleteSelected}
+                        disabled={!selectedMessageIds.length}
+                        className="text-red-400 font-medium px-4 py-1 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
+                    >
+                        Delete
+                    </button>
+                </div>
+            ) : null}
+
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900 custom-scrollbar">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center px-4">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center mb-4">
@@ -153,11 +210,31 @@ export default function DirectMessageBox({
                 ) : (
                     <>
                         {messages.map((message) => (
-                            <MessageBubble
-                                key={message._id}
-                                message={message}
-                                onReply={handleReply}
-                            />
+                            <div key={message._id} className="relative group">
+                                <MessageBubble
+                                    message={message}
+                                    onReply={handleReply}
+                                    isSelectionMode={isSelectionMode}
+                                    isSelected={selectedMessageIds.includes(message._id)}
+                                    onSelect={() => toggleSelection(message._id)}
+                                />
+                                {/* Long press or specific action simulation for entering selection mode */}
+                                {!isSelectionMode && (
+                                    <button
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 bg-gray-700 rounded-full text-white/50 hover:text-white transition-opacity z-10"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsSelectionMode(true);
+                                            toggleSelection(message._id);
+                                        }}
+                                        title="Select"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
                         ))}
                         {isTyping && (
                             <div className="flex justify-start mb-4 px-4">

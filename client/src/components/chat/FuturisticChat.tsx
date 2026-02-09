@@ -140,9 +140,13 @@ interface LiquidGlassBubbleProps {
     onReply: () => void;
     onReact: (emoji: string) => void;
     index: number;
+    isSelectionMode: boolean;
+    isSelected: boolean;
+    onSelect: () => void;
+    onPin?: () => void;
 }
 
-function LiquidGlassBubble({ message, isOwn, onReply, onReact, index }: LiquidGlassBubbleProps) {
+function LiquidGlassBubble({ message, isOwn, onReply, onReact, index, isSelectionMode, isSelected, onSelect, onPin }: LiquidGlassBubbleProps) {
     const x = useMotionValue(0);
     const [showReactions, setShowReactions] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -200,15 +204,36 @@ function LiquidGlassBubble({ message, isOwn, onReply, onReact, index }: LiquidGl
             </motion.div>
 
             <motion.div
-                drag="x"
+                drag={!isSelectionMode ? "x" : false}
                 dragConstraints={{ left: isOwn ? -150 : 0, right: isOwn ? 0 : 150 }}
                 dragElastic={0.3}
                 onDragStart={() => setIsDragging(true)}
                 onDragEnd={handleDragEnd}
                 style={{ x }}
                 whileDrag={{ scale: 1.02 }}
-                className={`max-w-[80%] ${isOwn ? 'items-end' : 'items-start'}`}
+                className={`max-w-[80%] ${isOwn ? 'items-end' : 'items-start'} ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                onClick={() => {
+                    if (isSelectionMode) onSelect();
+                }}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (!isSelectionMode && onPin) {
+                        // Trigger pin context menu - handled parent side or basic confirm for now?
+                        // Actually, let's keep it simple: Long press triggers selection in mobile, Context menu in desktop?
+                        // For now, let's make selection mode manual via header, or long press here.
+                        // Let's rely on parent to pass "onLongPress" which toggles selection.
+                        onSelect(); // Enters selection mode if not active? No, specific actions.
+                    }
+                }}
             >
+                {/* Selection Checkbox */}
+                {isSelectionMode && (
+                    <div className={`absolute top-1/2 -translate-y-1/2 ${isOwn ? '-left-8' : '-right-8'} z-20`}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 border-teal-500' : 'border-white/30'}`}>
+                            {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        </div>
+                    </div>
+                )}
                 {/* Sender name for squad chat */}
                 {!isOwn && (
                     <Link href={`/profile/${message.senderId}`}>
@@ -687,6 +712,11 @@ export default function FuturisticChat({
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
+    // New Features
+    const [pinnedMessage, setPinnedMessage] = useState<Message | null>(null);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -717,6 +747,39 @@ export default function FuturisticChat({
             if (data.senderId !== session.user.id && 'vibrate' in navigator) {
                 navigator.vibrate([20, 10, 20]);
             }
+        });
+
+        // Pin Events
+        newSocket.on('pinned_message', (msg: Message) => {
+            console.log('📌 Initial Pinned Message:', msg);
+            setPinnedMessage(msg);
+        });
+
+        newSocket.on('message_pinned', (data: any) => {
+            console.log('📌 Message Pinned Event:', data);
+            setPinnedMessage({
+                _id: data.messageId,
+                message: data.message,
+                senderName: data.senderName,
+                type: data.type,
+                imageUrl: data.imageUrl,
+                senderId: '', // Ideally backend should send this too
+                timestamp: new Date().toISOString()
+            });
+            toast.success(`${data.pinnedBy} pinned a message`);
+        });
+
+        newSocket.on('message_unpinned', (data: any) => {
+            console.log('📌 Message Unpinned');
+            setPinnedMessage(null);
+            if (data.unpinnedBy) toast.success(`Message unpinned by ${data.unpinnedBy}`);
+        });
+
+        // Delete Events
+        newSocket.on('message_deleted', ({ messageId }: { messageId: string }) => {
+            setMessages(prev => prev.filter(m => m._id !== messageId));
+            // Also check if pinned message was deleted
+            setPinnedMessage(prev => prev && prev._id === messageId ? null : prev);
         });
 
         newSocket.on('user_typing', ({ userName }) => {
@@ -782,6 +845,38 @@ export default function FuturisticChat({
         }));
     };
 
+    // Selection Logic
+    const toggleSelection = (messageId: string) => {
+        setSelectedMessageIds(prev =>
+            prev.includes(messageId)
+                ? prev.filter(id => id !== messageId)
+                : [...prev, messageId]
+        );
+    };
+
+    const handleDeleteSelected = () => {
+        if (!selectedMessageIds.length || !socket) return;
+
+        // Loop deletions (or bulk if backend supported)
+        selectedMessageIds.forEach(id => {
+            socket.emit('delete_message', { tripId, messageId: id });
+        });
+
+        setIsSelectionMode(false);
+        setSelectedMessageIds([]);
+        toast.success(`Deleted ${selectedMessageIds.length} messages`);
+    };
+
+    const handlePinMessage = (messageId: string) => {
+        if (!socket) return;
+        socket.emit('pin_message', { tripId, messageId });
+    };
+
+    const handleUnpinMessage = () => {
+        if (!socket) return;
+        socket.emit('unpin_message', { tripId });
+    };
+
     if (!isSquadMember) {
         return (
             <div className="relative h-[600px] rounded-3xl overflow-hidden">
@@ -811,75 +906,152 @@ export default function FuturisticChat({
     }
 
     return (
-        <div className="relative h-[600px] rounded-3xl overflow-hidden">
+        <div className="relative h-[600px] rounded-3xl overflow-hidden flex flex-col">
             {/* Animated background */}
             <AnimatedMeshBackground />
 
             {/* Header */}
             <div
-                className="relative z-10 px-4 py-4 flex items-center justify-between"
+                className="relative z-10 px-4 py-3 flex items-center justify-between shrink-0"
                 style={{
-                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)',
+                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)',
+                    backdropFilter: 'blur(5px)'
                 }}
             >
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-orange-400 flex items-center justify-center">
-                        <span className="text-white font-bold">
-                            {isSquadChat ? '🎯' : receiverName?.[0] || '?'}
-                        </span>
+                {isSelectionMode ? (
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => { setIsSelectionMode(false); setSelectedMessageIds([]); }} className="p-2 hover:bg-white/10 rounded-full text-white/70">
+                                <X size={20} />
+                            </button>
+                            <span className="text-white font-medium">{selectedMessageIds.length} Selected</span>
+                        </div>
+                        <button
+                            onClick={handleDeleteSelected}
+                            disabled={!selectedMessageIds.length}
+                            className="text-red-400 font-medium px-4 py-1 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
+                        >
+                            Delete
+                        </button>
                     </div>
-                    <div>
-                        <h3 className="text-white font-semibold" style={{ fontVariationSettings: '"wght" 600' }}>
-                            {isSquadChat ? 'Squad Chat' : receiverName}
-                        </h3>
-                        <p className="text-xs text-white/50">
-                            {connected ? (
-                                <span className="flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                                    Connected
-                                </span>
-                            ) : 'Connecting...'}
-                        </p>
-                    </div>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-400 p-[2px]">
+                                    <div className="w-full h-full rounded-full bg-black/50 backdrop-blur-sm overflow-hidden p-0.5">
+                                        <Image
+                                            src={receiverName ? `https://ui-avatars.com/api/?name=${receiverName}&background=random` : '/assets/trip-cover-1.jpg'}
+                                            alt="Chat"
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></div>
+                            </div>
+                            <div>
+                                <h3 className="text-white font-semibold text-sm tracking-wide">
+                                    {isSquadChat ? 'Squad Chat' : receiverName}
+                                </h3>
+                                <div className="flex items-center gap-1.5 h-4">
+                                    {typingUsers.length > 0 ? (
+                                        <span className="text-teal-400 text-xs animate-pulse">typing...</span>
+                                    ) : (
+                                        <div className="flex items-center gap-1 text-white/40 text-xs">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500/50"></span>
+                                            online
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsSelectionMode(true)}
+                                className="p-2 hover:bg-white/10 rounded-full text-white/60 transition-colors"
+                                title="Select Messages"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                </svg>
+                            </button>
+                            {/* Other existing buttons like video/call could go here */}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Pinned Message Banner */}
+            <AnimatePresence>
+                {pinnedMessage && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="relative z-10 px-4 pb-2 shrink-0"
+                    >
+                        <div className="bg-teal-900/40 backdrop-blur-md border-l-2 border-teal-500 rounded-r-lg p-2 flex items-center justify-between">
+                            <div className="flex-1 min-w-0" onClick={() => {
+                                // Scroll to message?
+                                const el = document.getElementById(`msg-${pinnedMessage._id}`);
+                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}>
+                                <p className="text-[10px] text-teal-300 font-semibold mb-0.5">Pinned Message</p>
+                                <p className="text-xs text-white/90 truncate">{pinnedMessage.message}</p>
+                            </div>
+                            <button
+                                onClick={handleUnpinMessage}
+                                className="p-1.5 hover:bg-white/10 rounded-full text-white/50 hover:text-white"
+                                title="Unpin"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar">
+                <div className="space-y-4 pb-4">
+                    {messages.map((msg, idx) => (
+                        <div id={`msg-${msg._id}`} key={msg._id || idx}>
+                            <LiquidGlassBubble
+                                message={msg}
+                                isOwn={msg.senderId === session?.user?.id}
+                                onReply={() => setReplyingTo(msg)}
+                                onReact={(emoji) => handleReact(msg._id!, emoji)}
+                                index={idx}
+                                isSelectionMode={isSelectionMode}
+                                isSelected={msg._id ? selectedMessageIds.includes(msg._id) : false}
+                                onSelect={() => msg._id && toggleSelection(msg._id)}
+                                onPin={() => msg._id && handlePinMessage(msg._id)}
+                            />
+                        </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+
+                    {/* Typing Indicator at bottom of list */}
+                    <TypingIndicator names={typingUsers} />
                 </div>
             </div>
 
-            {/* Messages */}
-            <div
-                className="relative z-10 h-[calc(100%-180px)] overflow-y-auto pb-4 scrollbar-thin scrollbar-thumb-white/10"
-                style={{
-                    maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
-                }}
-            >
-                <AnimatePresence initial={false}>
-                    {messages.map((msg, index) => (
-                        <LiquidGlassBubble
-                            key={msg._id || index}
-                            message={msg}
-                            isOwn={msg.senderId === session?.user?.id}
-                            onReply={() => setReplyingTo(msg)}
-                            onReact={(emoji) => handleReact(msg._id || '', emoji)}
-                            index={index}
-                        />
-                    ))}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                    {typingUsers.length > 0 && <TypingIndicator names={typingUsers} />}
-                </AnimatePresence>
-
-                <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input bar */}
-            <DynamicInputBar
-                onSend={handleSend}
-                onTyping={handleTyping}
-                replyingTo={replyingTo}
-                onCancelReply={() => setReplyingTo(null)}
-                disabled={!connected}
-            />
+            {/* Input Area (Hidden in Selection Mode) */}
+            {!isSelectionMode && (
+                <div className="relative z-20 shrink-0">
+                    <DynamicInputBar
+                        onSend={handleSend}
+                        onTyping={handleTyping}
+                        replyingTo={replyingTo}
+                        onCancelReply={() => setReplyingTo(null)}
+                        disabled={!connected}
+                    />
+                </div>
+            )}
         </div>
     );
+
 }

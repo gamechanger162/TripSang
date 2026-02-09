@@ -8,7 +8,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
 // Force hide routing machine container as we only want the path
 import '@/styles/map-overrides.css';
-import { socket } from '@/lib/websocket';
+import { socketManager } from '@/lib/socketManager';
 import toast from 'react-hot-toast';
 import { Share2, ExternalLink } from 'lucide-react';
 
@@ -62,132 +62,194 @@ const createCustomIcon = (type: 'start' | 'end' | 'stop', number?: number) => {
     });
 };
 
-
 interface Waypoint {
     lat: number;
     lng: number;
     name?: string;
-    timestamp?: string;
 }
 
 interface CollaborativeMapProps {
     tripId: string;
-    initialWaypoints: Waypoint[];
+    initialWaypoints?: Waypoint[];
     startPoint: { lat: number; lng: number; name: string };
     endPoint?: { lat: number; lng: number; name: string };
     isReadOnly?: boolean;
+    shouldJoinRoom?: boolean; // New prop to control room joining
 }
 
-function RoutingMachine({ waypoints, startPoint, endPoint }: { waypoints: Waypoint[], startPoint: any, endPoint?: any }) {
-    const map = useMap();
-    const routingControlRef = useRef<any>(null);
-
-    useEffect(() => {
-        if (!map) return;
-
-        // Filter invalid waypoints specifically for routing to avoid OSRM crashes/errors
-        const validWaypoints = (waypoints || []).filter(wp =>
-            wp && typeof wp.lat === 'number' && typeof wp.lng === 'number'
-        );
-
-        // Ensure startPoint is valid
-        if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') return;
-
-        const points = [
-            L.latLng(startPoint.lat, startPoint.lng),
-            ...validWaypoints.map(wp => L.latLng(wp.lat, wp.lng)),
-            ...(endPoint && typeof endPoint.lat === 'number' && typeof endPoint.lng === 'number'
-                ? [L.latLng(endPoint.lat, endPoint.lng)]
-                : [])
-        ];
-
-        if (routingControlRef.current) {
-            try {
-                routingControlRef.current.setWaypoints(points);
-            } catch (e) {
-                console.warn('Failed to update waypoints', e);
-            }
-        } else {
-            try {
-                routingControlRef.current = (L as any).Routing.control({
-                    waypoints: points,
-                    lineOptions: {
-                        styles: [{ color: '#6366f1', opacity: 0.8, weight: 6 }]
-                    },
-                    // Use OpenStreetMap routing service instead of OSRM demo server to avoid demo restrictions
-                    serviceUrl: 'https://routing.openstreetmap.de/routed-car/route/v1',
-                    show: false,
-                    addWaypoints: false,
-                    routeWhileDragging: false,
-                    fitSelectedRoutes: true,
-                    showAlternatives: false,
-                    createMarker: function () { return null; }
-                }).addTo(map);
-
-                // Handle routing errors gracefully
-                routingControlRef.current.on('routingerror', function (e: any) {
-                    console.warn('Routing error:', e);
-                });
-            } catch (e) {
-                console.error('Failed to initialize Routing Machine', e);
-            }
-        }
-
-        return () => {
-            // Cleanup provided by Leaflet usually, but we keep ref for updates
-        };
-    }, [map, waypoints, startPoint, endPoint]);
-
-    return null;
-}
-
-function MapEvents({ onMapClick }: { onMapClick: (e: L.LeafletMouseEvent) => void }) {
+// Sub-component to handle map clicks
+function MapEvents({ onMapClick, isReadOnly }: { onMapClick: (e: L.LeafletMouseEvent) => void, isReadOnly: boolean }) {
     useMapEvents({
-        click: onMapClick,
+        click: (e) => {
+            if (!isReadOnly) {
+                onMapClick(e);
+            }
+        },
     });
     return null;
 }
 
-const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isReadOnly = false }: CollaborativeMapProps) => {
-    const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints || []);
-    const [socketConnected, setSocketConnected] = useState(false);
+// Inner component to handle routing logic with access to map instance
+function RoutingController({
+    waypoints,
+    startPoint,
+    endPoint,
+    isReadOnly
+}: {
+    waypoints: Waypoint[],
+    startPoint: { lat: number; lng: number, name: string },
+    endPoint?: { lat: number; lng: number, name: string },
+    isReadOnly: boolean
+}) {
+    const map = useMap();
+    const routingControlRef = useRef<any>(null);
 
-    // Sync state with prop when data loads
+    // Initialize/Update Routing Machine
     useEffect(() => {
-        if (initialWaypoints && initialWaypoints.length > 0) {
-            setWaypoints(initialWaypoints);
+        if (!map) return;
+
+        // Clean up previous routing control
+        if (routingControlRef.current) {
+            try {
+                // Check if control is still added to map before removing
+                // Validating internal state of control to avoid crash
+                if (map.hasLayer && map.hasLayer(routingControlRef.current)) {
+                    map.removeControl(routingControlRef.current);
+                } else {
+                    try { map.removeControl(routingControlRef.current); } catch (e) { }
+                }
+            } catch (e) {
+                // Ignore removal errors
+            }
+            routingControlRef.current = null;
         }
-    }, [initialWaypoints]);
 
-    useEffect(() => {
-        socket.on('connect', () => {
-            setSocketConnected(true);
-        });
+        // Define waypoints for routing
+        // Format: [Start, ...Waypoints, End]
+        const points = [
+            L.latLng(startPoint.lat, startPoint.lng),
+            ...waypoints.map(w => L.latLng(w.lat, w.lng))
+        ];
 
-        socket.on('map_update', (data: { waypoints: Waypoint[], updatedBy: string }) => {
-            setWaypoints(data.waypoints);
-        });
+        if (endPoint) {
+            points.push(L.latLng(endPoint.lat, endPoint.lng));
+        }
+
+        // Create Routing Control
+        try {
+            routingControlRef.current = (L as any).Routing.control({
+                waypoints: points,
+                routeWhileDragging: !isReadOnly,
+                show: false, // Hide the itinerary panel
+                addWaypoints: !isReadOnly, // Allow adding waypoints by dragging line
+                fitSelectedRoutes: true,
+                lineOptions: {
+                    styles: [{ color: '#00ffff', opacity: 0.7, weight: 5 }]
+                },
+                createMarker: function (i: number, wp: any, nWps: number) {
+                    let type: 'start' | 'end' | 'stop' = 'stop';
+
+                    if (i === 0) {
+                        type = 'start';
+                    } else if (i === nWps - 1 && endPoint) {
+                        type = 'end';
+                    }
+
+                    return L.marker(wp.latLng, {
+                        draggable: !isReadOnly,
+                        icon: createCustomIcon(type, type === 'stop' ? i : undefined)
+                    }).bindPopup(
+                        type === 'start' ? `Start: ${startPoint.name}` :
+                            type === 'end' ? `Destination: ${endPoint?.name}` :
+                                `Stop ${i}`
+                    );
+                }
+            }).addTo(map);
+
+            // Listen for route changes
+            if (!isReadOnly) {
+                routingControlRef.current.on('routesfound', function (e: any) {
+                    // Route found logic
+                });
+            }
+
+        } catch (error) {
+            console.error("Routing error:", error);
+        }
 
         return () => {
-            socket.off('map_update');
+            // We explicitly do NOT remove the control here if it's still needed, 
+            // but for React usage we usually do. 
+            // The crash happens if OSRM response comes back after removal.
+            // We can't easily cancel OSRM request in leaflet-routing-machine v3.
+
+            // Best effort cleanup
+            if (map && routingControlRef.current) {
+                try {
+                    const control = routingControlRef.current;
+                    // Monkey-patch _clearLines to prevent crash if a pending route request 
+                    // returns after the control is removed.
+                    if (control) {
+                        try { control._clearLines = () => { }; } catch (e) { }
+                    }
+
+                    if (map.hasLayer && map.hasLayer(control)) {
+                        map.removeControl(control);
+                    }
+                } catch (e) { }
+            }
         };
-    }, []);
+        // Use primitive values for dependencies to avoid re-running on object reference change
+        // JSON.stringify is a cheap way to compare deep objects for small data like waypoints
+    }, [map, isReadOnly, startPoint.lat, startPoint.lng, endPoint?.lat, endPoint?.lng, JSON.stringify(waypoints)]);
 
-    // Auto-save waypoints when they change
+    return null;
+}
+
+export default function CollaborativeMap({
+    tripId,
+    initialWaypoints = [],
+    startPoint,
+    endPoint,
+    isReadOnly = false,
+    shouldJoinRoom = false
+}: CollaborativeMapProps) {
+    const [waypoints, setWaypoints] = useState<Waypoint[]>(initialWaypoints);
+    const mapRef = useRef<L.Map | null>(null);
+
+    // Socket Connection for Real-time Updates
     useEffect(() => {
-        if (waypoints.length > 0 && !isReadOnly) {
-            const timer = setTimeout(() => {
-                socket.emit('map_action', { tripId, waypoints });
-            }, 500); // Debounce for 500ms
-
-            return () => clearTimeout(timer);
+        // If this component acts as a standalone viewer (e.g. from TripDetails),
+        // it needs to join the room.
+        if (shouldJoinRoom && tripId) {
+            socketManager.joinRoom(tripId, 'squad');
         }
-    }, [waypoints, tripId, isReadOnly]);
 
-    // Safety check for startPoint
-    if (!startPoint || typeof startPoint.lat !== 'number' || typeof startPoint.lng !== 'number') {
-        return <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-900/50">Invalid map coordinates</div>;
-    }
+        const handleMapUpdate = (data: { waypoints: Waypoint[], updatedBy: string }) => {
+            setWaypoints(data.waypoints);
+            if (data.updatedBy) {
+                toast.success(`${data.updatedBy} updated the route`, {
+                    icon: '🗺️',
+                    position: 'bottom-center',
+                    style: {
+                        background: 'rgba(0, 0, 0, 0.8)',
+                        color: '#fff',
+                    }
+                });
+            }
+        };
+
+        socketManager.on('map_update', handleMapUpdate);
+
+        return () => {
+            socketManager.off('map_update', handleMapUpdate);
+
+            // Only leave if we were the one who joined specifically for this map
+            if (shouldJoinRoom && tripId) {
+                socketManager.leaveRoom(tripId, 'squad');
+            }
+        };
+    }, [tripId, shouldJoinRoom]);
 
     const handleMapClick = (e: L.LeafletMouseEvent) => {
         if (isReadOnly) return;
@@ -195,88 +257,105 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
         const newWaypoint = {
             lat: e.latlng.lat,
             lng: e.latlng.lng,
-            name: `Stop ${waypoints.length + 1}`,
-            timestamp: new Date().toISOString()
+            name: `Stop ${waypoints.length + 1}`
         };
 
         const updatedWaypoints = [...waypoints, newWaypoint];
         setWaypoints(updatedWaypoints);
 
-        socket.emit('map_action', {
+        // Emit to socket
+        socketManager.emit('map_action', {
             tripId,
             waypoints: updatedWaypoints
         });
-    };
-
-    const handleUndo = () => {
-        if (isReadOnly || waypoints.length === 0) return;
-        const updatedWaypoints = waypoints.slice(0, -1);
-        setWaypoints(updatedWaypoints);
-        socket.emit('map_action', { tripId, waypoints: updatedWaypoints });
     };
 
     const handleDeleteStop = (index: number) => {
         if (isReadOnly) return;
         const updatedWaypoints = waypoints.filter((_, i) => i !== index);
         setWaypoints(updatedWaypoints);
-        socket.emit('map_action', { tripId, waypoints: updatedWaypoints });
+        socketManager.emit('map_action', { tripId, waypoints: updatedWaypoints });
     };
 
-    const generateGoogleMapsUrl = () => {
-        // Build Google Maps URL with all waypoints
-        const origin = `${startPoint.lat},${startPoint.lng}`;
-        const destination = endPoint ? `${endPoint.lat},${endPoint.lng}` : origin;
-
-        // Format waypoints as lat,lng pairs separated by |
-        const waypointsParam = waypoints.length > 0
-            ? `&waypoints=${waypoints.map(wp => `${wp.lat},${wp.lng}`).join('|')}`
-            : '';
-
-        return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypointsParam}&travelmode=driving`;
+    const handleUndo = () => {
+        if (isReadOnly || waypoints.length === 0) return;
+        const updatedWaypoints = waypoints.slice(0, -1);
+        setWaypoints(updatedWaypoints);
+        socketManager.emit('map_action', { tripId, waypoints: updatedWaypoints });
     };
 
-    const handleShareGoogleMaps = () => {
-        const url = generateGoogleMapsUrl();
+    const openInGoogleMaps = () => {
+        if (!startPoint || !endPoint) return;
 
-        // Copy to clipboard
-        navigator.clipboard.writeText(url).then(() => {
-            toast.success('Google Maps link copied to clipboard!');
-        }).catch(() => {
-            toast.error('Failed to copy link');
-        });
-    };
+        let url = `https://www.google.com/maps/dir/?api=1&origin=${startPoint.lat},${startPoint.lng}&destination=${endPoint.lat},${endPoint.lng}`;
 
-    const handleOpenGoogleMaps = () => {
-        const url = generateGoogleMapsUrl();
+        if (waypoints.length > 0) {
+            const waypointsStr = waypoints.map(w => `${w.lat},${w.lng}`).join('|');
+            url += `&waypoints=${waypointsStr}`;
+        }
+
         window.open(url, '_blank');
-        toast.success('Opening in Google Maps...');
     };
+
+    // Parse coordinates to ensure they are numbers (handle string numbers)
+    const secureStartPoint = {
+        ...startPoint,
+        lat: Number(startPoint.lat),
+        lng: Number(startPoint.lng)
+    };
+
+    const secureEndPoint = endPoint ? {
+        ...endPoint,
+        lat: Number(endPoint.lat),
+        lng: Number(endPoint.lng)
+    } : undefined;
+
+    // Safety check for startPoint
+    if (!secureStartPoint || isNaN(secureStartPoint.lat) || isNaN(secureStartPoint.lng)) {
+        console.error('Invalid startPoint:', startPoint);
+        return <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-900/50">Invalid start coordinates</div>;
+    }
+
+    // Debug logging
+    // console.log('CollaborativeMap rendering:', { startPoint: secureStartPoint, endPoint: secureEndPoint, waypoints });
 
     return (
-        <div className="h-full w-full relative z-0">
+        <div className="relative w-full h-full">
             <MapContainer
-                center={[startPoint.lat, startPoint.lng]}
+                center={[secureStartPoint.lat, secureStartPoint.lng]}
                 zoom={6}
                 style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom={true}
+                ref={mapRef}
             >
                 <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // Light mode standard
+                // For dark mode map, we'd use a different provider or filter
+                // className="map-tiles"
                 />
 
+                <MapEvents onMapClick={handleMapClick} isReadOnly={isReadOnly} />
+
+                <RoutingController
+                    waypoints={waypoints}
+                    startPoint={secureStartPoint}
+                    endPoint={secureEndPoint}
+                    isReadOnly={isReadOnly}
+                />
+
+                {/* Explicit Markers for fallback/instant feedback */}
                 {/* Start Point Marker (Green S) */}
-                <Marker position={[startPoint.lat, startPoint.lng]} icon={createCustomIcon('start')}>
+                <Marker position={[secureStartPoint.lat, secureStartPoint.lng]} icon={createCustomIcon('start')}>
                     <Popup>
-                        <div className="font-bold">Start: {startPoint.name}</div>
+                        <div className="font-bold">Start: {secureStartPoint.name}</div>
                     </Popup>
                 </Marker>
 
                 {/* End Point Marker (Red E) */}
-                {endPoint && (
-                    <Marker position={[endPoint.lat, endPoint.lng]} icon={createCustomIcon('end')}>
+                {secureEndPoint && (
+                    <Marker position={[secureEndPoint.lat, secureEndPoint.lng]} icon={createCustomIcon('end')}>
                         <Popup>
-                            <div className="font-bold">End: {endPoint.name}</div>
+                            <div className="font-bold">Dest: {secureEndPoint.name}</div>
                         </Popup>
                     </Marker>
                 )}
@@ -302,43 +381,42 @@ const CollaborativeMap = ({ tripId, initialWaypoints, startPoint, endPoint, isRe
                         </Popup>
                     </Marker>
                 ))}
-
-                <RoutingMachine waypoints={waypoints} startPoint={startPoint} endPoint={endPoint} />
-                <MapEvents onMapClick={handleMapClick} />
             </MapContainer>
 
-            {/* Map Controls - Top Right */}
-            <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-                {/* Share Buttons */}
+            {/* Floating Action Buttons */}
+            <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-[400]">
                 <button
-                    onClick={handleOpenGoogleMaps}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2.5 rounded-xl shadow-xl hover:from-blue-500 hover:to-blue-600 font-medium transition-all flex items-center gap-2 hover:-translate-y-0.5"
+                    onClick={openInGoogleMaps}
+                    className="p-3 bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 transition-colors flex items-center justify-center"
                     title="Open in Google Maps"
                 >
-                    <ExternalLink size={18} />
-                    Open in Maps
+                    <ExternalLink size={20} />
                 </button>
+            </div>
 
-                <button
-                    onClick={handleShareGoogleMaps}
-                    className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 py-2.5 rounded-xl shadow-xl hover:from-emerald-500 hover:to-green-500 font-medium transition-all flex items-center gap-2 hover:-translate-y-0.5"
-                    title="Copy Google Maps link"
-                >
-                    <Share2 size={18} />
-                    Share Link
-                </button>
-
-                {!isReadOnly && waypoints.length > 0 && (
-                    <button
-                        onClick={handleUndo}
-                        className="bg-white/90 dark:bg-dark-700/90 text-gray-700 dark:text-white px-4 py-2.5 rounded-xl shadow-xl hover:bg-white dark:hover:bg-dark-600 font-medium transition-all backdrop-blur-sm border border-gray-200 dark:border-gray-600"
-                    >
-                        ↩ Undo Stop
-                    </button>
-                )}
+            {/* Legend/Info Overlay */}
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur p-3 rounded-lg shadow-lg z-[400] max-w-xs">
+                <h4 className="font-bold text-gray-800 text-sm mb-1">Route Info</h4>
+                <div className="text-xs text-gray-600 space-y-1">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                        <span>Start: {startPoint.name}</span>
+                    </div>
+                    {waypoints.length > 0 && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                            <span>{waypoints.length} Stop{waypoints.length !== 1 ? 's' : ''}</span>
+                        </div>
+                    )}
+                    {endPoint && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <span>End: {endPoint.name}</span>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
-};
+}
 
-export default CollaborativeMap;

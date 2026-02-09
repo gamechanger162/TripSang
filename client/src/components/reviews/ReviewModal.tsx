@@ -87,7 +87,7 @@ export default function ReviewModal({
                                 strokeLinejoin="round"
                                 strokeWidth={2}
                                 d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                                className={star <= currentRating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}
+                                className={star <= currentRating ? 'text-yellow-500 filter drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]' : 'text-gray-600'}
                             />
                         </svg>
                     </button>
@@ -98,7 +98,7 @@ export default function ReviewModal({
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
 
                 {/* Overlay */}
                 <div
@@ -106,32 +106,32 @@ export default function ReviewModal({
                     aria-hidden="true"
                     onClick={onClose}
                 >
-                    <div className="absolute inset-0 bg-gray-500 opacity-75 dark:bg-black dark:opacity-80"></div>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
                 </div>
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
                 <div
-                    className="inline-block align-bottom bg-white dark:bg-dark-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full"
+                    className="inline-block align-bottom bg-[#001428]/95 backdrop-blur-xl border border-cyan-500/20 rounded-2xl text-left overflow-hidden shadow-[0_0_50px_rgba(8,145,178,0.2)] transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
                 >
-                    <div className="bg-white dark:bg-dark-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div className="px-6 pt-6 pb-6">
                         <div className="sm:flex sm:items-start">
                             <div className="w-full">
-                                <h3 className="text-xl leading-6 font-bold text-gray-900 dark:text-white mb-2">
+                                <h3 className="text-xl leading-6 font-bold text-white mb-2 font-heading">
                                     Review {revieweeName}
                                 </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                                    How was your experience with {revieweeName} on {tripTitle}?
+                                <p className="text-sm text-gray-400 mb-6">
+                                    How was your experience with <span className="text-cyan-400">{revieweeName}</span> on <span className="text-cyan-400">{tripTitle}</span>?
                                 </p>
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     {/* Overall Rating */}
-                                    <div className="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-dark-700 rounded-xl">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-white mb-2">
+                                    <div className="flex flex-col items-center justify-center p-6 bg-white/5 border border-white/10 rounded-xl">
+                                        <label className="text-sm font-medium text-gray-300 mb-3 uppercase tracking-wider">
                                             Overall Rating
                                         </label>
                                         {renderStars(rating, setRating, 'lg')}
-                                        <p className="text-xs text-center mt-2 font-medium text-yellow-600 dark:text-yellow-400">
+                                        <p className="text-xs text-center mt-3 font-medium text-cyan-400 animate-pulse">
                                             {rating === 1 && "Terrible"}
                                             {rating === 2 && "Poor"}
                                             {rating === 3 && "Average"}
@@ -141,61 +141,69 @@ export default function ReviewModal({
                                     </div>
 
                                     {/* Detailed Categories */}
-                                    <div className="space-y-3">
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-white border-b border-gray-100 dark:border-dark-700 pb-1 mb-3">
+                                    <div className="space-y-4">
+                                        <label className="block text-sm font-medium text-cyan-400 border-b border-white/10 pb-2 mb-3 uppercase tracking-wider">
                                             Detailed Ratings
                                         </label>
 
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">Punctuality</span>
+                                        <div className="flex items-center justify-between group">
+                                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Punctuality</span>
                                             {renderStars(categories.punctuality, (v) => handleCategoryChange('punctuality', v), 'sm')}
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">Friendliness</span>
+                                        <div className="flex items-center justify-between group">
+                                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Friendliness</span>
                                             {renderStars(categories.friendliness, (v) => handleCategoryChange('friendliness', v), 'sm')}
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">Reliability</span>
+                                        <div className="flex items-center justify-between group">
+                                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Reliability</span>
                                             {renderStars(categories.reliability, (v) => handleCategoryChange('reliability', v), 'sm')}
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">Communication</span>
+                                        <div className="flex items-center justify-between group">
+                                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Communication</span>
                                             {renderStars(categories.communication, (v) => handleCategoryChange('communication', v), 'sm')}
                                         </div>
                                     </div>
 
                                     {/* Comments */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-white mb-1">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2 uppercase tracking-wider">
                                             Comments (Optional)
                                         </label>
                                         <textarea
                                             rows={3}
                                             value={comment}
                                             onChange={(e) => setComment(e.target.value)}
-                                            className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-dark-600 rounded-md dark:bg-dark-700 dark:text-white p-2 border"
+                                            className="block w-full sm:text-sm bg-black/40 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 p-3 transition-all resize-none"
                                             placeholder="Sharing is caring! Tell others about your experience..."
                                             maxLength={500}
                                         />
-                                        <p className="text-xs text-gray-400 text-right mt-1">
+                                        <p className="text-xs text-gray-500 text-right mt-1">
                                             {comment.length}/500
                                         </p>
                                     </div>
 
-                                    <div className="flex justify-end gap-3 mt-6">
+                                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
                                         <button
                                             type="button"
                                             onClick={onClose}
-                                            className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm dark:bg-dark-700 dark:text-gray-200 dark:border-dark-600"
+                                            className="px-4 py-2 border border-white/10 text-base font-medium rounded-xl text-gray-300 bg-white/5 hover:bg-white/10 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-gray-500 sm:text-sm"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={submitting}
-                                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm"
+                                            className="inline-flex justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-xl text-black bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {submitting ? 'Submitting...' : 'Submit Review'}
+                                            {submitting ? (
+                                                <span className="flex items-center gap-2">
+                                                    <svg className="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Submitting...
+                                                </span>
+                                            ) : 'Submit Review'}
                                         </button>
                                     </div>
                                 </form>

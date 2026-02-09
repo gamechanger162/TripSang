@@ -27,8 +27,8 @@ interface TripDetails {
     tripCode?: string;
     title: string;
     description?: string;
-    startPoint: { name: string; coordinates?: any };
-    endPoint: { name: string; coordinates?: any };
+    startPoint: { name: string; coordinates?: any; lat?: number; lng?: number; latitude?: number; longitude?: number };
+    endPoint: { name: string; coordinates?: any; lat?: number; lng?: number; latitude?: number; longitude?: number };
     startDate: string;
     endDate: string;
     tags: string[];
@@ -1224,17 +1224,28 @@ export function TripDetailsClient() {
                                 tripId={tripId}
                                 initialWaypoints={trip?.waypoints || []}
                                 startPoint={{
-                                    lat: trip?.startPoint.coordinates?.latitude || 20.5937,
-                                    lng: trip?.startPoint.coordinates?.longitude || 78.9629,
-                                    name: trip?.startPoint.name || 'Start'
+                                    lat: trip?.startPoint?.coordinates?.latitude || trip?.startPoint?.coordinates?.lat || trip?.startPoint?.lat || 20.5937,
+                                    lng: trip?.startPoint?.coordinates?.longitude || trip?.startPoint?.coordinates?.lng || trip?.startPoint?.lng || 78.9629,
+                                    name: trip?.startPoint?.name || 'Start (Nagpur)'
                                 }}
                                 endPoint={trip?.endPoint ? {
-                                    lat: trip.endPoint.coordinates?.latitude || 20.5937,
-                                    lng: trip.endPoint.coordinates?.longitude || 78.9629,
-                                    name: trip.endPoint.name
+                                    lat: trip.endPoint.coordinates?.latitude || trip.endPoint.coordinates?.lat || trip.endPoint.lat || 28.6139,
+                                    lng: trip.endPoint.coordinates?.longitude || trip.endPoint.coordinates?.lng || trip.endPoint.lng || 77.2090,
+                                    name: trip.endPoint.name || 'End (New Delhi)'
                                 } : undefined}
                                 isReadOnly={!isSquadMember}
+                                shouldJoinRoom={true}
                             />
+                            {/* Warning for missing coordinates */}
+                            {((!trip?.startPoint?.coordinates?.latitude && !trip?.startPoint?.lat) || (!trip?.endPoint?.coordinates?.latitude && !trip?.endPoint?.lat)) && (
+                                <div className="absolute bottom-4 left-4 z-[1000] bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-lg max-w-sm">
+                                    <p className="font-bold">⚠️ Map Data Missing</p>
+                                    <p className="text-sm mt-1">
+                                        This trip doesn't have precise location data saved. accurately.
+                                        Showing default view.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

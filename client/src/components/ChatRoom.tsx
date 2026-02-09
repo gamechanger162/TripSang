@@ -12,6 +12,7 @@ import { X, Map as MapIcon, Pin } from 'lucide-react';
 import { linkifyText } from '@/utils/linkify';
 import Link from 'next/link';
 import ImageViewer from './ImageViewer';
+import MeshBackground from '@/components/app/ui/MeshBackground';
 
 // Dynamic import for Map to avoid SSR issues
 const CollaborativeMap = dynamic(() => import('./CollaborativeMap'), {
@@ -420,25 +421,22 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
 
     if (!isSquadMember) {
         return (
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-800/60 via-gray-900/80 to-black/60 backdrop-blur-2xl border border-white/10 p-10 text-center">
-                {/* Background decorations */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.15),transparent_50%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.1),transparent_50%)]" />
-                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+            <div className="relative h-[650px] overflow-hidden rounded-3xl bg-[#000a1f] border border-white/10 p-10 text-center flex flex-col justify-center items-center">
+                <MeshBackground />
 
-                <div className="relative">
+                <div className="relative z-10 max-w-sm mx-auto p-8 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
                     {/* Lock icon with premium styling */}
-                    <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center border border-white/10 shadow-2xl shadow-violet-500/20 rotate-3 hover:rotate-0 transition-transform duration-300">
-                        <svg className="w-10 h-10 text-violet-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-cyan-500/20 via-blue-500/20 to-purple-500/20 flex items-center justify-center border border-white/10 shadow-[0_0_30px_rgba(6,182,212,0.2)] rotate-3 hover:rotate-0 transition-transform duration-500 group">
+                        <svg className="w-10 h-10 text-cyan-400/80 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
 
-                    <h3 className="text-xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-3">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-white via-cyan-100 to-cyan-400 bg-clip-text text-transparent mb-3 tracking-tight">
                         Join Squad to Access Chat
                     </h3>
-                    <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed mb-8">
-                        Connect with other travelers, share plans, and get excited together by joining this trip!
+                    <p className="text-cyan-200/60 text-sm leading-relaxed mb-8">
+                        Connect with fellow travelers, share coordinates, and synchronize your plans.
                     </p>
 
                     {/* Join Squad Button */}
@@ -451,14 +449,14 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                 const joinBtn = document.querySelector('[data-join-squad]');
                                 if (joinBtn) {
                                     joinBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    (joinBtn as HTMLElement).classList.add('ring-4', 'ring-violet-500/50');
-                                    setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-violet-500/50'), 2000);
+                                    (joinBtn as HTMLElement).classList.add('ring-4', 'ring-cyan-500/50');
+                                    setTimeout(() => (joinBtn as HTMLElement).classList.remove('ring-4', 'ring-cyan-500/50'), 2000);
                                 }
                             }
                         }}
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 text-white rounded-2xl font-semibold hover:from-violet-500 hover:via-purple-500 hover:to-pink-500 transition-all duration-300 shadow-xl shadow-violet-500/30 hover:shadow-violet-500/50 hover:-translate-y-1 group"
+                        className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white rounded-2xl font-semibold hover:from-cyan-500 hover:via-blue-500 hover:to-indigo-500 transition-all duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] hover:-translate-y-1 group"
                     >
-                        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
                         Join This Squad
@@ -469,35 +467,33 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
     }
 
     return (
-        <div className="card relative flex flex-col h-[650px] p-0 overflow-hidden bg-white/80 dark:bg-dark-800/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl">
+        <div className="card relative flex flex-col h-[650px] p-0 overflow-hidden bg-[#000a1f] backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl">
+            <MeshBackground />
             {/* Decorated Header */}
-            <div className="p-4 border-b border-gray-100/50 dark:border-gray-700/50 flex items-center justify-between bg-white/90 dark:bg-dark-800/90 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+            <div className="relative z-10 p-4 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-md sticky top-0 shadow-lg">
                 <div className="flex items-center gap-3">
                     <div className="relative">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary-400 to-purple-500 p-0.5 shadow-lg">
-                            <div className="w-full h-full rounded-full bg-white dark:bg-dark-800 flex items-center justify-center">
-                                <svg className="w-6 h-6 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-[2px] shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                            <div className="w-full h-full rounded-full bg-black/80 flex items-center justify-center overflow-hidden">
+                                <span className="text-xl">🚀</span>
                             </div>
                         </div>
                         {connected && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-dark-800 rounded-full"></span>
+                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-black rounded-full shadow-[0_0_8px_#10b981]"></span>
                         )}
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Squad Chat</h3>
-                        <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                            {squadMembers.length} members • {connected ? 'Live' : 'Connect...'}
+                        <h3 className="text-lg font-bold text-white tracking-wide">Squad Chat</h3>
+                        <div className="flex items-center text-xs font-medium text-cyan-200/50">
+                            {squadMembers.length} members • {connected ? <span className="text-emerald-400 ml-1">Live</span> : 'Connecting...'}
                         </div>
                     </div>
                 </div>
                 <button
                     onClick={() => setShowMap(!showMap)}
-                    className="group relative p-3 bg-gray-50 dark:bg-dark-700/50 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 text-gray-500 hover:text-primary-600 transition-all duration-300 hover:shadow-md"
+                    className="group relative p-3 bg-white/5 rounded-2xl hover:bg-cyan-500/10 text-cyan-400/70 hover:text-cyan-400 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]"
                     title="Toggle Map"
                 >
-                    <div className="absolute inset-0 bg-primary-100/20 dark:bg-primary-900/10 rounded-2xl scale-0 group-hover:scale-100 transition-transform duration-300"></div>
                     <MapIcon size={20} className="relative z-10" />
                 </button>
             </div>
@@ -525,52 +521,48 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                 )}
             </div>
 
-            {/* Messages Area - Added subtle pattern background */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-[#f8fafc] dark:bg-dark-900 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-dark-700 scrollbar-track-transparent">
-                {/* Decorative background pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+            {/* Messages Area */}
+            <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
 
                 {/* Pinned Message Banner */}
                 {pinnedMessage && (
-                    <div className="sticky top-0 z-10 mx-auto max-w-md bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/30 border border-amber-200 dark:border-amber-700/50 rounded-xl p-3 shadow-lg backdrop-blur-sm">
+                    <div className="sticky top-0 z-20 mx-auto max-w-md bg-amber-500/10 backdrop-blur-xl border border-amber-500/20 rounded-xl p-3 shadow-lg mb-4">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 min-w-0">
-                                <Pin size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                <Pin size={16} className="text-amber-400 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">{pinnedMessage.senderName}</p>
-                                    <p className="text-sm text-amber-900 dark:text-amber-100 truncate">
+                                    <p className="text-xs font-semibold text-amber-300">{pinnedMessage.senderName}</p>
+                                    <p className="text-sm text-amber-100/80 truncate">
                                         {pinnedMessage.type === 'image' ? '📷 Image' : pinnedMessage.message}
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={handleUnpinMessage}
-                                className="p-1 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800/50 rounded-full transition-colors flex-shrink-0"
+                                className="p-1.5 text-amber-400/60 hover:text-amber-300 hover:bg-amber-500/20 rounded-full transition-colors flex-shrink-0"
                                 title="Unpin message"
                             >
-                                <X size={16} />
+                                <X size={14} />
                             </button>
                         </div>
                     </div>
                 )}
 
                 {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400 relative z-10">
-                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                            <svg className="w-10 h-10 text-indigo-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
+                    <div className="flex flex-col items-center justify-center h-full text-center relative z-10">
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-2xl border border-white/5 animate-float">
+                            <span className="text-4xl">💭</span>
                         </div>
-                        <p className="text-lg font-semibold text-gray-600 dark:text-gray-300">Quiet in here...</p>
-                        <p className="text-sm text-gray-500">Break the ice and start planning! 🚀</p>
+                        <p className="text-xl font-bold text-white mb-2 tracking-wide">Quiet in here...</p>
+                        <p className="text-sm text-cyan-200/50">Break the ice and start planning! 🚀</p>
                     </div>
                 ) : (
                     messages.map((msg, index) => {
                         // System message
                         if (msg.type === 'system') {
                             return (
-                                <div key={index} className="flex justify-center my-4 relative z-10">
-                                    <span className="bg-gray-100/80 dark:bg-dark-700/80 backdrop-blur-sm text-gray-500 dark:text-gray-400 text-[11px] font-medium py-1 px-4 rounded-full border border-gray-200/50 dark:border-gray-600/50 shadow-sm">
+                                <div key={index} className="flex justify-center my-6 relative z-10">
+                                    <span className="bg-white/5 backdrop-blur-sm text-cyan-200/40 text-[10px] uppercase tracking-widest font-medium py-1.5 px-4 rounded-full border border-white/5">
                                         {msg.message}
                                     </span>
                                 </div>
@@ -581,86 +573,89 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                         const showAvatar = index === 0 || messages[index - 1].senderName !== msg.senderName || messages[index - 1].type === 'system';
 
                         return (
-                            <div key={msg._id || index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group relative z-10 animate-fade-in-up`}>
+                            <div key={msg._id || index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group relative z-10`}>
                                 {!isOwnMessage && (
                                     <Link
                                         href={`/profile/${msg.senderId}`}
-                                        className={`mr-2 w-9 h-9 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'} self-end mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
+                                        className={`mr-3 w-8 h-8 flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'} self-end mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
                                     >
                                         {msg.senderProfilePicture ? (
                                             <Image
                                                 src={msg.senderProfilePicture}
                                                 alt={msg.senderName}
-                                                width={36}
-                                                height={36}
-                                                className="w-full h-full rounded-2xl object-cover shadow-sm border border-white dark:border-dark-600"
+                                                width={32}
+                                                height={32}
+                                                className="w-full h-full rounded-full object-cover shadow-[0_0_10px_rgba(255,255,255,0.1)] border border-white/20"
                                             />
                                         ) : (
-                                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md border border-white dark:border-dark-600">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-900 to-blue-900 flex items-center justify-center text-white text-xs font-bold border border-white/10">
                                                 {msg.senderName[0]}
                                             </div>
                                         )}
                                     </Link>
                                 )}
 
-                                <div className={`flex flex-col max-w-[75%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
-                                    {/* Sender Name (only if first in group) */}
-                                    {!isOwnMessage && showAvatar && (
-                                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 ml-1 mb-1">{msg.senderName}</span>
+                                {/* Sender Name (only if first in group) */}
+                                {!isOwnMessage && showAvatar && (
+                                    <span className="text-[10px] uppercase tracking-wider font-semibold text-cyan-400 ml-1 mb-1 shadow-black drop-shadow-md">{msg.senderName}</span>
+                                )}
+
+                                {/* Message Bubble */}
+                                <div
+                                    className={`px-5 py-3 shadow-lg backdrop-blur-md transition-all duration-300 ${isOwnMessage
+                                        ? 'bg-gradient-to-br from-cyan-600/20 to-blue-600/20 text-white rounded-2xl rounded-tr-sm border border-cyan-500/30 hover:border-cyan-500/50 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                                        : 'bg-white/5 text-gray-200 rounded-2xl rounded-tl-sm border border-white/10 hover:bg-white/10 hover:border-white/20'
+                                        }`}
+                                >
+                                    {/* Quoted Message */}
+                                    {msg.replyTo && (
+                                        <div
+                                            className={`mb-2 p-2 rounded-lg text-xs border-l-2 cursor-pointer ${isOwnMessage
+                                                ? 'bg-black/20 border-cyan-400/50 text-cyan-100/90'
+                                                : 'bg-black/20 border-white/30 text-gray-300'
+                                                }`}
+                                        >
+                                            <p className="font-bold mb-0.5">{msg.replyTo.senderName}</p>
+                                            <p className="truncate opacity-80">
+                                                {msg.replyTo.type === 'image' ? '📷 Image' : msg.replyTo.message}
+                                            </p>
+                                        </div>
                                     )}
 
-                                    {/* Message Bubble */}
-                                    <div
-                                        className={`px-5 py-3 shadow-md backdrop-blur-sm transition-all duration-200 ${isOwnMessage
-                                            ? 'bg-gradient-to-br from-primary-600 to-purple-600 text-white rounded-2xl rounded-tr-sm hover:shadow-lg'
-                                            : 'bg-white dark:bg-dark-700/80 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tl-sm border border-gray-100 dark:border-gray-600 hover:shadow-md'
-                                            }`}
-                                    >
-                                        {/* Quoted Message */}
-                                        {msg.replyTo && (
-                                            <div
-                                                className={`mb-2 p-2 rounded-lg text-xs border-l-2 cursor-pointer ${isOwnMessage
-                                                    ? 'bg-white/10 border-white/50 text-white/90'
-                                                    : 'bg-gray-50 dark:bg-dark-800/50 border-primary-500 text-gray-500 dark:text-gray-400'
-                                                    }`}
-                                            >
-                                                <p className="font-bold mb-0.5">{msg.replyTo.senderName}</p>
-                                                <p className="truncate">
-                                                    {msg.replyTo.type === 'image' ? '📷 Image' : msg.replyTo.message}
-                                                </p>
+                                    {msg.type === 'image' && msg.imageUrl ? (
+                                        <div
+                                            className="-m-2 rounded-xl overflow-hidden cursor-pointer relative group-image"
+                                            onClick={() => setViewingImage(msg.imageUrl!)}
+                                        >
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-image-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                                                <span className="text-white text-xs font-medium px-3 py-1 bg-black/50 rounded-full backdrop-blur-md border border-white/10">View</span>
                                             </div>
-                                        )}
+                                            <Image
+                                                src={msg.imageUrl}
+                                                alt="Shared image"
+                                                width={300}
+                                                height={225}
+                                                unoptimized
+                                                className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <p className={`text-sm break-words whitespace-pre-wrap leading-relaxed tracking-wide font-light ${isOwnMessage ? 'text-cyan-50' : 'text-gray-200'}`}>{renderMessageWithMentions(msg.message)}</p>
+                                    )}
+                                </div>
 
-                                        {msg.type === 'image' && msg.imageUrl ? (
-                                            <div
-                                                className="-m-2 rounded-xl overflow-hidden cursor-pointer"
-                                                onClick={() => setViewingImage(msg.imageUrl!)}
-                                            >
-                                                <Image
-                                                    src={msg.imageUrl}
-                                                    alt="Shared image"
-                                                    width={300}
-                                                    height={225}
-                                                    unoptimized
-                                                    className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-300"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm break-words whitespace-pre-wrap leading-relaxed tracking-wide font-normal">{renderMessageWithMentions(msg.message)}</p>
-                                        )}
-                                    </div>
+                                {/* Message Footer & Actions */}
+                                <div className={`text-[10px] mt-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isOwnMessage ? 'mr-1 flex-row-reverse' : 'ml-1'}`}>
+                                    <span className="text-cyan-200/40 mx-2">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
 
-                                    {/* Message Footer & Actions */}
-                                    <div className={`text-[10px] mt-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity ${isOwnMessage ? 'mr-1' : 'ml-1'}`}>
-                                        <span className="text-gray-400 mr-2">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-
+                                    <div className="flex items-center gap-1 bg-black/40 rounded-full px-2 py-0.5 backdrop-blur-md border border-white/5">
                                         {/* Reply Button */}
                                         <button
                                             onClick={() => handleReply(msg)}
-                                            className="text-gray-400 hover:text-primary-500 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-600"
+                                            className="text-gray-400 hover:text-cyan-400 transition-colors p-1 rounded-full hover:bg-white/5"
                                             title="Reply"
                                         >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                             </svg>
                                         </button>
@@ -668,13 +663,13 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                                         {/* Pin Button */}
                                         <button
                                             onClick={() => handlePinMessage(msg)}
-                                            className={`transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-600 ${pinnedMessage?.messageId === msg._id
-                                                ? 'text-amber-500'
-                                                : 'text-gray-400 hover:text-amber-500'
+                                            className={`transition-colors p-1 rounded-full hover:bg-white/5 ${pinnedMessage?.messageId === msg._id
+                                                ? 'text-amber-400'
+                                                : 'text-gray-400 hover:text-amber-400'
                                                 }`}
                                             title={pinnedMessage?.messageId === msg._id ? 'Pinned' : 'Pin message'}
                                         >
-                                            <Pin size={14} />
+                                            <Pin size={12} />
                                         </button>
                                     </div>
                                 </div>
@@ -685,13 +680,13 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
 
                 {/* Typing Indicator */}
                 {typingUsers.size > 0 && (
-                    <div className="flex items-center ml-12 space-x-2 animate-pulse">
-                        <div className="flex space-x-1 bg-white/50 dark:bg-dark-700/50 p-2.5 rounded-2xl rounded-tl-none border border-gray-100 dark:border-gray-700">
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="flex items-center ml-12 space-x-2 animate-pulse mb-4">
+                        <div className="flex space-x-1 bg-white/5 p-2.5 rounded-2xl rounded-tl-none border border-white/10 shadow-lg backdrop-blur-sm">
+                            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                        <span className="text-[10px] text-gray-400 font-medium tracking-wide lowercase">
+                        <span className="text-[10px] text-cyan-200/50 font-medium tracking-wide lowercase">
                             {typingUsers.size} typing...
                         </span>
                     </div>
@@ -701,7 +696,7 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-dark-800/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-700/50 z-20">
+            <div className="relative z-20 p-4 border-t border-white/5 bg-black/20 backdrop-blur-xl">
                 <form onSubmit={sendMessage} className="flex items-end gap-3 relative">
                     {/* Image Upload Button */}
                     <div className="relative group">
@@ -828,6 +823,6 @@ export default function ChatRoom({ tripId, isSquadMember, squadMembers = [], sta
                 onClose={() => setViewingImage(null)}
                 alt="Chat image"
             />
-        </div>
+        </div >
     );
 }

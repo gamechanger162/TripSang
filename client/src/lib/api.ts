@@ -757,6 +757,13 @@ export const messageAPI = {
     // Get list of blocked users
     getBlockedUsers: async () => {
         return fetchWithAuth('/api/messages/blocked-users');
+    },
+
+    // Delete a message
+    deleteMessage: async (messageId: string) => {
+        return fetchWithAuth(`/api/messages/${messageId}`, {
+            method: 'DELETE'
+        });
     }
 };
 
@@ -1154,6 +1161,14 @@ export const communityAPI = {
             method: 'POST',
             body: JSON.stringify(data)
         });
+    },
+
+    /**
+     * Delete community message
+     * DELETE /api/communities/:id/messages/:messageId
+     */
+    deleteMessage: async (id: string, messageId: string) => {
+        return fetchWithAuth(`/api/communities/${id}/messages/${messageId}`, { method: 'DELETE' });
     }
 };
 

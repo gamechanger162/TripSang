@@ -10,9 +10,12 @@ import ImageViewer from '../ImageViewer';
 interface MessageBubbleProps {
     message: DirectMessage;
     onReply?: (message: DirectMessage) => void;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+    onSelect?: () => void;
 }
 
-export default function MessageBubble({ message, onReply }: MessageBubbleProps) {
+export default function MessageBubble({ message, onReply, isSelectionMode, isSelected, onSelect }: MessageBubbleProps) {
     const { data: session } = useSession();
     const isOwnMessage = message.sender === session?.user?.id;
     const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -27,8 +30,20 @@ export default function MessageBubble({ message, onReply }: MessageBubbleProps) 
     };
 
     return (
-        <>
-            <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 group`}>
+        <div className={`relative flex items-center gap-2 ${isSelectionMode ? 'mb-4' : 'mb-4'} group/bubble`}>
+            {/* Selection Checkbox */}
+            {isSelectionMode && (
+                <div
+                    className="shrink-0 cursor-pointer p-2"
+                    onClick={() => onSelect?.()}
+                >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-500'}`}>
+                        {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                </div>
+            )}
+
+            <div className={`flex flex-1 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                 <div className={`flex flex-col max-w-[70%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                     {/* Message bubble */}
                     <div
@@ -101,13 +116,12 @@ export default function MessageBubble({ message, onReply }: MessageBubbleProps) 
                 </div>
             </div>
 
-            {/* Image Viewer Modal */}
             <ImageViewer
                 imageUrl={viewingImage || ''}
                 isOpen={!!viewingImage}
                 onClose={() => setViewingImage(null)}
                 alt="DM image"
             />
-        </>
+        </div>
     );
 }

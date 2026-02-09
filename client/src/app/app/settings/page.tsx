@@ -108,7 +108,7 @@ export default function SettingsPage() {
                 {/* Profile Section */}
                 <div className="settings-section">
                     <h2 className="section-title">Profile</h2>
-                    <Link href={`/profile/${user?.id}`}>
+                    <Link href="/dashboard">
                         <GlassCard padding="md" hover className="profile-card">
                             <div className="profile-info-container">
                                 <div className="profile-avatar-wrapper">

@@ -869,3 +869,25 @@ body {
     background: linear-gradient(90deg, #D4AF37, #F4E4BA);
     border-radius: 2px;
 }
+
+/* Specific Custom Scrollbar for Cyberpunk Components */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.4);
+    /* cyan-500/40 */
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.7);
+    /* cyan-500/70 */
+}

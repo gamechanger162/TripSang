@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, Loader2, Send, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Users, Loader2, Send, Image as ImageIcon, X } from 'lucide-react';
 import { communityAPI, uploadAPI } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
 import { useEnv } from '@/hooks/useEnv';
@@ -16,6 +16,7 @@ const CommunityDetailsModal = dynamic(() => import('@/components/CommunityDetail
 });
 
 import CommunityMessageBubble from '@/components/chat/CommunityMessageBubble';
+import MeshBackground from '@/components/app/ui/MeshBackground';
 
 interface Message {
     _id: string;
@@ -59,6 +60,38 @@ export default function CommunityChatPage() {
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
+
+    const toggleSelection = (messageId: string) => {
+        setSelectedMessageIds(prev =>
+            prev.includes(messageId)
+                ? prev.filter(id => id !== messageId)
+                : [...prev, messageId]
+        );
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!selectedMessageIds.length) return;
+
+        const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedMessageIds.length} messages?`);
+        if (!confirmDelete) return;
+
+        try {
+            await Promise.all(selectedMessageIds.map(messageId => communityAPI.deleteMessage(id as string, messageId)));
+
+            // Optimistic update
+            setMessages(prev => prev.filter(m => !selectedMessageIds.includes(m._id)));
+
+            toast.success('Messages deleted');
+            setIsSelectionMode(false);
+            setSelectedMessageIds([]);
+        } catch (error) {
+            console.error('Failed to delete messages:', error);
+            toast.error('Failed to delete some messages');
+        }
+    };
 
     const currentUserId = (session?.user as any)?.id;
 
@@ -232,34 +265,67 @@ export default function CommunityChatPage() {
     };
 
     return (
-        <div className="flex-1 flex flex-col h-full pb-16 md:pb-0 relative">
+        <div className="flex-1 flex flex-col h-full pb-16 md:pb-0 relative bg-[#000a1f] overflow-hidden">
+            <MeshBackground />
+
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-black/30 backdrop-blur-xl">
-                <button
-                    onClick={handleBack}
-                    className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-
-                <div
-                    className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setShowDetailsModal(true)}
-                >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center overflow-hidden">
-                        {community?.logo ? (
-                            <img src={community.logo} alt={community.name} className="w-full h-full object-cover" />
-                        ) : (
-                            <Users size={20} className="text-white" />
-                        )}
+            {isSelectionMode ? (
+                <div className="relative z-10 p-4 border-b border-white/5 bg-cyan-900/40 backdrop-blur-xl shadow-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => { setIsSelectionMode(false); setSelectedMessageIds([]); }}
+                            className="p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                        <span className="text-white font-medium">{selectedMessageIds.length} Selected</span>
                     </div>
-
-                    <div>
-                        <h2 className="text-white font-semibold">{community?.name || 'Community'}</h2>
-                        <p className="text-xs text-gray-400">{community?.memberCount || 0} members</p>
-                    </div>
+                    <button
+                        onClick={handleDeleteSelected}
+                        disabled={!selectedMessageIds.length}
+                        className="text-red-400 font-medium px-4 py-1 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
+                    >
+                        Delete
+                    </button>
                 </div>
-            </div>
+            ) : (
+                <div className="relative z-10 flex items-center gap-3 p-4 border-b border-white/5 bg-black/20 backdrop-blur-xl shadow-lg">
+                    <button
+                        onClick={handleBack}
+                        className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+
+                    <div
+                        className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setShowDetailsModal(true)}
+                    >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center overflow-hidden">
+                            {community?.logo ? (
+                                <img src={community.logo} alt={community.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <Users size={20} className="text-white" />
+                            )}
+                        </div>
+
+                        <div>
+                            <h2 className="text-white font-semibold">{community?.name || 'Community'}</h2>
+                            <p className="text-xs text-gray-400">{community?.memberCount || 0} members</p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => setIsSelectionMode(true)}
+                        className="p-2 rounded-full hover:bg-white/10 text-white/60 transition-colors"
+                        title="Select Messages"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                    </button>
+                </div>
+            )}
 
             <CommunityDetailsModal
                 isOpen={showDetailsModal}
@@ -268,24 +334,44 @@ export default function CommunityChatPage() {
             />
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => (
-                    <CommunityMessageBubble
-                        key={msg._id}
-                        message={msg}
-                        isOwn={msg.sender === currentUserId}
-                        onImageClick={handleImageClick}
-                    />
-                ))}
-                <div ref={messagesEndRef} />
+            <div className="relative z-10 flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="space-y-1">
+                    {messages.map((msg) => (
+                        <div key={msg._id} className="relative group">
+                            <CommunityMessageBubble
+                                message={msg}
+                                isOwn={msg.sender === currentUserId}
+                                onImageClick={handleImageClick}
+                                isSelectionMode={isSelectionMode}
+                                isSelected={selectedMessageIds.includes(msg._id)}
+                                onSelect={() => toggleSelection(msg._id)}
+                            />
+                            {!isSelectionMode && (msg.sender === currentUserId) && (
+                                <button
+                                    className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 p-1 bg-black/50 rounded-full text-white/50 hover:text-white transition-opacity z-10"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsSelectionMode(true);
+                                        toggleSelection(msg._id);
+                                    }}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                </div>
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-white/10 bg-black/30 backdrop-blur-xl">
-                <div className="flex items-center gap-2">
+            <div className="relative z-10 p-4 border-t border-white/5 bg-black/20 backdrop-blur-xl">
+                <div className="flex items-center gap-3 max-w-4xl mx-auto">
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                        className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-cyan-400 hover:text-cyan-300 transition-all border border-white/5 hover:border-cyan-500/30"
                     >
                         <ImageIcon size={20} />
                     </button>
@@ -296,20 +382,23 @@ export default function CommunityChatPage() {
                         onChange={handleImageUpload}
                         className="hidden"
                     />
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50"
-                    />
+                    <div className="flex-1 relative group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                            placeholder="Type a message..."
+                            className="relative w-full px-6 py-3 bg-black/40 border border-white/10 rounded-full text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:bg-black/60 transition-all font-light tracking-wide shadow-inner"
+                        />
+                    </div>
                     <button
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim() || sending}
-                        className="p-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] transform hover:scale-105 transition-all"
                     >
-                        {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                        {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
                     </button>
                 </div>
             </div>

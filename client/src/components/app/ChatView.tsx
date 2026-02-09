@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { messageAPI, uploadAPI } from '@/lib/api';
+import { messageAPI, uploadAPI, communityAPI } from '@/lib/api';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import {
@@ -107,6 +107,46 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false); // State for remove member modal
     const [showTripDetails, setShowTripDetails] = useState(false); // State for trip details modal
 
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
+
+    const toggleSelection = (messageId: string) => {
+        setSelectedMessageIds(prev =>
+            prev.includes(messageId)
+                ? prev.filter(id => id !== messageId)
+                : [...prev, messageId]
+        );
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!selectedMessageIds.length) return;
+
+        const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedMessageIds.length} messages?`);
+        if (!confirmDelete) return;
+
+        try {
+            await Promise.all(selectedMessageIds.map(async (id) => {
+                if (conversationType === 'squad') {
+                    socketRef.current?.emit('delete_message', { tripId: conversationId, messageId: id });
+                } else if (conversationType === 'community') {
+                    await communityAPI.deleteMessage(conversationId, id);
+                } else {
+                    await messageAPI.deleteMessage(id);
+                }
+            }));
+
+            // Optimistic update
+            setMessages(prev => prev.filter(m => !selectedMessageIds.includes(m._id)));
+
+            toast.success('Messages deleted');
+            setIsSelectionMode(false);
+            setSelectedMessageIds([]);
+        } catch (error) {
+            console.error('Failed to delete messages:', error);
+            toast.error('Failed to delete some messages');
+        }
+    };
+
     // Fetch messages
     const fetchMessages = useCallback(async () => {
         try {
@@ -164,21 +204,25 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         avatar: data.trip?.coverPhoto,
                         type: 'squad',
                         creatorId: data.trip?.creator,
-                        // Map data for CollaborativeMap
+                        // Map data for CollaborativeMap - Standardized with TripDetailsClient logic
                         startPoint: data.trip?.startPoint ? {
                             ...data.trip.startPoint,
-                            lat: data.trip.startPoint.coordinates?.latitude || data.trip.startPoint.lat,
-                            lng: data.trip.startPoint.coordinates?.longitude || data.trip.startPoint.lng
-                        } : undefined,
+                            lat: data.trip.startPoint.coordinates?.latitude || data.trip.startPoint.coordinates?.lat || data.trip.startPoint.lat || 20.5937, // Nagpur
+                            lng: data.trip.startPoint.coordinates?.longitude || data.trip.startPoint.coordinates?.lng || data.trip.startPoint.lng || 78.9629,
+                            name: data.trip.startPoint.name || 'Start (Nagpur)'
+                        } : { lat: 20.5937, lng: 78.9629, name: 'Start (Nagpur)' },
+
                         endPoint: data.trip?.endPoint ? {
                             ...data.trip.endPoint,
-                            lat: data.trip.endPoint.coordinates?.latitude || data.trip.endPoint.lat,
-                            lng: data.trip.endPoint.coordinates?.longitude || data.trip.endPoint.lng
+                            lat: data.trip.endPoint.coordinates?.latitude || data.trip.endPoint.coordinates?.lat || data.trip.endPoint.lat || 28.6139, // New Delhi
+                            lng: data.trip.endPoint.coordinates?.longitude || data.trip.endPoint.coordinates?.lng || data.trip.endPoint.lng || 77.2090,
+                            name: data.trip.endPoint.name || 'End (New Delhi)'
                         } : undefined,
+
                         waypoints: (data.trip?.waypoints || []).map((wp: any) => ({
                             ...wp,
-                            lat: wp.lat || wp.latitude || wp.coordinates?.latitude,
-                            lng: wp.lng || wp.longitude || wp.coordinates?.longitude
+                            lat: wp.lat || wp.latitude || wp.coordinates?.latitude || wp.coordinates?.lat,
+                            lng: wp.lng || wp.longitude || wp.coordinates?.longitude || wp.coordinates?.lng
                         })),
                         members: data.trip?.squadMembers || [], // Members now includes creator from backend
                         isCreator: data.trip?.creator === session?.user?.id || data.trip?.creator?._id === session?.user?.id,
@@ -641,25 +685,45 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         else if (isSamePrev && !isSameNext) groupPosition = 'bottom';
 
         return (
-            <MessageBubble
-                key={msg._id}
-                message={msg}
-                isOwn={isOwn}
-                groupPosition={groupPosition}
-                onReply={() => setReplyTo(msg)}
-                onPin={() => {
-                    // Emit socket event to persist pin to backend
-                    if (conversationType === 'squad') {
-                        socketRef.current?.emit('pin_message', {
-                            tripId: conversationId,
-                            messageId: msg._id
-                        });
-                    }
-                    setPinnedMessage(msg);
-                }}
-                formatTime={formatTime}
-                onImageClick={setSelectedImage}
-            />
+            <div className="relative group/msg">
+                <MessageBubble
+                    key={msg._id}
+                    message={msg}
+                    isOwn={isOwn}
+                    groupPosition={groupPosition}
+                    onReply={() => setReplyTo(msg)}
+                    onPin={() => {
+                        // Emit socket event to persist pin to backend
+                        if (conversationType === 'squad') {
+                            socketRef.current?.emit('pin_message', {
+                                tripId: conversationId,
+                                messageId: msg._id
+                            });
+                        }
+                        setPinnedMessage(msg);
+                    }}
+                    formatTime={formatTime}
+                    onImageClick={setSelectedImage}
+                    isSelectionMode={isSelectionMode}
+                    isSelected={selectedMessageIds.includes(msg._id)}
+                    onSelect={() => toggleSelection(msg._id)}
+                />
+                {!isSelectionMode && (
+                    <button
+                        className="absolute top-2 right-2 opacity-0 group-hover/msg:opacity-100 p-1 bg-black/50 rounded-full text-white/50 hover:text-white transition-opacity z-10"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSelectionMode(true);
+                            toggleSelection(msg._id);
+                        }}
+                        title="Select"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </button>
+                )}
+            </div>
         );
     };
 
@@ -673,45 +737,78 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     </button>
                 )}
 
-                <div
-                    className={`header-info cursor-pointer hover:opacity-80 transition-opacity`}
-                    onClick={() => {
-                        if (conversationType === 'dm' && conversationInfo?.otherUserId) {
-                            router.push(`/profile/${conversationInfo.otherUserId}`);
-                        } else if (conversationType === 'squad') {
-                            setShowTripDetails(true);
-                        } else if (conversationType === 'community') {
-                            router.push(`/app/communities/${conversationId}`);
-                        }
-                    }}
-                >
-                    {conversationInfo?.avatar ? (
-                        <div className="header-avatar-container">
-                            <Image
-                                src={conversationInfo.avatar}
-                                alt=""
-                                fill
-                                sizes="40px"
-                                className="object-cover"
-                            />
+                {isSelectionMode ? (
+                    <div className="flex-1 flex items-center justify-between mx-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-white font-medium">{selectedMessageIds.length} Selected</span>
                         </div>
-                    ) : (
-                        <div className="header-avatar-placeholder">
-                            {conversationInfo?.name?.charAt(0) || '?'}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleDeleteSelected}
+                                disabled={!selectedMessageIds.length}
+                                className="text-red-400 font-medium px-4 py-1 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
+                            >
+                                Delete
+                            </button>
+                            <button
+                                onClick={() => { setIsSelectionMode(false); setSelectedMessageIds([]); }}
+                                className="p-2 hover:bg-white/10 rounded-full text-white/70"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
-                    )}
-                    <div>
-                        <h3 className="header-name">
-                            {conversationInfo?.name || 'Loading...'}
-                            {conversationInfo?.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
-                        </h3>
-                        {typingUsers.length > 0 && (
-                            <span className="typing-indicator">
-                                {typingUsers.join(', ')} typing...
-                            </span>
-                        )}
                     </div>
-                </div>
+                ) : (
+                    <div
+                        className={`header-info cursor-pointer hover:opacity-80 transition-opacity`}
+                        onClick={() => {
+                            if (conversationType === 'dm' && conversationInfo?.otherUserId) {
+                                router.push(`/profile/${conversationInfo.otherUserId}`);
+                            } else if (conversationType === 'squad') {
+                                setShowTripDetails(true);
+                            } else if (conversationType === 'community') {
+                                router.push(`/app/communities/${conversationId}`);
+                            }
+                        }}
+                    >
+                        {conversationInfo?.avatar ? (
+                            <div className="header-avatar-container">
+                                <Image
+                                    src={conversationInfo.avatar}
+                                    alt=""
+                                    fill
+                                    sizes="40px"
+                                    className="object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <div className="header-avatar-placeholder">
+                                {conversationInfo?.name?.charAt(0) || '?'}
+                            </div>
+                        )}
+                        <div>
+                            <h3 className="header-name">
+                                {conversationInfo?.name || 'Loading...'}
+                                {conversationInfo?.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
+                            </h3>
+                            {typingUsers.length > 0 && (
+                                <span className="typing-indicator">
+                                    {typingUsers.join(', ')} typing...
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {!isSelectionMode && (
+                    <button
+                        onClick={() => setIsSelectionMode(true)}
+                        className="p-2 rounded-full hover:bg-white/10 text-white/60 transition-colors ml-auto mr-2"
+                        title="Select Messages"
+                    >
+                        <MoreVertical size={20} />
+                    </button>
+                )}
 
                 {/* Remove Member Modal */}
                 <AnimatePresence>
@@ -995,9 +1092,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                 margin: '8px'
                             }}
                         >
-                            {conversationInfo?.startPoint &&
-                                typeof conversationInfo.startPoint.lat === 'number' &&
-                                typeof conversationInfo.startPoint.lng === 'number' ? (
+                            {conversationInfo?.startPoint ? (
                                 <CollaborativeMap
                                     tripId={conversationId}
                                     startPoint={conversationInfo.startPoint}
@@ -1983,7 +2078,10 @@ function MessageBubble({
     onReply,
     onPin,
     formatTime,
-    onImageClick
+    onImageClick,
+    isSelectionMode,
+    isSelected,
+    onSelect
 }: {
     message: Message;
     isOwn: boolean;
@@ -1992,6 +2090,9 @@ function MessageBubble({
     onPin: () => void;
     formatTime: (ts: string) => string;
     onImageClick?: (url: string) => void;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+    onSelect?: () => void;
 }) {
     const x = useMotionValue(0);
     const replyOpacity = useTransform(x, [-100, -50], [1, 0]);
@@ -2061,6 +2162,21 @@ function MessageBubble({
             >
                 <Reply size={16} />
             </motion.div>
+
+            {/* Selection Checkbox */}
+            {isSelectionMode && (
+                <div
+                    className="shrink-0 cursor-pointer p-2 mr-2"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect?.();
+                    }}
+                >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-cyan-500 border-cyan-500' : 'border-gray-500'}`}>
+                        {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                </div>
+            )}
 
             {/* Profile Picture for received messages - always show */}
             {!isOwn && (
