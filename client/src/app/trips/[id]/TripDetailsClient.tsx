@@ -15,9 +15,8 @@ const FuturisticSquadChat = dynamic(() => import('@/components/FuturisticSquadCh
 import GoogleAd from '@/components/GoogleAd';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
-import { Map as MapIcon, X } from 'lucide-react';
-import PremiumBadge from '@/components/PremiumBadge';
-import { isPremiumUser } from '@/utils/linkify';
+import { Map as MapIcon, X, Shield, Smartphone } from 'lucide-react';
+
 
 const EditTripModal = dynamic(() => import('@/components/EditTripModal'), { ssr: false });
 
@@ -45,6 +44,8 @@ interface TripDetails {
         profilePicture?: string;
         badges?: string[];
         bio?: string;
+        isMobileVerified?: boolean;
+        verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
     };
     currentSquadSize?: number;
     maxSquadSize: number;
@@ -52,6 +53,8 @@ interface TripDetails {
         _id: string;
         name: string;
         profilePicture?: string;
+        isMobileVerified?: boolean;
+        verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
     }>;
     stats: {
         likes: number;
@@ -601,19 +604,37 @@ export function TripDetailsClient() {
                                             {trip.creator.name[0]}
                                         </span>
                                     )}
-                                    {isPremiumUser(trip.creator) && <PremiumBadge size="md" />}
+
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                                    <h4 className="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-1">
                                         {trip.creator.name}
+                                        {(trip.creator as any)?.isMobileVerified && (
+                                            <div
+                                                className="w-4 h-4 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                title="Phone Verified"
+                                            >
+                                                <Smartphone size={10} className="text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                        )}
+                                        {trip.creator.verificationStatus === 'verified' && (
+                                            <div
+                                                className="w-4 h-4 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                title="Identity Verified"
+                                            >
+                                                <Shield size={10} className="text-emerald-600 dark:text-emerald-400" />
+                                            </div>
+                                        )}
                                     </h4>
                                     {trip.creator.badges && trip.creator.badges.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">
-                                            {trip.creator.badges.map((badge, index) => (
-                                                <span key={index} className="badge badge-secondary text-xs">
-                                                    {badge}
-                                                </span>
-                                            ))}
+                                            {trip.creator.badges
+                                                .filter(badge => badge !== 'Premium')
+                                                .map((badge, index) => (
+                                                    <span key={index} className="badge badge-secondary text-xs">
+                                                        {badge}
+                                                    </span>
+                                                ))}
                                         </div>
                                     )}
                                     {trip.creator.bio && (
@@ -687,10 +708,26 @@ export function TripDetailsClient() {
                                                             {member.name[0]}
                                                         </span>
                                                     )}
-                                                    {isPremiumUser(member) && <PremiumBadge size="sm" />}
+
                                                 </div>
-                                                <span className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                                                <span className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 flex items-center gap-1">
                                                     {member.name}
+                                                    {(member as any)?.isMobileVerified && (
+                                                        <div
+                                                            className="w-3.5 h-3.5 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                            title="Phone Verified"
+                                                        >
+                                                            <Smartphone size={8} className="text-blue-600 dark:text-blue-400" />
+                                                        </div>
+                                                    )}
+                                                    {(member as any)?.verificationStatus === 'verified' && (
+                                                        <div
+                                                            className="w-3.5 h-3.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                            title="Identity Verified"
+                                                        >
+                                                            <Shield size={8} className="text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                    )}
                                                 </span>
                                             </Link>
                                             {/* Actions */}

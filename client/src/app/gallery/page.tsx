@@ -10,19 +10,34 @@ import { Heart, MessageCircle, Share2, MapPin, Plus, X, Trash2 } from 'lucide-re
 import { useRouter } from 'next/navigation';
 import ShareMemoryModal from '@/components/ShareMemoryModal';
 import ImageLightbox from '@/components/ImageLightbox';
-import PremiumBadge from '@/components/PremiumBadge';
-import { isPremiumUser } from '@/utils/linkify';
+import { Shield, Smartphone } from 'lucide-react';
+
 
 interface Memory {
     _id: string;
+
     content: string;
     photos: { url: string; caption?: string }[];
-    author: { _id: string; name: string; profilePicture?: string; subscription?: any };
+    author: {
+        _id: string;
+        name: string;
+        profilePicture?: string;
+        subscription?: any;
+        isMobileVerified?: boolean;
+        verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
+    };
     trip: { _id: string; title: string; startPoint: any; endPoint: any };
     likes: string[];
     comments: {
         _id: string;
-        user: { _id: string; name: string; profilePicture?: string; subscription?: any };
+        user: {
+            _id: string;
+            name: string;
+            profilePicture?: string;
+            subscription?: any;
+            isMobileVerified?: boolean;
+            verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
+        };
         text: string;
         createdAt: string;
     }[];
@@ -221,10 +236,28 @@ export default function GalleryPage() {
                                         fill
                                         className="object-cover"
                                     />
-                                    {isPremiumUser(memory.author) && <PremiumBadge size="sm" />}
+
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{memory.author.name}</h3>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-1">
+                                        {memory.author.name}
+                                        {(memory.author as any)?.isMobileVerified && (
+                                            <div
+                                                className="w-3.5 h-3.5 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                title="Phone Verified"
+                                            >
+                                                <Smartphone size={8} className="text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                        )}
+                                        {memory.author.verificationStatus === 'verified' && (
+                                            <div
+                                                className="w-3.5 h-3.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                title="Identity Verified"
+                                            >
+                                                <Shield size={8} className="text-emerald-600 dark:text-emerald-400" />
+                                            </div>
+                                        )}
+                                    </h3>
                                     {(memory.trip) && (
                                         <div className="flex items-center text-xs text-gray-500">
                                             <MapPin size={12} className="mr-1" />
@@ -322,10 +355,28 @@ export default function GalleryPage() {
                                                         {(comment.user?.name?.[0]) || '?'}
                                                     </div>
                                                 )}
-                                                {isPremiumUser(comment.user) && <PremiumBadge size="sm" />}
+
                                             </div>
                                             <div className="flex-1 bg-gray-50 dark:bg-dark-700 rounded-lg p-2 text-sm">
-                                                <p className="font-semibold text-gray-900 dark:text-white text-xs">{comment.user?.name || 'Unknown User'}</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white text-xs flex items-center gap-1">
+                                                    {comment.user?.name || 'Unknown User'}
+                                                    {(comment.user as any)?.isMobileVerified && (
+                                                        <div
+                                                            className="w-3 h-3 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                            title="Phone Verified"
+                                                        >
+                                                            <Smartphone size={7} className="text-blue-600 dark:text-blue-400" />
+                                                        </div>
+                                                    )}
+                                                    {(comment.user as any)?.verificationStatus === 'verified' && (
+                                                        <div
+                                                            className="w-3 h-3 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                            title="Identity Verified"
+                                                        >
+                                                            <Shield size={7} className="text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                    )}
+                                                </p>
                                                 <p className="text-gray-700 dark:text-gray-300">{comment.text}</p>
                                             </div>
                                         </div>

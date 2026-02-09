@@ -9,8 +9,8 @@ export const getTripMemories = async (req, res) => {
         const { tripId } = req.params;
 
         const memories = await Memory.find({ trip: tripId })
-            .populate('author', 'name profilePicture subscription')
-            .populate('comments.user', 'name profilePicture subscription')
+            .populate('author', 'name profilePicture subscription isMobileVerified verificationStatus')
+            .populate('comments.user', 'name profilePicture subscription isMobileVerified verificationStatus')
             .sort({ createdAt: -1 });
 
         res.json({
@@ -83,7 +83,7 @@ export const createMemory = async (req, res) => {
         const memory = await Memory.create(memoryData);
         console.log('✅ Memory Created:', memory._id);
 
-        await memory.populate('author', 'name profilePicture');
+        await memory.populate('author', 'name profilePicture isMobileVerified verificationStatus');
         if (memory.trip) await memory.populate('trip', 'title');
 
         res.status(201).json({
@@ -177,7 +177,7 @@ export const addComment = async (req, res) => {
         });
 
         await memory.save();
-        await memory.populate('comments.user', 'name profilePicture');
+        await memory.populate('comments.user', 'name profilePicture isMobileVerified verificationStatus');
 
         const newComment = memory.comments[memory.comments.length - 1];
 
@@ -341,9 +341,9 @@ export const getAllMemories = async (req, res) => {
 
         // Fetch fully populated docs for these IDs
         const memories = await Memory.find({ _id: { $in: memoryIds } })
-            .populate('author', 'name profilePicture subscription')
+            .populate('author', 'name profilePicture subscription isMobileVerified verificationStatus')
             .populate('trip', 'title startPoint endPoint')
-            .populate('comments.user', 'name profilePicture subscription')
+            .populate('comments.user', 'name profilePicture subscription isMobileVerified verificationStatus')
             .sort({ createdAt: -1 }); // Ensure order is maintained
 
         // Get approximate total for pagination (calculating exact total with complex filter is expensive)

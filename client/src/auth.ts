@@ -213,8 +213,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.role = user.role || 'user';
                 token.accessToken = user.token;
                 token.isMobileVerified = user.isMobileVerified || false;
+                token.accessToken = user.token;
+                token.isMobileVerified = user.isMobileVerified || false;
                 token.verificationStatus = user.verificationStatus || 'unverified';
+                // Map backend profilePicture to NextAuth picture
+                if (user.profilePicture) {
+                    token.picture = user.profilePicture;
+                }
             }
+
+            // If user updates profile, we might need to update token.picture
+            // validation logic here if needed
 
             return token;
         },
@@ -225,7 +234,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 session.user.role = token.role as string;
                 session.user.accessToken = token.accessToken as string;
                 session.user.isMobileVerified = token.isMobileVerified as boolean;
+                session.user.isMobileVerified = token.isMobileVerified as boolean;
                 session.user.verificationStatus = token.verificationStatus as string;
+                if (token.picture) {
+                    session.user.image = token.picture;
+                }
             }
 
             return session;

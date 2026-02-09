@@ -40,6 +40,16 @@ const nextConfig = {
                 hostname: 'plus.unsplash.com',
                 pathname: '/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'lh3.googleusercontent.com',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'firebasestorage.googleapis.com',
+                pathname: '/**',
+            },
         ]
     },
     env: {

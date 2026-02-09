@@ -322,8 +322,8 @@ export const getTripById = async (req, res) => {
         const { id } = req.params;
 
         const trip = await Trip.findById(id)
-            .populate('creator', 'name email profilePicture badges bio location gender')
-            .populate('squadMembers', 'name profilePicture badges');
+            .populate('creator', 'name email profilePicture badges bio location gender isMobileVerified verificationStatus')
+            .populate('squadMembers', 'name profilePicture badges isMobileVerified verificationStatus');
 
         if (!trip) {
             return res.status(404).json({

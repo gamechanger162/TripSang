@@ -631,9 +631,28 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     </button>
                 )}
 
-                <div className="header-info">
+                <div
+                    className={`header-info ${conversationType === 'dm' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                    onClick={() => {
+                        if (conversationType === 'dm' && conversationInfo?.otherUserId) {
+                            router.push(`/profile/${conversationInfo.otherUserId}`);
+                        } else if (conversationType === 'squad') {
+                            router.push(`/trips/${conversationId}`);
+                        } else if (conversationType === 'community') {
+                            router.push(`/app/communities/${conversationId}`);
+                        }
+                    }}
+                >
                     {conversationInfo?.avatar ? (
-                        <Image src={conversationInfo.avatar} alt="" width={40} height={40} className="header-avatar object-cover" />
+                        <div className="header-avatar-container">
+                            <Image
+                                src={conversationInfo.avatar}
+                                alt=""
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                            />
+                        </div>
                     ) : (
                         <div className="header-avatar-placeholder">
                             {conversationInfo?.name?.charAt(0) || '?'}
@@ -1035,10 +1054,23 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     gap: 12px;
                 }
                 
-                .header-avatar, .header-avatar-placeholder {
+                .header-avatar-container {
                     width: 40px;
                     height: 40px;
-                    border-radius: 12px;
+                    min-width: 40px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    position: relative;
+                    flex-shrink: 0;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+
+                .header-avatar-placeholder {
+                    width: 40px;
+                    height: 40px;
+                    min-width: 40px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
                     object-fit: cover;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
                 }
@@ -1215,6 +1247,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 24px;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                }
+                
+                .header-avatar-placeholder {
+                    border-radius: 50%;
                 }
                 
                 .input-action-btn {

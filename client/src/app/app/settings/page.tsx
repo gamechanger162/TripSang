@@ -6,18 +6,21 @@ import { useRouter } from 'next/navigation';
 import GlassCard from '@/components/app/ui/GlassCard';
 import { GlassButton } from '@/components/app/ui/GlassCard';
 import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
+import Image from 'next/image';
 import {
     User,
     Bell,
     Shield,
     LogOut,
     ChevronRight,
-    Moon,
     Volume2,
-    MessageCircle
+    MessageCircle,
+    CheckCircle2,
+    Clock,
+    AlertCircle,
+    Smartphone
 } from 'lucide-react';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
     const { data: session, status } = useSession();
@@ -40,46 +43,173 @@ export default function SettingsPage() {
         await signOut({ callbackUrl: '/' });
     };
 
+    // Helper to determine verification status display
+    const getVerificationStatus = () => {
+        const isIdentityVerified = user?.verificationStatus === 'verified';
+        const isPhoneVerified = user?.isMobileVerified;
+        const status = user?.verificationStatus;
+
+        if (isIdentityVerified && isPhoneVerified) {
+            return {
+                label: 'Verified',
+                icon: <CheckCircle2 size={18} className="text-emerald-400" />,
+                color: 'text-emerald-400',
+                subtext: 'Identity & Phone verified',
+                href: '/profile/edit' // Or nowhere if we want it disabled
+            };
+        }
+
+        if (status === 'pending') {
+            return {
+                label: 'Pending Approval',
+                icon: <Clock size={18} className="text-yellow-400" />,
+                color: 'text-yellow-400',
+                subtext: 'Review in progress',
+                href: '/verify/status' // Assuming a status page exists, or back to identity
+            };
+        }
+
+        if (status === 'rejected') {
+            return {
+                label: 'Identity Rejected',
+                icon: <AlertCircle size={18} className="text-red-400" />,
+                color: 'text-red-400',
+                subtext: 'Tap to try again',
+                href: '/verify/identity'
+            };
+        }
+
+        if (isPhoneVerified && !isIdentityVerified) {
+            return {
+                label: 'Verify Government ID',
+                icon: <Shield size={18} className="text-blue-400" />,
+                color: 'text-gray-200',
+                subtext: 'Phone verified',
+                href: '/verify/id'
+            };
+        }
+
+        return {
+            label: 'Verify Identity',
+            icon: <Shield size={18} className="text-blue-400" />,
+            color: 'text-gray-200',
+            subtext: 'Get verified badge',
+            href: '/verify/identity'
+        };
+    };
+
+    const verStatus = getVerificationStatus();
+
     return (
         <>
             <div className="settings-content">
-                <h1>Settings</h1>
+                <h1 className="page-title">Settings</h1>
 
                 {/* Profile Section */}
                 <div className="settings-section">
-                    <h2>Profile</h2>
+                    <h2 className="section-title">Profile</h2>
                     <Link href={`/profile/${user?.id}`}>
                         <GlassCard padding="md" hover className="profile-card">
-                            <div className="profile-info">
-                                <div className="profile-avatar">
+                            <div className="profile-info-container">
+                                <div className="profile-avatar-wrapper">
                                     {user?.image ? (
-                                        <img src={user.image} alt={user.name} />
+                                        <div className="profile-avatar-container">
+                                            <Image
+                                                src={user.image}
+                                                alt={user.name || 'User'}
+                                                fill
+                                                sizes="64px"
+                                                className="object-cover"
+                                                unoptimized
+                                                referrerPolicy="no-referrer"
+                                            />
+                                        </div>
                                     ) : (
-                                        <User size={24} />
+                                        <div className="profile-avatar-placeholder">
+                                            <User size={32} />
+                                        </div>
                                     )}
                                 </div>
-                                <div>
+                                <div className="profile-text">
                                     <h3 className="profile-name">
                                         {user?.name || 'User'}
-                                        {user?.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
+                                        <div className="flex items-center gap-1 ml-2">
+                                            {user?.isMobileVerified && (
+                                                <div
+                                                    className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30"
+                                                    title="Phone Verified"
+                                                >
+                                                    <Smartphone size={12} className="text-blue-400" />
+                                                </div>
+                                            )}
+                                            {user?.verificationStatus === 'verified' && (
+                                                <div
+                                                    className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30"
+                                                    title="Identity Verified (Aadhaar/PAN)"
+                                                >
+                                                    <Shield size={12} className="text-emerald-400" />
+                                                </div>
+                                            )}
+                                        </div>
                                     </h3>
                                     <p className="profile-email">{user?.email}</p>
+                                    <p className="profile-view-text">View Profile</p>
                                 </div>
                             </div>
-                            <ChevronRight size={20} className="chevron" />
+                            <div className="chevron-wrapper">
+                                <ChevronRight size={20} className="chevron" />
+                            </div>
                         </GlassCard>
                     </Link>
                 </div>
 
+                {/* Account Settings */}
+                <div className="settings-section">
+                    <h2 className="section-title">Account</h2>
+                    <GlassCard padding="none" className="settings-group">
+                        <Link href="/profile/edit" className="setting-item clickable">
+                            <div className="setting-main">
+                                <div className="setting-icon-bg bg-blue-500/20 text-blue-400">
+                                    <User size={20} />
+                                </div>
+                                <div className="setting-label">
+                                    <span className="setting-title">Edit Profile</span>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="chevron" />
+                        </Link>
+
+                        <Link href={verStatus.href} className="setting-item clickable">
+                            <div className="setting-main">
+                                <div className={`setting-icon-bg ${verStatus.color === 'text-emerald-400' ? 'bg-emerald-500/20' : 'bg-purple-500/20 text-purple-400'}`}>
+                                    {verStatus.icon}
+                                </div>
+                                <div className="setting-label">
+                                    <span className={`setting-title ${verStatus.color !== 'text-gray-200' ? verStatus.color : ''}`}>
+                                        {verStatus.label}
+                                    </span>
+                                    {verStatus.subtext && (
+                                        <span className="setting-subtitle">{verStatus.subtext}</span>
+                                    )}
+                                </div>
+                            </div>
+                            {user?.verificationStatus !== 'verified' && (
+                                <ChevronRight size={18} className="chevron" />
+                            )}
+                        </Link>
+                    </GlassCard>
+                </div>
+
                 {/* Preferences */}
                 <div className="settings-section">
-                    <h2>Preferences</h2>
-
+                    <h2 className="section-title">Preferences</h2>
                     <GlassCard padding="none" className="settings-group">
                         <div className="setting-item">
-                            <div className="setting-info">
-                                <Bell size={20} />
-                                <span>Push Notifications</span>
+                            <div className="setting-main">
+                                <div className="setting-icon-bg bg-orange-500/20 text-orange-400">
+                                    <Bell size={20} />
+                                </div>
+                                <span className="setting-title">Push Notifications</span>
                             </div>
                             <label className="toggle">
                                 <input
@@ -92,9 +222,11 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="setting-item">
-                            <div className="setting-info">
-                                <Volume2 size={20} />
-                                <span>Message Sounds</span>
+                            <div className="setting-main">
+                                <div className="setting-icon-bg bg-pink-500/20 text-pink-400">
+                                    <Volume2 size={20} />
+                                </div>
+                                <span className="setting-title">Message Sounds</span>
                             </div>
                             <label className="toggle">
                                 <input
@@ -108,31 +240,16 @@ export default function SettingsPage() {
                     </GlassCard>
                 </div>
 
-                {/* Account */}
+                {/* Support */}
                 <div className="settings-section">
-                    <h2>Account</h2>
-
+                    <h2 className="section-title">Support</h2>
                     <GlassCard padding="none" className="settings-group">
-                        <Link href="/profile/edit" className="setting-item clickable">
-                            <div className="setting-info">
-                                <User size={20} />
-                                <span>Edit Profile</span>
-                            </div>
-                            <ChevronRight size={18} className="chevron" />
-                        </Link>
-
-                        <Link href="/verify/identity" className="setting-item clickable">
-                            <div className="setting-info">
-                                <Shield size={20} />
-                                <span>Verify Identity</span>
-                            </div>
-                            <ChevronRight size={18} className="chevron" />
-                        </Link>
-
                         <Link href="/help-support" className="setting-item clickable">
-                            <div className="setting-info">
-                                <MessageCircle size={20} />
-                                <span>Help & Support</span>
+                            <div className="setting-main">
+                                <div className="setting-icon-bg bg-teal-500/20 text-teal-400">
+                                    <MessageCircle size={20} />
+                                </div>
+                                <span className="setting-title">Help & Support</span>
                             </div>
                             <ChevronRight size={18} className="chevron" />
                         </Link>
@@ -140,190 +257,261 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Logout */}
-                <GlassButton
+                <button
                     onClick={handleLogout}
-                    variant="secondary"
-                    className="logout-btn"
+                    className="logout-button"
                 >
-                    <LogOut size={18} className="mr-2" />
-                    Logout
-                </GlassButton>
+                    <LogOut size={18} />
+                    Log Out
+                </button>
+
+                <p className="version-text">Version 1.0.0</p>
             </div>
 
             <style jsx>{`
-                .settings-layout {
-                    display: flex;
-                    width: 100%;
-                    height: 100%;
-                }
-                
                 .settings-content {
                     flex: 1;
                     padding: 24px;
                     max-width: 600px;
+                    margin: 0 auto;
+                    width: 100%;
+                    padding-bottom: 240px; /* Increased to clear nav bar */
                     overflow-y: auto;
-                    padding-bottom: 100px;
+                    height: 100%;
                 }
-                
+
                 @media (min-width: 768px) {
                     .settings-content {
                         padding-bottom: 40px;
                     }
                 }
-                
-                h1 {
-                    font-size: 24px;
-                    font-weight: 700;
+
+                .page-title {
+                    font-size: 28px;
+                    font-weight: 800;
                     color: white;
-                    margin-bottom: 24px;
+                    margin-bottom: 32px;
+                    letter-spacing: -0.02em;
                 }
-                
+
                 .settings-section {
-                    margin-bottom: 24px;
+                    margin-bottom: 32px;
                 }
-                
-                .settings-section h2 {
+
+                .section-title {
                     font-size: 13px;
                     font-weight: 600;
-                    color: rgba(255, 255, 255, 0.5);
+                    color: rgba(255, 255, 255, 0.4);
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    letter-spacing: 0.05em;
                     margin-bottom: 12px;
+                    padding-left: 8px;
                 }
-                
+
+                /* Profile Card Styles */
                 .profile-card {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
+                    padding: 20px !important;
                 }
-                
-                .profile-info {
+
+                .profile-info-container {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 16px;
                 }
-                
-                .profile-avatar {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 14px;
+
+                .profile-avatar-wrapper {
+                    position: relative;
+                }
+
+                .profile-avatar-container {
+                    width: 64px;
+                    height: 64px;
+                    min-width: 64px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    position: relative;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    border: 2px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .profile-avatar-placeholder {
+                    width: 64px;
+                    height: 64px;
+                    min-width: 64px;
+                    border-radius: 50%;
                     background: linear-gradient(135deg, #14b8a6, #0d9488);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: white;
-                    overflow: hidden;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    border: 2px solid rgba(255, 255, 255, 0.1);
                 }
-                
-                .profile-avatar img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
+
+                .profile-text {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
                 }
-                
+
                 .profile-name {
-                    font-size: 16px;
-                    font-weight: 600;
+                    font-size: 18px;
+                    font-weight: 700;
                     color: white;
                     display: flex;
                     align-items: center;
-                    gap: 4px;
+                    gap: 6px;
                 }
-                
+
                 .profile-email {
-                    font-size: 13px;
-                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 14px;
+                    color: rgba(255, 255, 255, 0.5);
                 }
-                
-                .chevron {
-                    color: rgba(255, 255, 255, 0.4);
+
+                .profile-view-text {
+                    font-size: 12px;
+                    color: #14b8a6;
+                    margin-top: 4px;
+                    font-weight: 500;
                 }
-                
+
+                /* Settings Group & Items */
                 .settings-group {
                     overflow: hidden;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
                 }
-                
+
                 .setting-item {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    padding: 16px;
+                    padding: 16px 20px;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    transition: background 0.2s;
+                    min-height: 72px;
                 }
-                
+
                 .setting-item:last-child {
                     border-bottom: none;
                 }
-                
-                .setting-item.clickable {
-                    cursor: pointer;
-                    transition: background 0.2s;
-                    color: inherit;
-                    text-decoration: none;
-                }
-                
+
                 .setting-item.clickable:hover {
-                    background: rgba(255, 255, 255, 0.05);
+                    background: rgba(255, 255, 255, 0.03);
                 }
-                
-                .setting-info {
+
+                .setting-main {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
-                    color: white;
+                    gap: 16px;
                 }
-                
+
+                .setting-icon-bg {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .setting-label {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .setting-title {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: rgba(255, 255, 255, 0.9);
+                }
+
+                .setting-subtitle {
+                    font-size: 12px;
+                    color: rgba(255, 255, 255, 0.4);
+                    margin-top: 2px;
+                }
+
+                .chevron {
+                    color: rgba(255, 255, 255, 0.2);
+                }
+
+                /* Toggle Switch */
                 .toggle {
                     position: relative;
-                    width: 44px;
-                    height: 24px;
+                    width: 50px;
+                    height: 30px;
                     cursor: pointer;
                 }
-                
+
                 .toggle input {
                     opacity: 0;
                     width: 0;
                     height: 0;
                 }
-                
+
                 .slider {
                     position: absolute;
                     inset: 0;
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 20px;
                     transition: all 0.3s;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                 }
-                
+
                 .slider:before {
                     content: '';
                     position: absolute;
-                    width: 18px;
-                    height: 18px;
-                    left: 3px;
-                    top: 3px;
+                    width: 24px;
+                    height: 24px;
+                    left: 2px;
+                    top: 2px;
                     background: white;
                     border-radius: 50%;
-                    transition: all 0.3s;
+                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                 }
-                
+
                 .toggle input:checked + .slider {
                     background: #14b8a6;
+                    border-color: #14b8a6;
                 }
-                
+
                 .toggle input:checked + .slider:before {
                     transform: translateX(20px);
                 }
-                
-                .logout-btn {
+
+                /* Logout Button */
+                .logout-button {
                     width: 100%;
+                    padding: 16px;
+                    margin-top: 12px;
+                    display: flex;
+                    align-items: center;
                     justify-content: center;
-                    margin-top: 8px;
-                    border-color: rgba(239, 68, 68, 0.3) !important;
-                    color: #ef4444 !important;
+                    gap: 8px;
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    border-radius: 16px;
+                    color: #ef4444;
+                    font-weight: 600;
+                    font-size: 15px;
+                    transition: all 0.2s;
                 }
-                
-                .logout-btn:hover {
-                    background: rgba(239, 68, 68, 0.1) !important;
+
+                .logout-button:active {
+                    transform: scale(0.98);
+                    opacity: 0.8;
+                }
+
+                .version-text {
+                    text-align: center;
+                    color: rgba(255, 255, 255, 0.2);
+                    font-size: 12px;
+                    margin-top: 32px;
                 }
             `}</style>
         </>

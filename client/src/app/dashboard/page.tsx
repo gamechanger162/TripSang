@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 import PushNotificationManager from '@/components/common/PushNotificationManager';
 import DeleteAccountButton from '@/components/common/DeleteAccountButton';
 
+import { Shield, Smartphone } from 'lucide-react';
+
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
@@ -165,19 +167,29 @@ export default function UserDashboard() {
                                                 }`}>
                                                 {session.user.role}
                                             </span>
-                                            {session.user.verificationStatus === 'verified' ? (
-                                                <span className="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                    </svg>
-                                                    Verified
-                                                </span>
-                                            ) : (
-                                                <Link href="/verify/id" className="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200 cursor-pointer">
-                                                    {session.user.verificationStatus === 'pending' ? 'Verification Pending' : 'Verify Identity'}
-                                                    {session.user.verificationStatus !== 'pending' && <span className="ml-1 text-gray-500">→</span>}
-                                                </Link>
-                                            )}
+                                            <div className="flex items-center gap-1">
+                                                {(session.user as any)?.isMobileVerified && (
+                                                    <div
+                                                        className="w-5 h-5 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                        title="Phone Verified"
+                                                    >
+                                                        <Smartphone size={12} className="text-blue-600 dark:text-blue-400" />
+                                                    </div>
+                                                )}
+                                                {session.user.verificationStatus === 'verified' ? (
+                                                    <div
+                                                        className="w-5 h-5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                        title="Identity Verified (Aadhaar/PAN)"
+                                                    >
+                                                        <Shield size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                                    </div>
+                                                ) : (
+                                                    <Link href="/verify/id" className="px-2 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200 cursor-pointer">
+                                                        {session.user.verificationStatus === 'pending' ? 'Verification Pending' : 'Verify Identity'}
+                                                        {session.user.verificationStatus !== 'pending' && <span className="ml-1 text-gray-500">→</span>}
+                                                    </Link>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

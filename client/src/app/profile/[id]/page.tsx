@@ -8,7 +8,7 @@ import ReportUserModal from '@/components/ReportUserModal';
 import Link from 'next/link';
 import { userAPI, friendAPI, tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Flag } from 'lucide-react';
+import { Flag, Shield, Smartphone } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { isPremiumUser } from '@/utils/linkify';
 
@@ -28,6 +28,7 @@ interface UserProfile {
     badges: string[];
     createdAt: string;
     isMobileVerified?: boolean;
+    verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
     subscription?: any;
     stats?: {
         tripsCreated: number;
@@ -245,20 +246,30 @@ export default function UserProfilePage() {
                                         </span>
                                     )}
                                 </div>
-                                {profile.isMobileVerified && (
-                                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800">
-                                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                )}
-                                {isPremiumUser(profile) && <PremiumBadge size="lg" className="absolute -top-1 -right-1" />}
                             </div>
 
                             {/* Name & Info */}
                             <div className="flex-1">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                     {profile.name}
+                                    <div className="flex items-center gap-1">
+                                        {profile.isMobileVerified && (
+                                            <div
+                                                className="w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                title="Phone Verified"
+                                            >
+                                                <Smartphone size={14} className="text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                        )}
+                                        {profile.verificationStatus === 'verified' && (
+                                            <div
+                                                className="w-6 h-6 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                title="Identity Verified (Aadhaar/PAN)"
+                                            >
+                                                <Shield size={14} className="text-emerald-600 dark:text-emerald-400" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </h1>
                                 {profile.location && (profile.location.city || profile.location.country) && (
                                     <p className="text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
@@ -273,14 +284,16 @@ export default function UserProfilePage() {
                                 {/* Badges */}
                                 {profile.badges.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mt-3">
-                                        {profile.badges.map((badge) => (
-                                            <span
-                                                key={badge}
-                                                className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-primary-100 to-secondary-100 text-primary-700 dark:from-primary-900/30 dark:to-secondary-900/30 dark:text-primary-400 rounded-full border border-primary-200 dark:border-primary-800"
-                                            >
-                                                {badge}
-                                            </span>
-                                        ))}
+                                        {profile.badges
+                                            .filter(badge => badge !== 'Premium') // Filter out Premium badge
+                                            .map((badge) => (
+                                                <span
+                                                    key={badge}
+                                                    className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-primary-100 to-secondary-100 text-primary-700 dark:from-primary-900/30 dark:to-secondary-900/30 dark:text-primary-400 rounded-full border border-primary-200 dark:border-primary-800"
+                                                >
+                                                    {badge}
+                                                </span>
+                                            ))}
                                     </div>
                                 )}
                             </div>
