@@ -182,7 +182,32 @@ const tripSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
-    }
+    },
+    // Trip Itinerary (editable by creator only)
+    itinerary: [{
+        day: {
+            type: Number,
+            required: true
+        },
+        date: Date,
+        activities: [{
+            time: String,
+            title: {
+                type: String,
+                required: true
+            },
+            description: String,
+            location: String,
+            addedBy: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
+        }]
+    }]
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

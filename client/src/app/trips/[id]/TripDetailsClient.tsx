@@ -6,16 +6,12 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { tripAPI } from '@/lib/api';
-// FuturisticSquadChat is heavy (socket.io, framer-motion), so we lazy load it
-const FuturisticSquadChat = dynamic(() => import('@/components/FuturisticSquadChat'), {
-    loading: () => <div className="h-96 w-full flex items-center justify-center bg-gray-100 dark:bg-dark-800 rounded-xl">Loading Chat...</div>,
-    ssr: false
-});
+
 
 import GoogleAd from '@/components/GoogleAd';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
-import { Map as MapIcon, X, Shield, Smartphone } from 'lucide-react';
+import { Map as MapIcon, X, Shield, Smartphone, MessageCircle, ChevronRight } from 'lucide-react';
 
 
 const EditTripModal = dynamic(() => import('@/components/EditTripModal'), { ssr: false });
@@ -560,23 +556,50 @@ export function TripDetailsClient() {
                         <GoogleAd className="min-h-[250px]" />
 
                         {/* Chat Room */}
-                        <FuturisticSquadChat
-                            tripId={tripId}
-                            isSquadMember={isSquadMember}
-                            squadMembers={trip.squadMembers}
-                            startPoint={{
-                                lat: trip.startPoint.coordinates?.latitude || 20.5937,
-                                lng: trip.startPoint.coordinates?.longitude || 78.9629,
-                                name: trip.startPoint.name
-                            }}
-                            endPoint={trip.endPoint ? {
-                                lat: trip.endPoint.coordinates?.latitude || 20.5937,
-                                lng: trip.endPoint.coordinates?.longitude || 78.9629,
-                                name: trip.endPoint.name
-                            } : undefined}
-                            initialWaypoints={trip.waypoints}
-                            onJoin={handleJoinSquad}
-                        />
+                        {/* Squad Chat CTA */}
+                        <div className="card bg-gradient-to-br from-primary-900 to-primary-800 text-white overflow-hidden relative">
+                            {/* Background Patterns */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary-500/20 rounded-full blur-3xl -ml-32 -mb-32"></div>
+
+                            <div className="relative z-10 flex flex-col items-center text-center p-6">
+                                <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                                    <MessageCircle size={32} className="text-white" />
+                                </div>
+
+                                <h3 className="text-2xl font-bold mb-2">Squad Chat</h3>
+                                <p className="text-primary-100 mb-8 max-w-md">
+                                    Connect with your travel buddies, plan details, and share excitement before the trip begins!
+                                </p>
+
+                                {isSquadMember ? (
+                                    <Link
+                                        href={`/app/squads/${tripId}`}
+                                        className="group flex items-center gap-2 bg-white text-primary-900 px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all transform hover:-translate-y-0.5"
+                                    >
+                                        Open Squad Chat
+                                        <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        onClick={handleJoinSquad}
+                                        className="group flex items-center gap-2 bg-white text-primary-900 px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all transform hover:-translate-y-0.5"
+                                    >
+                                        Join Squad to Chat
+                                        <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                )}
+
+                                <div className="mt-8 flex items-center gap-4 text-sm text-primary-200">
+                                    <div className="flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                                        Live Chat
+                                    </div>
+                                    <div className="w-1 h-1 rounded-full bg-primary-200"></div>
+                                    <div>{trip.squadMembers.length} Members</div>
+                                </div>
+                            </div>
+                        </div>
 
 
                     </div>
@@ -646,7 +669,7 @@ export function TripDetailsClient() {
                             {/* Send Message Button (only if not the creator) */}
                             {session && !isCreator && (
                                 <Link
-                                    href={`/messages/${trip.creator._id}`}
+                                    href={`/app?userId=${trip.creator._id}`}
                                     className="mt-4 w-full btn-outline flex items-center justify-center gap-2"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -735,7 +758,7 @@ export function TripDetailsClient() {
                                                 {/* Message button (only if not self) */}
                                                 {session && member._id !== userId && (
                                                     <Link
-                                                        href={`/messages/${member._id}`}
+                                                        href={`/app?userId=${member._id}`}
                                                         className="p-1.5 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors"
                                                         title={`Message ${member.name}`}
                                                     >
@@ -894,9 +917,27 @@ export function TripDetailsClient() {
                                                 )}
                                             </div>
                                             <div>
-                                                <p className="font-medium text-gray-900 dark:text-white hover:text-primary-600">
-                                                    {member.name}
-                                                </p>
+                                                <div className="flex items-center gap-1">
+                                                    <p className="font-medium text-gray-900 dark:text-white hover:text-primary-600">
+                                                        {member.name}
+                                                    </p>
+                                                    {(member as any)?.isMobileVerified && (
+                                                        <div
+                                                            className="w-4 h-4 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                            title="Phone Verified"
+                                                        >
+                                                            <Smartphone size={10} className="text-blue-600 dark:text-blue-400" />
+                                                        </div>
+                                                    )}
+                                                    {(member as any)?.verificationStatus === 'verified' && (
+                                                        <div
+                                                            className="w-4 h-4 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                            title="Identity Verified"
+                                                        >
+                                                            <Shield size={10} className="text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 {member._id === trip.creator._id && (
                                                     <span className="text-xs bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 px-2 py-0.5 rounded-full">
                                                         Host
@@ -909,7 +950,7 @@ export function TripDetailsClient() {
                                             {/* Message button (only if not self) */}
                                             {session && member._id !== userId && (
                                                 <Link
-                                                    href={`/messages/${member._id}`}
+                                                    href={`/app?userId=${member._id}`}
                                                     className="p-2 hover:bg-primary-100 dark:hover:bg-primary-900 rounded-full transition-colors text-gray-500 hover:text-primary-600"
                                                     title={`Message ${member.name}`}
                                                     onClick={() => setShowAllMembers(false)}

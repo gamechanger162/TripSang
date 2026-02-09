@@ -75,7 +75,7 @@ export default function CommunityList({ communities, loading }: CommunityListPro
                 <h3 className="text-lg font-medium text-gray-300 mb-2">No Communities Yet</h3>
                 <p className="text-gray-500 mb-6">Join or create a community to connect with travelers</p>
                 <Link
-                    href="/community/discover"
+                    href="/app/communities"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors"
                 >
                     <Globe className="w-4 h-4" />
@@ -90,7 +90,7 @@ export default function CommunityList({ communities, loading }: CommunityListPro
             {communities.map(community => (
                 <Link
                     key={community._id}
-                    href={`/community/${community._id}`}
+                    href={`/app/communities/${community._id}`}
                     className="block bg-gray-800/60 hover:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 transition-all border border-gray-700/50 hover:border-gray-600/50 group"
                 >
                     <div className="flex items-center gap-4">

@@ -18,7 +18,8 @@ import {
     MapPin,
     VolumeX,
     User,
-    Ban
+    Ban,
+    UserMinus
 } from 'lucide-react';
 import { socketManager } from '@/lib/socketManager';
 import type { Socket } from 'socket.io-client';
@@ -59,6 +60,12 @@ interface ChatViewProps {
     isMobile: boolean;
 }
 
+interface SquadMember {
+    _id: string;
+    name: string;
+    profilePicture?: string;
+}
+
 import { useSquads } from '@/contexts/SquadContext';
 
 export default function ChatView({ conversationId, conversationType, onBack, isMobile }: ChatViewProps) {
@@ -97,6 +104,8 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [isBlocked, setIsBlocked] = useState(false);
+    const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false); // State for remove member modal
+    const [showTripDetails, setShowTripDetails] = useState(false); // State for trip details modal
 
     // Fetch messages
     const fetchMessages = useCallback(async () => {
@@ -131,6 +140,19 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     }));
                 }
 
+                // Normalize squad messages (senderId is populated as object from backend)
+                if (conversationType === 'squad') {
+                    msgs = msgs.map((m: any) => ({
+                        ...m,
+                        // Extract senderId from populated object or use as-is
+                        senderId: typeof m.senderId === 'object' && m.senderId?._id
+                            ? m.senderId._id
+                            : m.senderId,
+                        senderName: m.senderName || m.senderId?.name || 'Unknown',
+                        senderProfilePicture: m.senderProfilePicture || m.senderId?.profilePicture,
+                    }));
+                }
+
                 // API already returns [Oldest, ..., Newest] thanks to server-side reverse()
                 // So we do NOT need to reverse again for DM.
                 setMessages(msgs);
@@ -157,7 +179,13 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                             ...wp,
                             lat: wp.lat || wp.latitude || wp.coordinates?.latitude,
                             lng: wp.lng || wp.longitude || wp.coordinates?.longitude
-                        }))
+                        })),
+                        members: data.trip?.squadMembers || [], // Members now includes creator from backend
+                        isCreator: data.trip?.creator === session?.user?.id || data.trip?.creator?._id === session?.user?.id,
+                        // Itinerary for in-chat view
+                        itinerary: data.trip?.itinerary || [],
+                        startDate: data.trip?.startDate,
+                        endDate: data.trip?.endDate
                     });
                 } else if (conversationType === 'community') {
                     setConversationInfo({
@@ -427,14 +455,24 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     body: JSON.stringify({
                         message: trimmedMessage,
                         type: 'text',
-                        replyTo: replyTo?._id // Add replyTo if supported by backend
+                        replyTo: replyTo?._id
                     })
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setMessages(prev => [...prev, data.message]);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Add message from API response (normalize senderId)
+                    const normalizedMessage = {
+                        ...data.message,
+                        senderId: data.message.sender || data.message.senderId
+                    };
+                    setMessages(prev => [...prev, normalizedMessage]);
                     virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+                } else {
+                    // Show error from API
+                    toast.error(data.message || 'Failed to send message');
+                    setNewMessage(trimmedMessage); // Restore message
                 }
             } else {
                 // Squad messages use Socket.IO
@@ -573,8 +611,12 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         const currentUserId = getCurrentUserId();
 
         // Universal detection: Compare sender to current user
-        // We use loose equality or string conversion to handle number/string ID mismatches
-        const isOwn = String(msgSenderId) === String(currentUserId);
+        // Handle case where senderId might be an object or string
+        const senderIdStr = String(msgSenderId);
+        const currentIdStr = String(currentUserId);
+
+        const isOwn = senderIdStr === currentIdStr ||
+            Boolean(session?.user?.email && (msg as any).senderEmail === session.user.email); // Fallback to email if IDs fail
 
         const isSystem = msg.type === 'system';
 
@@ -632,12 +674,12 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 )}
 
                 <div
-                    className={`header-info ${conversationType === 'dm' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                    className={`header-info cursor-pointer hover:opacity-80 transition-opacity`}
                     onClick={() => {
                         if (conversationType === 'dm' && conversationInfo?.otherUserId) {
                             router.push(`/profile/${conversationInfo.otherUserId}`);
                         } else if (conversationType === 'squad') {
-                            router.push(`/trips/${conversationId}`);
+                            setShowTripDetails(true);
                         } else if (conversationType === 'community') {
                             router.push(`/app/communities/${conversationId}`);
                         }
@@ -671,7 +713,96 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     </div>
                 </div>
 
+                {/* Remove Member Modal */}
+                <AnimatePresence>
+                    {showRemoveMemberModal && (
+                        <motion.div
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowRemoveMemberModal(false)}
+                        >
+                            <motion.div
+                                className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold text-white">Remove Member</h3>
+                                    <button
+                                        onClick={() => setShowRemoveMemberModal(false)}
+                                        className="p-1 rounded-full hover:bg-white/10 text-white/50 hover:text-white"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div className="p-4 max-h-[60vh] overflow-y-auto">
+                                    {conversationInfo?.members?.filter((m: any) => m._id !== session?.user?.id).length === 0 ? (
+                                        <p className="text-center text-white/50 py-4">No other members to remove.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {conversationInfo?.members?.filter((m: any) => m._id !== session?.user?.id).map((member: any) => (
+                                                <div key={member._id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
+                                                            {member.profilePicture ? (
+                                                                <Image
+                                                                    src={member.profilePicture}
+                                                                    alt={member.name}
+                                                                    width={40}
+                                                                    height={40}
+                                                                    className="object-cover w-full h-full"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-white font-bold">{member.name[0]}</span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-white font-medium">{member.name}</span>
+                                                    </div>
+                                                    <button
+                                                        className="p-2 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                                                        onClick={async () => {
+                                                            if (window.confirm(`Are you sure you want to remove ${member.name}?`)) {
+                                                                try {
+                                                                    const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                                    await fetch(`${apiUrl}/api/trips/${conversationId}/remove-member/${member._id}`, {
+                                                                        method: 'DELETE',
+                                                                        headers: {
+                                                                            'Authorization': `Bearer ${token}`
+                                                                        }
+                                                                    });
+                                                                    toast.success('Member removed');
+                                                                    // Update local state to remove member
+                                                                    setConversationInfo((prev: any) => ({
+                                                                        ...prev,
+                                                                        members: prev.members.filter((m: any) => m._id !== member._id)
+                                                                    }));
+                                                                } catch (error) {
+                                                                    console.error('Failed to remove member:', error);
+                                                                    toast.error('Failed to remove member');
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        <UserMinus size={18} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+
                 <div className="header-actions">
+
+
                     {conversationInfo?.type === 'squad' && (
                         <>
                             <button
@@ -768,30 +899,44 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                     )}
 
                                     {conversationInfo?.type === 'squad' && (
-                                        <button
-                                            className="option-item danger"
-                                            onClick={async () => {
-                                                setShowOptionsMenu(false);
-                                                if (window.confirm('Are you sure you want to leave this squad?')) {
-                                                    try {
-                                                        const token = session?.user?.accessToken || localStorage.getItem('token');
-                                                        await fetch(`${apiUrl}/api/trips/${conversationId}/leave`, {
-                                                            method: 'POST',
-                                                            headers: {
-                                                                'Authorization': `Bearer ${token}`
-                                                            }
-                                                        });
-                                                        toast.success('Left squad');
-                                                        onBack();
-                                                    } catch (error) {
-                                                        toast.error('Failed to leave squad');
+                                        <>
+                                            <button
+                                                className="option-item danger"
+                                                onClick={async () => {
+                                                    setShowOptionsMenu(false);
+                                                    if (window.confirm('Are you sure you want to leave this squad?')) {
+                                                        try {
+                                                            const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                            await fetch(`${apiUrl}/api/trips/${conversationId}/leave`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Authorization': `Bearer ${token}`
+                                                                }
+                                                            });
+                                                            toast.success('Left squad');
+                                                            onBack();
+                                                        } catch (error) {
+                                                            toast.error('Failed to leave squad');
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                        >
-                                            <User size={16} />
-                                            Leave Squad
-                                        </button >
+                                                }}
+                                            >
+                                                <User size={16} />
+                                                Leave Squad
+                                            </button>
+                                            {conversationInfo?.isCreator && (
+                                                <button
+                                                    className="option-item danger"
+                                                    onClick={() => {
+                                                        setShowOptionsMenu(false);
+                                                        setShowRemoveMemberModal(true);
+                                                    }}
+                                                >
+                                                    <UserMinus size={16} />
+                                                    Remove Member
+                                                </button>
+                                            )}
+                                        </>
                                     )}
                                 </motion.div >
                             )}
@@ -999,6 +1144,156 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
                             </button>
                             <span className="text-white/90 text-xs font-medium w-8 text-center">{Math.round(zoomLevel)}x</span>
+
+
+
+
+
+                            {/* Trip Details & Members Modal */}
+                            <AnimatePresence>
+                                {showTripDetails && conversationInfo?.type === 'squad' && (
+                                    <motion.div
+                                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        onClick={() => setShowTripDetails(false)}
+                                    >
+                                        <motion.div
+                                            className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]"
+                                            initial={{ scale: 0.9, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            exit={{ scale: 0.9, opacity: 0 }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/5">
+                                                <h3 className="text-lg font-bold text-white">Trip Details</h3>
+                                                <button
+                                                    onClick={() => setShowTripDetails(false)}
+                                                    className="p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                                                >
+                                                    <X size={20} />
+                                                </button>
+                                            </div>
+
+                                            <div className="overflow-y-auto p-5 space-y-8">
+                                                {/* Details Section */}
+                                                <div className="space-y-4">
+                                                    <div className="flex items-start gap-5">
+                                                        <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-white/10 flex-shrink-0 shadow-lg border border-white/10">
+                                                            {conversationInfo.avatar ? (
+                                                                <Image
+                                                                    src={conversationInfo.avatar}
+                                                                    alt={conversationInfo.name}
+                                                                    fill
+                                                                    className="object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-white/50">
+                                                                    <ImageIcon size={32} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 pt-1">
+                                                            <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{conversationInfo.name}</h2>
+                                                            <div className="flex items-center gap-2 text-white/70 bg-white/5 px-3 py-1.5 rounded-lg w-fit">
+                                                                <MapPin size={16} className="text-teal-400" />
+                                                                <span className="text-sm font-medium">{conversationInfo.endPoint?.name || 'Destination'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => router.push(`/trips/${conversationId}`)}
+                                                        className="w-full py-3 px-4 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 hover:text-teal-300 font-semibold transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        View Full Itinerary
+                                                    </button>
+                                                </div>
+
+                                                {/* Members Section */}
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h4 className="text-xs font-bold text-white/50 uppercase tracking-widest">
+                                                            Squad Members
+                                                        </h4>
+                                                        <span className="text-xs font-bold text-white/30 bg-white/10 px-2 py-1 rounded-full">
+                                                            {conversationInfo?.members?.length || 0}
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {conversationInfo?.members?.map((member: any) => (
+                                                            <div key={member._id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-transparent hover:border-white/5 group">
+                                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                                    <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden flex items-center justify-center relative flex-shrink-0 border border-white/10">
+                                                                        {member.profilePicture ? (
+                                                                            <Image
+                                                                                src={member.profilePicture}
+                                                                                alt={member.name}
+                                                                                fill
+                                                                                className="object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <span className="text-white font-bold">{member.name[0]}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-white font-medium truncate block">{member.name}</span>
+                                                                            {member._id === conversationInfo.creatorId && (
+                                                                                <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                                                                    Host
+                                                                                </span>
+                                                                            )}
+                                                                            {member._id === session?.user?.id && (
+                                                                                <span className="text-[10px] font-bold bg-white/10 text-white/50 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                                                                    You
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Remove Button (Only for Creator, not for self) */}
+                                                                {conversationInfo?.isCreator && member._id !== session?.user?.id && (
+                                                                    <button
+                                                                        className="p-2 rounded-full bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all transform hover:scale-110"
+                                                                        title="Remove Member"
+                                                                        onClick={async () => {
+                                                                            if (window.confirm(`Are you sure you want to remove ${member.name}?`)) {
+                                                                                try {
+                                                                                    const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                                                    await fetch(`${apiUrl}/api/trips/${conversationId}/remove-member/${member._id}`, {
+                                                                                        method: 'DELETE',
+                                                                                        headers: {
+                                                                                            'Authorization': `Bearer ${token}`
+                                                                                        }
+                                                                                    });
+                                                                                    toast.success('Member removed');
+                                                                                    // Update local state
+                                                                                    setConversationInfo((prev: any) => ({
+                                                                                        ...prev,
+                                                                                        members: prev.members.filter((m: any) => m._id !== member._id)
+                                                                                    }));
+                                                                                } catch (error) {
+                                                                                    console.error('Failed to remove member:', error);
+                                                                                    toast.error('Failed to remove member');
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <UserMinus size={18} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         <motion.div
@@ -1316,10 +1611,309 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 }
             `}</style>
 
+
+            {/* Trip Details & Members Modal */}
+            <AnimatePresence>
+                {showTripDetails && conversationInfo?.type === 'squad' && (
+                    <motion.div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowTripDetails(false)}
+                    >
+                        <motion.div
+                            className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/5">
+                                <h3 className="text-lg font-bold text-white">Trip Details</h3>
+                                <button
+                                    onClick={() => setShowTripDetails(false)}
+                                    className="p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="overflow-y-auto p-5 space-y-8">
+                                {/* Details Section */}
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-5">
+                                        <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-white/10 flex-shrink-0 shadow-lg border border-white/10">
+                                            {conversationInfo.avatar ? (
+                                                <Image
+                                                    src={conversationInfo.avatar}
+                                                    alt={conversationInfo.name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-white/50">
+                                                    <ImageIcon size={32} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 pt-1">
+                                            <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{conversationInfo.name}</h2>
+                                            <div className="flex items-center gap-2 text-white/70 bg-white/5 px-3 py-1.5 rounded-lg w-fit">
+                                                <MapPin size={16} className="text-teal-400" />
+                                                <span className="text-sm font-medium">{conversationInfo.endPoint?.name || 'Destination'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Members Section */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-xs font-bold text-white/50 uppercase tracking-widest">
+                                            Squad Members
+                                        </h4>
+                                        <span className="text-xs font-bold text-white/30 bg-white/10 px-2 py-1 rounded-full">
+                                            {conversationInfo?.members?.length || 0}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {conversationInfo?.members?.map((member: any) => (
+                                            <div key={member._id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-transparent hover:border-white/5 group">
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden flex items-center justify-center relative flex-shrink-0 border border-white/10">
+                                                        {member.profilePicture ? (
+                                                            <Image
+                                                                src={member.profilePicture}
+                                                                alt={member.name}
+                                                                fill
+                                                                className="object-cover"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-white font-bold">{member.name[0]}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-white font-medium truncate block">{member.name}</span>
+                                                            {member._id === conversationInfo.creatorId && (
+                                                                <span className="text-[10px] font-bold bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                                                    Host
+                                                                </span>
+                                                            )}
+                                                            {member._id === session?.user?.id && (
+                                                                <span className="text-[10px] font-bold bg-white/10 text-white/50 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                                                    You
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Remove Button (Only for Creator, not for self) */}
+                                                {conversationInfo?.isCreator && member._id !== session?.user?.id && (
+                                                    <button
+                                                        className="p-2 rounded-full bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all transform hover:scale-110"
+                                                        title="Remove Member"
+                                                        onClick={async () => {
+                                                            if (window.confirm(`Are you sure you want to remove ${member.name}?`)) {
+                                                                try {
+                                                                    const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                                    await fetch(`${apiUrl}/api/trips/${conversationId}/remove-member/${member._id}`, {
+                                                                        method: 'DELETE',
+                                                                        headers: {
+                                                                            'Authorization': `Bearer ${token}`
+                                                                        }
+                                                                    });
+                                                                    toast.success('Member removed');
+                                                                    // Update local state
+                                                                    setConversationInfo((prev: any) => ({
+                                                                        ...prev,
+                                                                        members: prev.members.filter((m: any) => m._id !== member._id)
+                                                                    }));
+                                                                } catch (error) {
+                                                                    console.error('Failed to remove member:', error);
+                                                                    toast.error('Failed to remove member');
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        <UserMinus size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Itinerary Section */}
+                                    <div className="mt-6 pt-4 border-t border-white/10">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-bold text-[#00f2ea]">Trip Itinerary</h3>
+                                            {conversationInfo?.isCreator && (
+                                                <button
+                                                    className="px-3 py-1.5 bg-[#00f2ea]/20 text-[#00f2ea] rounded-lg text-sm font-medium hover:bg-[#00f2ea]/30 transition-colors"
+                                                    onClick={() => {
+                                                        const newDay = {
+                                                            day: (conversationInfo?.itinerary?.length || 0) + 1,
+                                                            date: conversationInfo?.startDate
+                                                                ? new Date(new Date(conversationInfo.startDate).getTime() + (conversationInfo?.itinerary?.length || 0) * 24 * 60 * 60 * 1000)
+                                                                : new Date(),
+                                                            activities: []
+                                                        };
+                                                        const updatedItinerary = [...(conversationInfo?.itinerary || []), newDay];
+                                                        // Save to backend
+                                                        const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                        fetch(`${apiUrl}/api/trips/${conversationId}/itinerary`, {
+                                                            method: 'PUT',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${token}`
+                                                            },
+                                                            body: JSON.stringify({ itinerary: updatedItinerary })
+                                                        }).then(() => {
+                                                            setConversationInfo((prev: any) => ({
+                                                                ...prev,
+                                                                itinerary: updatedItinerary
+                                                            }));
+                                                            toast.success('Day added');
+                                                        }).catch(() => toast.error('Failed to add day'));
+                                                    }}
+                                                >
+                                                    + Add Day
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {(!conversationInfo?.itinerary || conversationInfo.itinerary.length === 0) ? (
+                                            <div className="text-center py-8 text-white/40">
+                                                <p className="text-sm">No itinerary planned yet</p>
+                                                {conversationInfo?.isCreator && (
+                                                    <p className="text-xs mt-1">Click "Add Day" to start planning</p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20">
+                                                {conversationInfo.itinerary.map((day: any, dayIndex: number) => (
+                                                    <div key={dayIndex} className="bg-white/5 rounded-xl p-3">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div>
+                                                                <span className="text-[#00f2ea] font-bold">Day {day.day}</span>
+                                                                {day.date && (
+                                                                    <span className="text-white/40 text-sm ml-2">
+                                                                        {new Date(day.date).toLocaleDateString()}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {conversationInfo?.isCreator && (
+                                                                <button
+                                                                    className="text-xs text-[#00f2ea]/60 hover:text-[#00f2ea] transition-colors"
+                                                                    onClick={() => {
+                                                                        const activityTitle = prompt('Enter activity title:');
+                                                                        if (activityTitle) {
+                                                                            const time = prompt('Enter time (e.g. 09:00 AM):', '09:00 AM');
+                                                                            const description = prompt('Enter description (optional):');
+                                                                            const location = prompt('Enter location (optional):');
+
+                                                                            const updatedItinerary = [...conversationInfo.itinerary];
+                                                                            updatedItinerary[dayIndex].activities.push({
+                                                                                time: time || '',
+                                                                                title: activityTitle,
+                                                                                description: description || '',
+                                                                                location: location || ''
+                                                                            });
+
+                                                                            const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                                            fetch(`${apiUrl}/api/trips/${conversationId}/itinerary`, {
+                                                                                method: 'PUT',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'Authorization': `Bearer ${token}`
+                                                                                },
+                                                                                body: JSON.stringify({ itinerary: updatedItinerary })
+                                                                            }).then(() => {
+                                                                                setConversationInfo((prev: any) => ({
+                                                                                    ...prev,
+                                                                                    itinerary: updatedItinerary
+                                                                                }));
+                                                                                toast.success('Activity added');
+                                                                            }).catch(() => toast.error('Failed to add activity'));
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    + Add Activity
+                                                                </button>
+                                                            )}
+                                                        </div>
+
+                                                        {(!day.activities || day.activities.length === 0) ? (
+                                                            <p className="text-white/30 text-xs">No activities planned</p>
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                {day.activities.map((activity: any, actIndex: number) => (
+                                                                    <div key={actIndex} className="flex items-start gap-3 text-sm group">
+                                                                        <span className="text-[#00f2ea]/60 font-mono text-xs w-16 flex-shrink-0">
+                                                                            {activity.time || '--:--'}
+                                                                        </span>
+                                                                        <div className="flex-1">
+                                                                            <p className="text-white/80 font-medium">{activity.title}</p>
+                                                                            {activity.location && (
+                                                                                <p className="text-white/40 text-xs">📍 {activity.location}</p>
+                                                                            )}
+                                                                            {activity.description && (
+                                                                                <p className="text-white/30 text-xs mt-1">{activity.description}</p>
+                                                                            )}
+                                                                        </div>
+                                                                        {conversationInfo?.isCreator && (
+                                                                            <button
+                                                                                className="opacity-0 group-hover:opacity-100 text-red-500/60 hover:text-red-500 text-xs transition-all"
+                                                                                onClick={() => {
+                                                                                    if (confirm('Remove this activity?')) {
+                                                                                        const updatedItinerary = [...conversationInfo.itinerary];
+                                                                                        updatedItinerary[dayIndex].activities.splice(actIndex, 1);
+
+                                                                                        const token = session?.user?.accessToken || localStorage.getItem('token');
+                                                                                        fetch(`${apiUrl}/api/trips/${conversationId}/itinerary`, {
+                                                                                            method: 'PUT',
+                                                                                            headers: {
+                                                                                                'Content-Type': 'application/json',
+                                                                                                'Authorization': `Bearer ${token}`
+                                                                                            },
+                                                                                            body: JSON.stringify({ itinerary: updatedItinerary })
+                                                                                        }).then(() => {
+                                                                                            setConversationInfo((prev: any) => ({
+                                                                                                ...prev,
+                                                                                                itinerary: updatedItinerary
+                                                                                            }));
+                                                                                            toast.success('Activity removed');
+                                                                                        }).catch(() => toast.error('Failed to remove activity'));
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+
         </div >
     );
 }
 
+// Message Bubble Component with swipe-to-reply and smart grouping
 // Message Bubble Component with swipe-to-reply and smart grouping
 function MessageBubble({
     message,
@@ -1341,6 +1935,7 @@ function MessageBubble({
     const x = useMotionValue(0);
     const replyOpacity = useTransform(x, [-100, -50], [1, 0]);
     const [showActions, setShowActions] = useState(false);
+    const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
     const handleDragEnd = () => {
         if (x.get() < -50) {
@@ -1351,8 +1946,10 @@ function MessageBubble({
     // Long press handler
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
-    const handleTouchStart = () => {
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const touch = e.touches[0];
         const timer = setTimeout(() => {
+            setMenuPosition({ x: touch.clientX, y: touch.clientY });
             setShowActions(true);
         }, 500);
         setLongPressTimer(timer);
@@ -1363,6 +1960,12 @@ function MessageBubble({
             clearTimeout(longPressTimer);
             setLongPressTimer(null);
         }
+    };
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setMenuPosition({ x: e.clientX, y: e.clientY });
+        setShowActions(true);
     };
 
     // Calculate border radius based on group position and ownership
@@ -1390,7 +1993,7 @@ function MessageBubble({
     };
 
     return (
-        <div className={`message-row ${isOwn ? 'own' : ''} ${groupPosition}`}>
+        <div className={`message-row ${isOwn ? 'own' : ''} ${groupPosition} group`}>
             <motion.div
                 className="reply-hint"
                 style={{ opacity: replyOpacity }}
@@ -1400,113 +2003,150 @@ function MessageBubble({
 
             {/* Profile Picture for received messages - always show */}
             {!isOwn && (
-                <Image
-                    src={
-                        message.senderProfilePicture ||
-                        `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2306b6d4'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3E${(message.senderName || 'U').charAt(0).toUpperCase()}%3C/text%3E%3C/svg%3E`
-                    }
-                    alt={message.senderName}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full object-cover mr-2 shrink-0 self-end"
-                />
+                <div
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        let senderId: string | null = null;
+                        if (message.senderId) {
+                            if (typeof message.senderId === 'object') {
+                                senderId = (message.senderId as any)?._id || (message.senderId as any)?.id;
+                            } else {
+                                senderId = message.senderId;
+                            }
+                        }
+                        if (senderId) {
+                            window.location.href = `/app/profile/${senderId}`;
+                        }
+                    }}
+                    title={`View ${message.senderName}'s profile`}
+                >
+                    <Image
+                        src={
+                            message.senderProfilePicture ||
+                            `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2306b6d4'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial'%3E${(message.senderName || 'U').charAt(0).toUpperCase()}%3C/text%3E%3C/svg%3E`
+                        }
+                        alt={message.senderName}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover mr-2 shrink-0 self-end mb-1"
+                    />
+                </div>
             )}
 
-            <motion.div
-                className={`message-bubble ${isOwn ? 'own' : ''} ${message.isPending ? 'pending' : ''}`}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={handleDragEnd}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onContextMenu={(e) => {
-                    e.preventDefault();
-                    setShowActions(true);
-                }}
-                style={{
-                    x,
-                    borderRadius: getBorderRadius(),
-                    marginBottom: groupPosition === 'bottom' || groupPosition === 'single' ? '12px' : '2px',
-                    position: 'relative'
-                }}
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-            >
-                {/* Message Actions Menu */}
-                <AnimatePresence>
-                    {showActions && (
-                        <>
-                            <div
-                                className="fixed inset-0 z-40"
+            <div className="relative flex items-center max-w-[75%]">
+                {/* More Button (Visible on Hover/Focus) */}
+                <button
+                    className={`p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 ${isOwn ? 'mr-2 order-first' : 'ml-2 order-last'}`}
+                    onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setMenuPosition({ x: rect.left, y: rect.bottom });
+                        setShowActions(true);
+                    }}
+                >
+                    <MoreVertical size={16} />
+                </button>
+
+                <motion.div
+                    className={`message-bubble ${isOwn ? 'own' : ''} ${message.isPending ? 'pending' : ''}`}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={handleDragEnd}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    onContextMenu={handleContextMenu}
+                    style={{
+                        x,
+                        borderRadius: getBorderRadius(),
+                        marginBottom: groupPosition === 'bottom' || groupPosition === 'single' ? '12px' : '2px',
+                        position: 'relative'
+                    }}
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    {/* Show sender name only for first message in group of received messages */}
+                    {!isOwn && (groupPosition === 'top' || groupPosition === 'single') && (
+                        <div className="bubble-sender">
+                            {message.senderName}
+                            {message.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
+                        </div>
+                    )}
+
+                    {message.replyTo && (
+                        <div className="bubble-reply">
+                            <strong>{message.replyTo.senderName}:</strong> {message.replyTo.message}
+                        </div>
+                    )}
+
+                    {message.type === 'image' && message.imageUrl && (
+                        <img
+                            src={message.imageUrl}
+                            alt=""
+                            className="bubble-image"
+                            onClick={() => onImageClick?.(message.imageUrl!)}
+                            style={{ cursor: onImageClick ? 'pointer' : 'default' }}
+                        />
+                    )}
+
+                    {message.message && (
+                        <p className="bubble-text">{message.message}</p>
+                    )}
+
+                    <span className="bubble-time">{formatTime(message.timestamp)}</span>
+                </motion.div>
+            </div>
+
+            {/* Message Actions Menu (Fixed Position) */}
+            <AnimatePresence>
+                {showActions && (
+                    <>
+                        <div
+                            className="fixed inset-0 z-40 bg-transparent"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowActions(false);
+                            }}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                setShowActions(false);
+                            }}
+                        />
+                        <motion.div
+                            className="fixed z-50 bg-gray-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[160px] backdrop-blur-xl"
+                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            style={{
+                                left: Math.min(menuPosition.x, window.innerWidth - 170), // Keep within screen
+                                top: Math.min(menuPosition.y, window.innerHeight - 100)  // Keep within screen
+                            }}
+                        >
+                            <button
+                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
                                 onClick={(e) => {
                                     e.stopPropagation();
+                                    onReply();
                                     setShowActions(false);
                                 }}
-                            />
-                            <motion.div
-                                className="absolute z-50 bg-gray-900 border border-gray-700/50 rounded-lg shadow-xl overflow-hidden min-w-[120px]"
-                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                style={isOwn ? { right: 0, top: '100%' } : { left: 0, top: '100%' }}
                             >
-                                <button
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-white/10 flex items-center gap-2"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onReply();
-                                        setShowActions(false);
-                                    }}
-                                >
-                                    <Reply size={14} /> Reply
-                                </button>
-                                <button
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-white/10 flex items-center gap-2"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onPin();
-                                        setShowActions(false);
-                                    }}
-                                >
-                                    <Pin size={14} /> Pin
-                                </button>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-
-                {/* Show sender name only for first message in group of received messages */}
-                {!isOwn && (groupPosition === 'top' || groupPosition === 'single') && (
-                    <div className="bubble-sender">
-                        {message.senderName}
-                        {message.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
-                    </div>
+                                <Reply size={16} className="text-teal-400" /> Reply
+                            </button>
+                            <button
+                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPin();
+                                    setShowActions(false);
+                                }}
+                            >
+                                <Pin size={16} className="text-amber-400" /> Pin Message
+                            </button>
+                        </motion.div>
+                    </>
                 )}
-
-                {message.replyTo && (
-                    <div className="bubble-reply">
-                        <strong>{message.replyTo.senderName}:</strong> {message.replyTo.message}
-                    </div>
-                )}
-
-                {message.type === 'image' && message.imageUrl && (
-                    <img
-                        src={message.imageUrl}
-                        alt=""
-                        className="bubble-image"
-                        onClick={() => onImageClick?.(message.imageUrl!)}
-                        style={{ cursor: onImageClick ? 'pointer' : 'default' }}
-                    />
-                )}
-
-                {message.message && (
-                    <p className="bubble-text">{message.message}</p>
-                )}
-
-                <span className="bubble-time">{formatTime(message.timestamp)}</span>
-            </motion.div>
+            </AnimatePresence>
 
             <style jsx>{`
                 .message-row {
@@ -1528,7 +2168,7 @@ function MessageBubble({
                 }
                 
                 .message-bubble {
-                    max-width: 75%;
+                    width: 100%; /* Take full width of container */
                     padding: 8px 14px;
                     position: relative;
                     background: rgba(255, 255, 255, 0.03);
@@ -1591,6 +2231,7 @@ function MessageBubble({
                     font-weight: 500;
                 }
             `}</style>
+
         </div>
     );
 }

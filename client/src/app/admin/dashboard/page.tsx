@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { adminAPI, uploadAPI, memoryAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { Shield, Smartphone } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -21,6 +22,7 @@ interface User {
     isMobileVerified: boolean;
     createdAt: string;
     profilePicture?: string;
+    verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
 }
 
 interface Trip {
@@ -31,6 +33,8 @@ interface Trip {
         _id: string;
         name: string;
         email: string;
+        isMobileVerified?: boolean;
+        verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
     };
     startDate: string;
     status: 'active' | 'completed' | 'cancelled';
@@ -662,11 +666,24 @@ export default function AdminDashboardPage() {
                                                         >
                                                             {user.isActive ? 'Active' : 'Blocked'}
                                                         </span>
-                                                        {user.isMobileVerified && (
-                                                            <span className="inline-flex px-2 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                                                Verified
-                                                            </span>
-                                                        )}
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            {user.isMobileVerified && (
+                                                                <div
+                                                                    className="w-5 h-5 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                                    title="Phone Verified"
+                                                                >
+                                                                    <Smartphone size={12} className="text-blue-600 dark:text-blue-400" />
+                                                                </div>
+                                                            )}
+                                                            {user.verificationStatus === 'verified' && (
+                                                                <div
+                                                                    className="w-5 h-5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                                    title="Identity Verified"
+                                                                >
+                                                                    <Shield size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -812,8 +829,30 @@ export default function AdminDashboardPage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm text-gray-900 dark:text-white">
-                                                            {trip.creator?.name || 'Unknown'}
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="text-sm text-gray-900 dark:text-white">
+                                                                {trip.creator?.name || 'Unknown'}
+                                                            </div>
+                                                            {trip.creator && (
+                                                                <>
+                                                                    {trip.creator.isMobileVerified && (
+                                                                        <div
+                                                                            className="w-4 h-4 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
+                                                                            title="Phone Verified"
+                                                                        >
+                                                                            <Smartphone size={10} className="text-blue-600 dark:text-blue-400" />
+                                                                        </div>
+                                                                    )}
+                                                                    {trip.creator.verificationStatus === 'verified' && (
+                                                                        <div
+                                                                            className="w-4 h-4 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+                                                                            title="Identity Verified"
+                                                                        >
+                                                                            <Shield size={10} className="text-emerald-600 dark:text-emerald-400" />
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
                                                         </div>
                                                         <div className="text-xs text-gray-500">
                                                             {trip.creator?.email || 'N/A'}

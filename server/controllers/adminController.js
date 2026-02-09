@@ -400,7 +400,7 @@ export const getAllTrips = async (req, res) => {
         }
 
         const trips = await Trip.find(filters)
-            .populate('creator', 'name email')
+            .populate('creator', 'name email isMobileVerified verificationStatus')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);

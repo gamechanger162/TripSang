@@ -75,7 +75,7 @@ export default function ConversationList({ conversations, loading }: Conversatio
             {conversations.map((conversation, index) => (
                 <Link
                     key={conversation._id}
-                    href={`/messages/${conversation.otherUser._id}`}
+                    href={`/app?userId=${conversation.otherUser._id}`}
                     className="block group"
                     style={{ animationDelay: `${index * 50}ms` }}
                 >

@@ -129,13 +129,15 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
         const userId = req.user._id;
 
         // Verify trip exists and user is a member
-        const trip = await Trip.findById(tripId);
+        const trip = await Trip.findById(tripId)
+            .populate('squadMembers', 'name profilePicture isMobileVerified verificationStatus')
+            .populate('creator', 'name profilePicture isMobileVerified verificationStatus');
         if (!trip) {
             return res.status(404).json({ success: false, message: 'Trip not found' });
         }
 
-        const isMember = trip.squadMembers.some(id => id.toString() === userId.toString());
-        const isCreator = trip.creator.toString() === userId.toString();
+        const isMember = trip.squadMembers.some(member => member._id.toString() === userId.toString());
+        const isCreator = trip.creator._id.toString() === userId.toString();
 
         if (!isMember && !isCreator) {
             return res.status(403).json({ success: false, message: 'You must be a squad member to view chat' });
@@ -155,6 +157,12 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
                 .populate('senderId', 'name profilePicture');
         }
 
+        // Combine creator with squadMembers for the members list (avoid duplicates)
+        const creatorInSquad = trip.squadMembers.some(m => m._id.toString() === trip.creator._id.toString());
+        const allMembers = creatorInSquad
+            ? trip.squadMembers
+            : [trip.creator, ...trip.squadMembers];
+
         res.json({
             success: true,
             messages,
@@ -162,11 +170,17 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
                 title: trip.title,
                 coverPhoto: trip.coverPhoto,
                 _id: trip._id,
-                creator: trip.creator, // Return creator ID
+                creator: trip.creator._id, // Return creator ID
+                squadMembers: allMembers, // Return all members including creator
                 // Include location for map integration
                 startPoint: trip.startPoint,
                 endPoint: trip.endPoint,
-                waypoints: trip.waypoints || []
+                waypoints: trip.waypoints || [],
+                // Include itinerary for in-chat view
+                itinerary: trip.itinerary || [],
+                // Trip dates for itinerary
+                startDate: trip.startDate,
+                endDate: trip.endDate
             },
             pinnedMessage: pinnedMessage ? {
                 _id: pinnedMessage._id,
@@ -181,6 +195,65 @@ router.get('/:tripId/chat', authenticate, async (req, res) => {
     } catch (error) {
         console.error('Get squad chat error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch chat messages' });
+    }
+});
+
+/**
+ * @route   PUT /api/trips/:id/itinerary
+ * @desc    Update trip itinerary (creator only)
+ * @access  Private
+ */
+router.put('/:id/itinerary', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+        const { itinerary } = req.body;
+
+        const trip = await Trip.findById(id);
+        if (!trip) {
+            return res.status(404).json({ success: false, message: 'Trip not found' });
+        }
+
+        // Only creator can edit itinerary
+        if (trip.creator.toString() !== userId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the trip creator can edit the itinerary'
+            });
+        }
+
+        // Validate itinerary structure
+        if (!Array.isArray(itinerary)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Itinerary must be an array'
+            });
+        }
+
+        // Update itinerary
+        trip.itinerary = itinerary.map(day => ({
+            day: day.day,
+            date: day.date,
+            activities: (day.activities || []).map(activity => ({
+                time: activity.time,
+                title: activity.title,
+                description: activity.description,
+                location: activity.location,
+                addedBy: activity.addedBy || userId,
+                createdAt: activity.createdAt || new Date()
+            }))
+        }));
+
+        await trip.save();
+
+        res.json({
+            success: true,
+            message: 'Itinerary updated successfully',
+            itinerary: trip.itinerary
+        });
+    } catch (error) {
+        console.error('Update itinerary error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update itinerary' });
     }
 });
 

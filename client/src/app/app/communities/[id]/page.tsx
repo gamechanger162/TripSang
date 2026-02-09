@@ -52,6 +52,8 @@ export default function CommunityChatPage() {
     const [loading, setLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
     const [sending, setSending] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
     const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -216,8 +218,13 @@ export default function CommunityChatPage() {
         router.push('/app/communities');
     };
 
+    const handleImageClick = (imageUrl: string) => {
+        setPreviewImage(imageUrl);
+        setZoomLevel(1);
+    };
+
     return (
-        <div className="flex-1 flex flex-col h-full pb-16 md:pb-0">
+        <div className="flex-1 flex flex-col h-full pb-16 md:pb-0 relative">
             {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-black/30 backdrop-blur-xl">
                 <button
@@ -264,7 +271,12 @@ export default function CommunityChatPage() {
                                 )}
                                 <div className={`rounded-2xl px-4 py-2 ${isOwn ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white' : 'bg-white/10 text-white'}`}>
                                     {msg.type === 'image' && msg.imageUrl ? (
-                                        <img src={msg.imageUrl} alt="Shared" className="max-w-full rounded-lg" />
+                                        <div
+                                            className="cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => handleImageClick(msg.imageUrl!)}
+                                        >
+                                            <img src={msg.imageUrl} alt="Shared" className="max-w-full rounded-lg" />
+                                        </div>
                                     ) : (
                                         <p>{msg.message}</p>
                                     )}
@@ -312,6 +324,63 @@ export default function CommunityChatPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+                    onClick={() => {
+                        setPreviewImage(null);
+                        setZoomLevel(1);
+                    }}
+                >
+                    <div className="relative w-full h-full flex flex-col items-center justify-center">
+                        <div className="absolute top-4 right-4 z-20">
+                            <button
+                                onClick={() => {
+                                    setPreviewImage(null);
+                                    setZoomLevel(1);
+                                }}
+                                className="p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div
+                            className="flex-1 w-full h-full flex items-center justify-center overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={previewImage}
+                                alt="Preview"
+                                className="max-w-full max-h-full object-contain transition-transform duration-100 ease-out"
+                                style={{ transform: `scale(${zoomLevel})` }}
+                            />
+                        </div>
+
+                        {/* Zoom Control at Bottom */}
+                        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
+                            <div className="flex items-center gap-2 bg-black/50 rounded-full px-4 py-2 backdrop-blur-md">
+                                <span className="text-white text-xs font-medium">Zoom</span>
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="3"
+                                    step="0.1"
+                                    value={zoomLevel}
+                                    onChange={(e) => setZoomLevel(parseFloat(e.target.value))}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                                />
+                                <span className="text-white text-xs w-8 text-right">{Math.round(zoomLevel * 100)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

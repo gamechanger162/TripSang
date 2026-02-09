@@ -257,7 +257,7 @@ export default function FriendsPage() {
                                     </Link>
                                     <div className="flex gap-2">
                                         <Link
-                                            href={`/messages/${friend._id}`}
+                                            href={`/app?userId=${friend._id}`}
                                             className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
                                             title="Message"
                                         >

@@ -286,6 +286,7 @@ export const sendCommunityMessage = async (req, res) => {
         };
 
         // Broadcast to all community members via socket
+        const io = req.app.get('io');
         if (io) {
             io.to(`community_${communityId}`).emit('receive_community_message', transformedMessage);
         }

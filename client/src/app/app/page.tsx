@@ -1,21 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ConversationList from '@/components/app/ConversationList';
 import ChatView from '@/components/app/ChatView';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Sparkles, Radio } from 'lucide-react';
+import { messageAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface SelectedConversation {
     id: string;
     type: 'dm' | 'squad';
 }
 
-export default function AppPage() {
+function AppContent() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const userIdParam = searchParams.get('userId');
     const [selectedConversation, setSelectedConversation] = useState<SelectedConversation | null>(null);
     const [isMobile, setIsMobile] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -33,6 +37,32 @@ export default function AppPage() {
         }
     }, [status, router]);
 
+    // Handle deep link to specific conversation via userId
+    useEffect(() => {
+        const initChatFromParams = async () => {
+            if (userIdParam && session?.user && !selectedConversation) {
+                try {
+                    const response = await messageAPI.getOrCreateConversation(userIdParam);
+                    if (response.success && response.conversation) {
+                        setSelectedConversation({
+                            id: response.conversation._id,
+                            type: 'dm'
+                        });
+                        // Clean up URL
+                        router.replace('/app', { scroll: false });
+                    }
+                } catch (error) {
+                    console.error('Failed to initialize chat from params:', error);
+                    toast.error('Failed to open conversation');
+                }
+            }
+        };
+
+        if (status === 'authenticated') {
+            initChatFromParams();
+        }
+    }, [userIdParam, session, status, selectedConversation, router]);
+
     // Don't render if not authenticated (still checking or redirecting)
     if (status === 'unauthenticated' || !session) return null;
 
@@ -47,8 +77,6 @@ export default function AppPage() {
 
     return (
         <div className="flex w-full h-full overflow-hidden">
-
-
             {/* Conversation List (hidden on mobile when chat is open) */}
             <AnimatePresence mode="wait">
                 {(!isMobile || !selectedConversation) && (
@@ -185,5 +213,17 @@ export default function AppPage() {
                 )}
             </AnimatePresence>
         </div>
+    );
+}
+
+export default function AppPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center w-full h-full text-white">
+                Loading...
+            </div>
+        }>
+            <AppContent />
+        </Suspense>
     );
 }
