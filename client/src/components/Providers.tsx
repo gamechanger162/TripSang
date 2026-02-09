@@ -6,7 +6,7 @@ import { SquadProvider } from '@/contexts/SquadContext';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
     return (
-        <SessionProvider>
+        <SessionProvider refetchOnWindowFocus={false}>
             <SquadProvider>
                 {children}
             </SquadProvider>

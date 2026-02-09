@@ -95,6 +95,11 @@ body {
         animation: gradient 3s ease infinite;
     }
 
+    .animate-gradient-x {
+        background-size: 200% auto;
+        animation: gradient-x 3s linear infinite;
+    }
+
     @keyframes gradient {
         0% {
             background-position: 0% 50%;
@@ -106,6 +111,16 @@ body {
 
         100% {
             background-position: 0% 50%;
+        }
+    }
+
+    @keyframes gradient-x {
+        0% {
+            background-position: 0% center;
+        }
+
+        100% {
+            background-position: 200% center;
         }
     }
 
@@ -201,4 +216,656 @@ body {
 /* Glass morphism effect */
 .glass {
     @apply bg-white/10 dark:bg-dark-900/10 backdrop-blur-lg border border-white/20 dark:border-white/10;
+}
+
+/* Premium Animations */
+@layer utilities {
+    .text-glow {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    .animate-spotlight {
+        animation: spotlight 2s ease .75s 1 forwards;
+    }
+
+    @keyframes spotlight {
+        0% {
+            opacity: 0;
+            transform: translate(-72%, -62%) scale(0.5);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translate(-50%, -40%) scale(1);
+        }
+    }
+
+    .bg-grid-pattern {
+        background-size: 40px 40px;
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+}
+
+/* Premium-Futuristic Hybrid Elements */
+
+/* Subtle Scan Lines - Premium Gold Tint */
+.premium-scanlines {
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(212, 175, 55, 0.015) 2px,
+            rgba(212, 175, 55, 0.015) 4px);
+    pointer-events: none;
+}
+
+/* Floating Particles Animation */
+@keyframes float-particle {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0.3;
+    }
+
+    25% {
+        transform: translateY(-20px) translateX(10px);
+        opacity: 0.6;
+    }
+
+    50% {
+        transform: translateY(-10px) translateX(-5px);
+        opacity: 0.4;
+    }
+
+    75% {
+        transform: translateY(-30px) translateX(5px);
+        opacity: 0.7;
+    }
+}
+
+.particle-gold {
+    animation: float-particle 8s ease-in-out infinite;
+}
+
+/* Data Stream Effect - Vertical Lines */
+@keyframes data-stream {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.5;
+    }
+
+    90% {
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
+
+.data-stream {
+    position: absolute;
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.15), transparent);
+    animation: data-stream 6s linear infinite;
+    opacity: 0.4;
+}
+
+/* Hexagon Grid Pattern */
+.hex-grid-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23d4af37' fill-opacity='0.03'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Orbiting Ring Animation */
+@keyframes orbit-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.orbit-ring {
+    animation: orbit-ring 20s linear infinite;
+}
+
+/* Pulse Glow - Premium Gold */
+@keyframes premium-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
+    }
+}
+
+.premium-pulse {
+    animation: premium-pulse 3s ease-in-out infinite;
+}
+
+/* ========================================
+   2080s FUTURISTIC DESIGN SYSTEM
+   ======================================== */
+
+/* Holographic Shimmer Effect */
+@keyframes holographic-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.holographic {
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.1) 20%,
+            rgba(0, 255, 255, 0.15) 40%,
+            rgba(255, 0, 255, 0.15) 60%,
+            rgba(255, 255, 255, 0.1) 80%,
+            rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    animation: holographic-shimmer 3s linear infinite;
+}
+
+/* Scan Line Effect */
+.scan-lines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.1) 2px,
+            rgba(0, 0, 0, 0.1) 4px);
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Neon Glow Pulses */
+@keyframes neon-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor;
+        opacity: 1;
+    }
+
+    50% {
+        box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor, 0 0 80px currentColor;
+        opacity: 0.8;
+    }
+}
+
+.neon-glow {
+    animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* Cyberpunk Text Glitch */
+@keyframes glitch {
+    0% {
+        text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
+            0.025em 0.04em 0 #fffc00;
+    }
+
+    15% {
+        text-shadow: 0.05em 0 0 #00fffc, -0.03em -0.04em 0 #fc00ff,
+            0.025em 0.04em 0 #fffc00;
+    }
+
+    16% {
+        text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff,
+            -0.05em -0.05em 0 #fffc00;
+    }
+
+    49% {
+        text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.035em 0 #fc00ff,
+            -0.05em -0.05em 0 #fffc00;
+    }
+
+    50% {
+        text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff,
+            0 -0.04em 0 #fffc00;
+    }
+
+    99% {
+        text-shadow: 0.05em 0.035em 0 #00fffc, 0.03em 0 0 #fc00ff,
+            0 -0.04em 0 #fffc00;
+    }
+
+    100% {
+        text-shadow: -0.05em 0 0 #00fffc, -0.025em -0.04em 0 #fc00ff,
+            -0.04em -0.025em 0 #fffc00;
+    }
+}
+
+.text-glitch {
+    animation: glitch 500ms infinite;
+}
+
+/* Futuristic Border Glow */
+.border-glow {
+    position: relative;
+}
+
+.border-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, #00ffff, #ff00ff, #00ff00, #ff0000, #00ffff);
+    background-size: 400%;
+    border-radius: inherit;
+    z-index: -1;
+    animation: border-glow-rotate 3s linear infinite;
+    filter: blur(8px);
+    opacity: 0.7;
+}
+
+@keyframes border-glow-rotate {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Floating Particle Effect */
+@keyframes particle-float {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: 0.5;
+    }
+
+    25% {
+        transform: translateY(-20px) translateX(10px) scale(1.1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: translateY(-10px) translateX(-5px) scale(0.9);
+        opacity: 0.6;
+    }
+
+    75% {
+        transform: translateY(-30px) translateX(5px) scale(1.05);
+        opacity: 0.7;
+    }
+}
+
+.particle {
+    animation: particle-float 4s ease-in-out infinite;
+}
+
+/* Cyber Grid Background */
+.cyber-grid {
+    background-image:
+        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(255, 0, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 255, 0.02) 1px, transparent 1px);
+    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+}
+
+/* Holographic Card */
+.holo-card {
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.holo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg,
+            transparent 40%,
+            rgba(255, 255, 255, 0.1) 45%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0.1) 55%,
+            transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.holo-card:hover::before {
+    transform: translateX(100%);
+}
+
+/* Futuristic Text Styles */
+.text-holographic {
+    background: linear-gradient(90deg, #00ffff, #ff00ff, #00ff00, #00ffff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holographic-text 4s linear infinite;
+}
+
+@keyframes holographic-text {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 300% 50%;
+    }
+}
+
+/* Neon Text */
+.text-neon-cyan {
+    color: #00ffff;
+    text-shadow:
+        0 0 5px #00ffff,
+        0 0 10px #00ffff,
+        0 0 20px #00ffff,
+        0 0 40px #00ffff;
+}
+
+.text-neon-magenta {
+    color: #ff00ff;
+    text-shadow:
+        0 0 5px #ff00ff,
+        0 0 10px #ff00ff,
+        0 0 20px #ff00ff,
+        0 0 40px #ff00ff;
+}
+
+/* Data Stream Animation */
+@keyframes data-stream {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+.data-stream {
+    animation: data-stream 2s linear infinite;
+}
+
+/* Futuristic Button */
+.btn-future {
+    position: relative;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    color: #00ffff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-future::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-future:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(255, 0, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-future:hover::before {
+    left: 100%;
+}
+
+/* Pulse Ring */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.pulse-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid currentColor;
+    border-radius: inherit;
+    animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* ========================================
+   PREMIUM LUXURY DESIGN SYSTEM
+   Elegant, Charismatic, Sophisticated
+   ======================================== */
+
+/* Premium Gold Gradient Text */
+.text-premium-gold {
+    background: linear-gradient(135deg, #D4AF37 0%, #F4E4BA 25%, #D4AF37 50%, #B8860B 75%, #D4AF37 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: premium-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes premium-shimmer {
+    0% {
+        background-position: 0% center;
+    }
+
+    50% {
+        background-position: 100% center;
+    }
+
+    100% {
+        background-position: 0% center;
+    }
+}
+
+/* Elegant Warm Gradient Text */
+.text-warm-gradient {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Premium Card Style */
+.premium-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(212, 175, 55, 0.25);
+    transform: translateY(-4px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 80px rgba(212, 175, 55, 0.08);
+}
+
+.premium-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg,
+            transparent 40%,
+            rgba(255, 255, 255, 0.02) 45%,
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(255, 255, 255, 0.02) 55%,
+            transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: inherit;
+}
+
+.premium-card:hover::before {
+    transform: translateX(100%);
+}
+
+/* Luxury Button - Gold */
+.btn-luxury {
+    position: relative;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+    border: none;
+    border-radius: 100px;
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+}
+
+.btn-luxury:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(212, 175, 55, 0.45), 0 0 60px rgba(212, 175, 55, 0.15);
+}
+
+.btn-luxury::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+}
+
+.btn-luxury:hover::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Luxury Outline Button */
+.btn-luxury-outline {
+    position: relative;
+    padding: 1rem 2.5rem;
+    background: transparent;
+    border: 1.5px solid rgba(212, 175, 55, 0.5);
+    border-radius: 100px;
+    color: #D4AF37;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-luxury-outline:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.8);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+}
+
+/* Premium Badge */
+.premium-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 100px;
+    color: #D4AF37;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Elegant Floating Animation */
+@keyframes elegant-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.animate-elegant-float {
+    animation: elegant-float 5s ease-in-out infinite;
+}
+
+/* Premium Background */
+.bg-premium-dark {
+    background: linear-gradient(180deg, #0a0a0a 0%, #0d0d0f 50%, #0a0a0a 100%);
+}
+
+/* Subtle Gold Glow */
+.glow-gold {
+    box-shadow: 0 0 60px rgba(212, 175, 55, 0.1);
+}
+
+/* Premium Divider */
+.premium-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
+}
+
+/* Accent Line */
+.accent-line-gold {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #D4AF37, #F4E4BA);
+    border-radius: 2px;
 }

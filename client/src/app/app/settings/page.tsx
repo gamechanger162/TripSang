@@ -275,9 +275,10 @@ export default function SettingsPage() {
                     max-width: 600px;
                     margin: 0 auto;
                     width: 100%;
-                    padding-bottom: 240px; /* Increased to clear nav bar */
+                    padding-bottom: 240px;
                     overflow-y: auto;
                     height: 100%;
+                    background: linear-gradient(180deg, rgba(0, 20, 40, 0.3) 0%, rgba(0, 10, 25, 0.5) 100%);
                 }
 
                 @media (min-width: 768px) {
@@ -292,6 +293,7 @@ export default function SettingsPage() {
                     color: white;
                     margin-bottom: 32px;
                     letter-spacing: -0.02em;
+                    text-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
                 }
 
                 .settings-section {
@@ -301,9 +303,9 @@ export default function SettingsPage() {
                 .section-title {
                     font-size: 13px;
                     font-weight: 600;
-                    color: rgba(255, 255, 255, 0.4);
+                    color: rgba(0, 255, 255, 0.6);
                     text-transform: uppercase;
-                    letter-spacing: 0.05em;
+                    letter-spacing: 0.1em;
                     margin-bottom: 12px;
                     padding-left: 8px;
                 }
@@ -314,6 +316,9 @@ export default function SettingsPage() {
                     align-items: center;
                     justify-content: space-between;
                     padding: 20px !important;
+                    background: rgba(0, 30, 50, 0.6) !important;
+                    border: 1px solid rgba(0, 255, 255, 0.2) !important;
+                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1) !important;
                 }
 
                 .profile-info-container {
@@ -333,8 +338,8 @@ export default function SettingsPage() {
                     border-radius: 50%;
                     overflow: hidden;
                     position: relative;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                    border: 2px solid rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+                    border: 2px solid rgba(0, 255, 255, 0.4);
                 }
 
                 .profile-avatar-placeholder {
@@ -342,13 +347,13 @@ export default function SettingsPage() {
                     height: 64px;
                     min-width: 64px;
                     border-radius: 50%;
-                    background: linear-gradient(135deg, #14b8a6, #0d9488);
+                    background: linear-gradient(135deg, #0891b2, #8b5cf6);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     color: white;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                    border: 2px solid rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+                    border: 2px solid rgba(0, 255, 255, 0.4);
                 }
 
                 .profile-text {
@@ -364,6 +369,7 @@ export default function SettingsPage() {
                     display: flex;
                     align-items: center;
                     gap: 6px;
+                    text-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
                 }
 
                 .profile-email {
@@ -373,15 +379,17 @@ export default function SettingsPage() {
 
                 .profile-view-text {
                     font-size: 12px;
-                    color: #14b8a6;
+                    color: #00ffff;
                     margin-top: 4px;
                     font-weight: 500;
+                    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
                 }
 
                 /* Settings Group & Items */
                 .settings-group {
                     overflow: hidden;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border: 1px solid rgba(0, 255, 255, 0.15) !important;
+                    background: rgba(0, 30, 50, 0.5) !important;
                 }
 
                 .setting-item {
@@ -389,8 +397,8 @@ export default function SettingsPage() {
                     align-items: center;
                     justify-content: space-between;
                     padding: 16px 20px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                    transition: background 0.2s;
+                    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+                    transition: all 0.3s;
                     min-height: 72px;
                 }
 
@@ -399,7 +407,7 @@ export default function SettingsPage() {
                 }
 
                 .setting-item.clickable:hover {
-                    background: rgba(255, 255, 255, 0.03);
+                    background: rgba(0, 255, 255, 0.05);
                 }
 
                 .setting-main {
@@ -416,6 +424,7 @@ export default function SettingsPage() {
                     align-items: center;
                     justify-content: center;
                     flex-shrink: 0;
+                    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
                 }
 
                 .setting-label {
@@ -431,12 +440,12 @@ export default function SettingsPage() {
 
                 .setting-subtitle {
                     font-size: 12px;
-                    color: rgba(255, 255, 255, 0.4);
+                    color: rgba(0, 255, 255, 0.5);
                     margin-top: 2px;
                 }
 
                 .chevron {
-                    color: rgba(255, 255, 255, 0.2);
+                    color: rgba(0, 255, 255, 0.4);
                 }
 
                 /* Toggle Switch */
@@ -456,10 +465,10 @@ export default function SettingsPage() {
                 .slider {
                     position: absolute;
                     inset: 0;
-                    background: rgba(255, 255, 255, 0.1);
+                    background: rgba(0, 255, 255, 0.1);
                     border-radius: 20px;
                     transition: all 0.3s;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(0, 255, 255, 0.2);
                 }
 
                 .slider:before {
@@ -476,8 +485,9 @@ export default function SettingsPage() {
                 }
 
                 .toggle input:checked + .slider {
-                    background: #14b8a6;
-                    border-color: #14b8a6;
+                    background: linear-gradient(135deg, #0891b2, #06b6d4);
+                    border-color: #00ffff;
+                    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
                 }
 
                 .toggle input:checked + .slider:before {
@@ -494,12 +504,17 @@ export default function SettingsPage() {
                     justify-content: center;
                     gap: 8px;
                     background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    border: 1px solid rgba(239, 68, 68, 0.3);
                     border-radius: 16px;
-                    color: #ef4444;
+                    color: #f87171;
                     font-weight: 600;
                     font-size: 15px;
-                    transition: all 0.2s;
+                    transition: all 0.3s;
+                }
+
+                .logout-button:hover {
+                    background: rgba(239, 68, 68, 0.2);
+                    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
                 }
 
                 .logout-button:active {
@@ -509,7 +524,7 @@ export default function SettingsPage() {
 
                 .version-text {
                     text-align: center;
-                    color: rgba(255, 255, 255, 0.2);
+                    color: rgba(0, 255, 255, 0.3);
                     font-size: 12px;
                     margin-top: 32px;
                 }

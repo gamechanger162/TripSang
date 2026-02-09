@@ -197,8 +197,8 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         group relative flex items-center gap-3 p-3 rounded-2xl cursor-pointer
                         transition-all duration-300 ease-out
                         ${isSelected
-                            ? 'bg-white/15 shadow-[0_0_20px_rgba(20,184,166,0.15)] border border-teal-500/30'
-                            : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
+                            ? 'bg-cyan-500/10 shadow-[0_0_25px_rgba(0,255,255,0.15)] border border-cyan-500/40'
+                            : 'bg-white/5 hover:bg-cyan-500/5 border border-transparent hover:border-cyan-500/20'
                         }
                     `}
                     whileHover={{ scale: 1.01, x: 4 }}
@@ -208,7 +208,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                     {isSelected && (
                         <motion.div
                             layoutId="activeConversation"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-teal-400 to-teal-600 rounded-full"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full shadow-[0_0_10px_rgba(0,255,255,0.5)]"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                         />
@@ -216,7 +216,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
 
                     {/* Avatar - FIXED SIZE */}
                     <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/10 group-hover:ring-white/20 transition-all">
+                        <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-cyan-500/30 group-hover:ring-cyan-500/50 transition-all shadow-[0_0_15px_rgba(0,255,255,0.2)]">
                             {conv.avatar && !failedImages.has(conv._id) ? (
                                 <Image
                                     src={conv.avatar}
@@ -230,7 +230,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                                     }}
                                 />
                             ) : (
-                                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
+                                <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
                                     <span className="text-white font-bold text-lg">
                                         {conv.name.charAt(0).toUpperCase()}
                                     </span>
@@ -238,7 +238,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                             )}
                         </div>
                         {/* Online Indicator (placeholder) */}
-                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-gray-900" />
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-cyan-400 rounded-full border-2 border-gray-900 shadow-[0_0_8px_rgba(0,255,255,0.6)]" />
                     </div>
 
                     {/* Content */}
@@ -267,7 +267,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                                 <motion.span
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full text-[11px] font-bold text-white flex items-center justify-center shadow-lg shadow-teal-500/30"
+                                    className="flex-shrink-0 min-w-[22px] h-[22px] px-1.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full text-[11px] font-bold text-white flex items-center justify-center shadow-lg shadow-cyan-500/40"
                                 >
                                     {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                                 </motion.span>
@@ -280,15 +280,15 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
     };
 
     return (
-        <div className="h-full flex flex-col bg-black/20 backdrop-blur-xl border-r border-white/10">
+        <div className="h-full flex flex-col bg-gradient-to-b from-[rgba(0,20,40,0.9)] to-[rgba(0,10,25,0.95)] backdrop-blur-xl border-r border-cyan-500/20">
             {/* Header */}
             <div className="p-4 pb-3 border-b border-white/5">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-white tracking-tight">Messages</h2>
+                    <h2 className="text-xl font-bold text-white tracking-tight" style={{ textShadow: '0 0 20px rgba(0,255,255,0.3)' }}>Messages</h2>
                     <motion.button
                         whileHover={{ scale: 1.05, rotate: 90 }}
                         whileTap={{ scale: 0.95 }}
-                        className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-teal-500/20 to-emerald-500/20 border border-teal-500/30 rounded-xl text-teal-400 hover:text-teal-300 transition-colors"
+                        className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/40 rounded-xl text-cyan-400 hover:text-cyan-300 transition-colors shadow-[0_0_15px_rgba(0,255,255,0.2)]"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                     </motion.button>
@@ -296,13 +296,13 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
 
                 {/* Search */}
                 <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500/60" />
                     <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-[rgba(0,30,50,0.6)] border border-cyan-500/20 rounded-xl text-white text-sm placeholder:text-cyan-500/40 focus:outline-none focus:border-cyan-500/50 focus:bg-[rgba(0,40,60,0.6)] focus:shadow-[0_0_20px_rgba(0,255,255,0.1)] transition-all"
                     />
                 </div>
             </div>
@@ -331,7 +331,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                             onClick={() => fetchConversations()}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 bg-teal-500/20 border border-teal-500/30 rounded-xl text-teal-400 text-sm font-medium"
+                            className="px-4 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-sm font-medium shadow-[0_0_15px_rgba(0,255,255,0.15)]"
                         >
                             Retry
                         </motion.button>
@@ -341,9 +341,9 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-teal-500/10 to-emerald-500/10 flex items-center justify-center"
+                            className="w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-cyan-500/15 to-purple-500/15 flex items-center justify-center border border-cyan-500/30"
                         >
-                            <Sparkles className="w-10 h-10 text-teal-400" />
+                            <Sparkles className="w-10 h-10 text-cyan-400" style={{ filter: 'drop-shadow(0 0 10px rgba(0,255,255,0.5))' }} />
                         </motion.div>
                         <p className="text-gray-300 font-medium mb-1">
                             {searchQuery ? 'No results found' : 'No conversations yet'}

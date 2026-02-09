@@ -1323,23 +1323,55 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     height: 100%;
                     display: flex;
                     flex-direction: column;
-                    background: transparent;
+                    background: linear-gradient(180deg, rgba(0, 20, 40, 0.8) 0%, rgba(0, 10, 20, 0.95) 100%);
+                    position: relative;
+                }
+                
+                .chat-view::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: 
+                        radial-gradient(ellipse at top right, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom left, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+                    pointer-events: none;
                 }
                 
                 .chat-header {
                     display: flex;
                     align-items: center;
                     padding: 12px 20px;
-                    background: rgba(255, 255, 255, 0.03);
+                    background: rgba(0, 20, 40, 0.6);
                     backdrop-filter: blur(20px);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    border-bottom: 1px solid rgba(0, 255, 255, 0.15);
                     gap: 12px;
                     z-index: 10;
+                    position: relative;
+                    box-shadow: 0 4px 30px rgba(0, 255, 255, 0.1);
+                }
+                
+                .chat-header::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), rgba(139, 92, 246, 0.5), transparent);
                 }
                 
                 .back-btn {
-                    color: white;
+                    color: rgba(0, 255, 255, 0.8);
                     padding: 4px;
+                    transition: all 0.3s;
+                }
+                
+                .back-btn:hover {
+                    color: #00ffff;
+                    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.5));
                 }
                 
                 .header-info {
@@ -1350,50 +1382,54 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 }
                 
                 .header-avatar-container {
-                    width: 40px;
-                    height: 40px;
-                    min-width: 40px;
+                    width: 44px;
+                    height: 44px;
+                    min-width: 44px;
                     border-radius: 50%;
                     overflow: hidden;
                     position: relative;
                     flex-shrink: 0;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    border: 2px solid rgba(0, 255, 255, 0.4);
+                    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
                 }
 
                 .header-avatar-placeholder {
-                    width: 40px;
-                    height: 40px;
-                    min-width: 40px;
+                    width: 44px;
+                    height: 44px;
+                    min-width: 44px;
                     border-radius: 50%;
                     flex-shrink: 0;
-                    object-fit: cover;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                }
-                
-                .header-avatar-placeholder {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: linear-gradient(135deg, #14b8a6, #0d9488);
+                    background: linear-gradient(135deg, #0891b2, #06b6d4);
                     color: white;
-                    font-weight: 600;
+                    font-weight: 700;
+                    border: 2px solid rgba(0, 255, 255, 0.4);
+                    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
                 }
                 
                 .header-name {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: rgba(255, 255, 255, 0.95);
+                    font-size: 17px;
+                    font-weight: 700;
+                    color: #ffffff;
                     display: flex;
                     align-items: center;
-                    gap: 4px;
-                    letter-spacing: -0.01em;
+                    gap: 6px;
+                    letter-spacing: 0.02em;
+                    text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
                 }
                 
                 .typing-indicator {
                     font-size: 12px;
-                    color: #14b8a6;
-                    animation: pulse 1.5s infinite;
+                    color: #00ffff;
+                    animation: typingGlow 1.5s infinite;
                     font-weight: 500;
+                }
+                
+                @keyframes typingGlow {
+                    0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+                    50% { opacity: 0.6; text-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
                 }
                 
                 .header-actions {
@@ -1402,19 +1438,22 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 }
                 
                 .header-action-btn {
-                    width: 36px;
-                    height: 36px;
+                    width: 40px;
+                    height: 40px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: rgba(255, 255, 255, 0.7);
-                    border-radius: 10px;
-                    transition: all 0.2s;
+                    color: rgba(0, 255, 255, 0.7);
+                    border-radius: 12px;
+                    transition: all 0.3s;
+                    border: 1px solid transparent;
                 }
                 
                 .header-action-btn:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    color: white;
+                    background: rgba(0, 255, 255, 0.1);
+                    color: #00ffff;
+                    border-color: rgba(0, 255, 255, 0.3);
+                    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
                 }
                 
                 .options-menu-wrapper {
@@ -1426,49 +1465,52 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     top: 100%;
                     right: 0;
                     margin-top: 8px;
-                    min-width: 180px;
-                    background: rgba(30, 30, 30, 0.95);
+                    min-width: 200px;
+                    background: rgba(0, 20, 40, 0.95);
                     backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 12px;
+                    border: 1px solid rgba(0, 255, 255, 0.2);
+                    border-radius: 16px;
                     padding: 8px;
                     z-index: 100;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 255, 255, 0.1);
                 }
                 
                 .option-item {
                     display: flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 12px;
                     width: 100%;
-                    padding: 10px 12px;
+                    padding: 12px 14px;
                     color: rgba(255, 255, 255, 0.9);
                     font-size: 14px;
-                    border-radius: 8px;
+                    font-weight: 500;
+                    border-radius: 10px;
                     transition: all 0.2s;
                     text-align: left;
                 }
                 
                 .option-item:hover {
-                    background: rgba(255, 255, 255, 0.1);
+                    background: rgba(0, 255, 255, 0.1);
+                    color: #00ffff;
                 }
                 
                 .option-item.danger {
-                    color: #ef4444;
+                    color: #f87171;
                 }
                 
                 .option-item.danger:hover {
-                    background: rgba(239, 68, 68, 0.15);
+                    background: rgba(248, 113, 113, 0.15);
+                    color: #fca5a5;
                 }
                 
                 .pinned-banner {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 8px 16px;
-                    background: rgba(249, 115, 22, 0.1);
-                    border-bottom: 1px solid rgba(249, 115, 22, 0.2);
-                    color: #f97316;
+                    gap: 10px;
+                    padding: 10px 16px;
+                    background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), rgba(0, 255, 255, 0.1));
+                    border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+                    color: #a78bfa;
                     font-size: 13px;
                     overflow: hidden;
                 }
@@ -1483,7 +1525,8 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 .messages-container {
                     flex: 1;
                     overflow: hidden;
-                    padding-bottom: 0px; 
+                    padding-bottom: 0px;
+                    position: relative;
                 }
                 
                 .messages-loading {
@@ -1495,20 +1538,22 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 
                 .system-message {
                     text-align: center;
-                    padding: 8px 16px;
-                    color: rgba(255, 255, 255, 0.5);
+                    padding: 12px 20px;
+                    color: rgba(0, 255, 255, 0.6);
                     font-size: 12px;
-                    margin: 8px 0;
+                    margin: 12px 0;
+                    font-weight: 500;
+                    letter-spacing: 0.02em;
                 }
                 
                 .reply-preview {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 8px 16px;
-                    background: rgba(20, 184, 166, 0.1);
-                    border-top: 1px solid rgba(20, 184, 166, 0.2);
-                    color: #14b8a6;
+                    gap: 10px;
+                    padding: 10px 16px;
+                    background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), rgba(139, 92, 246, 0.1));
+                    border-top: 1px solid rgba(0, 255, 255, 0.2);
+                    color: #00ffff;
                     font-size: 13px;
                     overflow: hidden;
                 }
@@ -1516,89 +1561,105 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 .reply-preview button {
                     margin-left: auto;
                     color: rgba(255, 255, 255, 0.5);
+                    transition: all 0.2s;
+                }
+                
+                .reply-preview button:hover {
+                    color: #00ffff;
                 }
                 
                 .chat-input-wrapper {
                     padding: 16px;
                     padding-top: 8px;
-                    padding-bottom: calc(64px + env(safe-area-inset-bottom)); /* Clear mobile nav (h-16 is 64px) + safe area */
-                    background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+                    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+                    background: linear-gradient(to top, rgba(0, 20, 40, 0.9), transparent);
+                    position: relative;
                 }
                 
                 @media (min-width: 768px) {
                     .chat-input-wrapper {
-                        padding: 16px; /* First reset all padding */
-                        padding-bottom: 0px; /* Then override bottom specifically */
+                        padding: 16px;
+                        padding-bottom: 16px;
                     }
                 }
                 
                 .chat-input-container {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 8px;
-                    background: rgba(255, 255, 255, 0.07);
+                    gap: 10px;
+                    padding: 8px 12px;
+                    background: rgba(0, 30, 50, 0.8);
                     backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 24px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(0, 255, 255, 0.2);
+                    border-radius: 28px;
+                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 255, 255, 0.1), inset 0 0 15px rgba(0, 255, 255, 0.03);
+                    transition: all 0.3s;
                 }
                 
-                .header-avatar-placeholder {
-                    border-radius: 50%;
+                .chat-input-container:focus-within {
+                    border-color: rgba(0, 255, 255, 0.5);
+                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 255, 255, 0.2), inset 0 0 15px rgba(0, 255, 255, 0.05);
                 }
                 
                 .input-action-btn {
-                    width: 36px;
-                    height: 36px;
+                    width: 40px;
+                    height: 40px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: rgba(255, 255, 255, 0.6);
+                    color: rgba(0, 255, 255, 0.6);
                     border-radius: 50%;
-                    transition: all 0.2s;
+                    transition: all 0.3s;
                 }
                 
                 .input-action-btn:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    color: white;
+                    background: rgba(0, 255, 255, 0.15);
+                    color: #00ffff;
+                    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
                 }
                 
                 .message-input {
                     flex: 1;
-                    padding: 10px 4px;
+                    padding: 12px 8px;
                     background: transparent;
                     border: none;
                     color: white;
                     font-size: 15px;
                     outline: none;
+                    font-weight: 400;
                 }
                 
                 .message-input::placeholder {
-                    color: rgba(255, 255, 255, 0.3);
+                    color: rgba(0, 255, 255, 0.3);
                 }
                 
                 .send-btn {
-                    width: 36px;
-                    height: 36px;
+                    width: 44px;
+                    height: 44px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: rgba(255, 255, 255, 0.4);
+                    color: rgba(0, 255, 255, 0.4);
                     border-radius: 50%;
-                    transition: all 0.2s;
+                    transition: all 0.3s;
                     transform: scale(0.9);
                 }
                 
                 .send-btn.active {
-                    background: #14b8a6;
+                    background: linear-gradient(135deg, #0891b2, #06b6d4);
                     color: white;
                     transform: scale(1);
-                    box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
+                    box-shadow: 0 0 25px rgba(0, 255, 255, 0.5), 0 4px 15px rgba(0, 0, 0, 0.3);
+                }
+                
+                .send-btn.active:hover {
+                    box-shadow: 0 0 35px rgba(0, 255, 255, 0.7), 0 4px 15px rgba(0, 0, 0, 0.3);
+                    transform: scale(1.05);
                 }
                 
                 .send-btn:disabled {
-                    opacity: 0.5;
+                    opacity: 0.4;
+                    cursor: not-allowed;
                 }
                 
                 .hidden {
@@ -2114,34 +2175,32 @@ function MessageBubble({
                             }}
                         />
                         <motion.div
-                            className="fixed z-50 bg-gray-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[160px] backdrop-blur-xl"
-                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="fixed z-50 bg-gray-900/95 border border-cyan-500/30 rounded-xl shadow-2xl overflow-hidden min-w-[160px] backdrop-blur-xl"
                             style={{
+                                boxShadow: '0 10px 40px rgba(0,0,0,0.5), 0 0 30px rgba(0,255,255,0.1)',
                                 left: Math.min(menuPosition.x, window.innerWidth - 170), // Keep within screen
                                 top: Math.min(menuPosition.y, window.innerHeight - 100)  // Keep within screen
                             }}
                         >
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-cyan-500/10 flex items-center gap-3 transition-colors"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onReply();
                                     setShowActions(false);
                                 }}
                             >
-                                <Reply size={16} className="text-teal-400" /> Reply
+                                <Reply size={16} className="text-cyan-400" /> Reply
                             </button>
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-500/10 flex items-center gap-3 transition-colors"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onPin();
                                     setShowActions(false);
                                 }}
                             >
-                                <Pin size={16} className="text-amber-400" /> Pin Message
+                                <Pin size={16} className="text-purple-400" /> Pin Message
                             </button>
                         </motion.div>
                     </>
@@ -2164,68 +2223,71 @@ function MessageBubble({
                     left: 16px;
                     top: 50%;
                     transform: translateY(-50%);
-                    color: #14b8a6;
+                    color: #00ffff;
+                    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
                 }
                 
                 .message-bubble {
-                    width: 100%; /* Take full width of container */
-                    padding: 8px 14px;
+                    width: 100%;
+                    padding: 10px 16px;
                     position: relative;
-                    background: rgba(255, 255, 255, 0.03);
+                    background: rgba(0, 30, 50, 0.6);
                     backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    border: 1px solid rgba(139, 92, 246, 0.2);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(139, 92, 246, 0.03);
                     transform-origin: bottom right;
                 }
                 
                 .message-bubble.own {
-                    background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(13, 148, 136, 0.2));
-                    border: 1px solid rgba(20, 184, 166, 0.2);
-                    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.1);
+                    background: linear-gradient(135deg, rgba(0, 180, 180, 0.25), rgba(0, 140, 160, 0.25));
+                    border: 1px solid rgba(0, 255, 255, 0.3);
+                    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.15), inset 0 0 15px rgba(0, 255, 255, 0.05);
                 }
                 
                 .message-bubble.pending {
-                    opacity: 0.7;
+                    opacity: 0.6;
                 }
                 
                 .bubble-sender {
-                    font-size: 11px;
+                    font-size: 12px;
                     font-weight: 600;
-                    color: rgba(20, 184, 166, 0.9);
+                    color: rgba(0, 255, 255, 0.9);
                     margin-bottom: 4px;
                     display: flex;
                     align-items: center;
-                    gap: 3px;
+                    gap: 4px;
+                    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
                 }
                 
                 .bubble-reply {
-                    font-size: 11px;
-                    color: rgba(255, 255, 255, 0.6);
-                    padding: 6px 10px;
-                    background: rgba(0, 0, 0, 0.2);
-                    border-radius: 8px;
-                    margin-bottom: 6px;
-                    border-left: 2px solid #14b8a6;
+                    font-size: 12px;
+                    color: rgba(255, 255, 255, 0.7);
+                    padding: 8px 12px;
+                    background: rgba(0, 0, 0, 0.3);
+                    border-radius: 10px;
+                    margin-bottom: 8px;
+                    border-left: 3px solid rgba(0, 255, 255, 0.6);
                 }
                 
                 .bubble-image {
                     max-width: 100%;
-                    border-radius: 12px;
-                    margin-bottom: 6px;
+                    border-radius: 14px;
+                    margin-bottom: 8px;
+                    border: 1px solid rgba(0, 255, 255, 0.2);
                 }
                 
                 .bubble-text {
                     color: rgba(255, 255, 255, 0.95);
                     font-size: 15px;
-                    line-height: 1.5;
+                    line-height: 1.55;
                     word-wrap: break-word;
                     font-weight: 400;
                 }
                 
                 .bubble-time {
-                    font-size: 9px;
-                    color: rgba(255, 255, 255, 0.3);
-                    margin-top: 2px;
+                    font-size: 10px;
+                    color: rgba(0, 255, 255, 0.4);
+                    margin-top: 4px;
                     display: block;
                     text-align: right;
                     font-weight: 500;

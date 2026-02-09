@@ -16,14 +16,6 @@ const nextConfig = {
     // Disable static generation for pages with authentication
     output: 'standalone',
     images: {
-        domains: [
-            'localhost',
-            'firebasestorage.googleapis.com',
-            'lh3.googleusercontent.com',
-            'images.unsplash.com',
-            'plus.unsplash.com',
-            'res.cloudinary.com'
-        ],
         remotePatterns: [
             {
                 protocol: 'https',

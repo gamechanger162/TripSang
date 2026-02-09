@@ -66,9 +66,7 @@ export default function Home() {
                 <VerifiedPartners />
             </Suspense>
 
-            <Suspense fallback={<SectionLoader />}>
-                <MomentsShowcase />
-            </Suspense>
+
 
             <Suspense fallback={<SectionLoader />}>
                 <CallToAction />

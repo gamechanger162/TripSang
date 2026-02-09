@@ -58,8 +58,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             }))
         }
     } catch (error) {
-        console.error('Error fetching trips for sitemap:', error)
+        console.warn('⚠️ Failed to fetch trips for sitemap, using static routes only.');
     }
 
-    return [...staticRoutes, ...tripRoutes]
+    return [...staticRoutes, ...tripRoutes];
 }

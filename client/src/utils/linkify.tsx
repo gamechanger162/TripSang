@@ -6,12 +6,20 @@
 // URL detection regex - matches http://, https://, and www.
 const URL_REGEX = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
 
+interface User {
+    subscription?: {
+        status: string;
+    };
+    verificationStatus?: string;
+    [key: string]: any;
+}
+
 /**
  * Check if a user is premium (has active subscription or trial)
  * @param user - User object with subscription field
  * @returns boolean indicating if user is premium
  */
-export const isPremiumUser = (user: any): boolean => {
+export const isPremiumUser = (user: User | null | undefined): boolean => {
     return user?.subscription?.status === 'active' || user?.subscription?.status === 'trial';
 };
 
@@ -20,7 +28,7 @@ export const isPremiumUser = (user: any): boolean => {
  * @param user - User object with verificationStatus field
  * @returns boolean indicating if user is verified
  */
-export const isVerifiedUser = (user: any): boolean => {
+export const isVerifiedUser = (user: User | null | undefined): boolean => {
     return user?.verificationStatus === 'verified';
 };
 

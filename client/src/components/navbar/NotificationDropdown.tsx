@@ -59,12 +59,12 @@ export default function NotificationDropdown({
                 <div className={`${isMobile
                     ? 'fixed top-16 left-4 right-4 max-h-80'
                     : 'absolute right-0 mt-2 w-80 max-h-96'
-                    } bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 overflow-y-auto z-50`}>
-                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
-                        <h3 className={`font-semibold text-gray-900 dark:text-white ${isMobile ? 'text-sm' : ''}`}>Notifications</h3>
+                    } bg-[#001428]/95 backdrop-blur-xl rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] py-2 border border-cyan-500/20 overflow-y-auto z-50`}>
+                    <div className="px-4 py-2 border-b border-white/10 flex justify-between items-center bg-white/5">
+                        <h3 className={`font-semibold text-white ${isMobile ? 'text-sm' : ''}`}>Notifications</h3>
                     </div>
                     {notifications.length === 0 ? (
-                        <div className={`p-${isMobile ? '4' : '6'} text-center text-gray-500 ${isMobile ? 'text-sm' : ''}`}>
+                        <div className={`p-${isMobile ? '4' : '6'} text-center text-gray-400 ${isMobile ? 'text-sm' : ''}`}>
                             No notifications
                         </div>
                     ) : (
@@ -72,24 +72,24 @@ export default function NotificationDropdown({
                             <Link
                                 key={notif._id}
                                 href={notif.link || '#'}
-                                className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                className="block px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 group"
                                 onClick={onClose}
                             >
                                 <div className="flex gap-3">
                                     {!isMobile && (
                                         notif.sender?.profilePicture ? (
-                                            <Image src={notif.sender.profilePicture} alt="" width={32} height={32} className="rounded-full flex-shrink-0 object-cover w-8 h-8" />
+                                            <Image src={notif.sender.profilePicture} alt="" width={32} height={32} className="rounded-full flex-shrink-0 object-cover w-8 h-8 ring-2 ring-cyan-500/30 group-hover:ring-cyan-500/60 transition-all" />
                                         ) : (
-                                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-600 flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center text-xs font-bold text-cyan-400 flex-shrink-0 border border-cyan-500/30">
                                                 {notif.sender?.name?.[0] || '!'}
                                             </div>
                                         )
                                     )}
                                     <div>
-                                        <p className={`text-gray-900 dark:text-gray-100 leading-tight mb-1 ${isMobile ? 'text-sm line-clamp-2' : 'text-sm'}`}>
+                                        <p className={`text-gray-200 group-hover:text-white transition-colors leading-tight mb-1 ${isMobile ? 'text-sm line-clamp-2' : 'text-sm'}`}>
                                             {notif.message}
                                         </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-xs text-gray-500 group-hover:text-cyan-400/70 transition-colors">
                                             {new Date(notif.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>

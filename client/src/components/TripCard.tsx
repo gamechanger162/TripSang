@@ -113,15 +113,15 @@ export default function TripCard({ trip }: TripCardProps) {
     const getDifficultyColor = (difficulty?: string) => {
         switch (difficulty) {
             case 'easy':
-                return 'bg-green-100 text-green-800';
+                return 'bg-green-500/20 text-green-200 border-green-500/30';
             case 'moderate':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30';
             case 'difficult':
-                return 'bg-orange-100 text-orange-800';
+                return 'bg-orange-500/20 text-orange-200 border-orange-500/30';
             case 'extreme':
-                return 'bg-red-100 text-red-800';
+                return 'bg-red-500/20 text-red-200 border-red-500/30';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-500/20 text-gray-200 border-gray-500/30';
         }
     };
 
@@ -162,7 +162,7 @@ export default function TripCard({ trip }: TripCardProps) {
 
     return (
         <Link href={`/trips/${trip._id}`}>
-            <div className="card hover:shadow-trip-hover transition-all duration-300 overflow-hidden group cursor-pointer">
+            <div className="card hover:shadow-cyan-500/20 transition-all duration-300 overflow-hidden group cursor-pointer border border-white/10 bg-white/5 backdrop-blur-sm">
                 {/* Cover Image */}
                 <div className="relative h-48 w-full overflow-hidden rounded-lg mb-4">
                     {trip.coverPhoto ? (
@@ -245,14 +245,14 @@ export default function TripCard({ trip }: TripCardProps) {
                     {/* Bottom Badges */}
                     <div className="absolute bottom-3 left-3 flex items-center gap-2">
                         {/* Trip Duration Badge */}
-                        <div className={`badge ${tripDuration.isShort ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'} text-xs`}>
+                        <div className={`badge text-xs backdrop-blur-md border border-white/20 ${tripDuration.isShort ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/30' : 'bg-purple-500/20 text-purple-200 border-purple-500/30'}`}>
                             <span className="mr-1">{tripDuration.icon}</span>
                             {tripDuration.label}
                         </div>
 
                         {/* Difficulty Badge */}
                         {trip.difficulty && (
-                            <div className={`badge ${getDifficultyColor(trip.difficulty)} capitalize text-xs`}>
+                            <div className={`badge capitalize text-xs backdrop-blur-md border border-white/20 ${getDifficultyColor(trip.difficulty)}`}>
                                 {trip.difficulty}
                             </div>
                         )}
@@ -260,31 +260,31 @@ export default function TripCard({ trip }: TripCardProps) {
                 </div>
 
                 {/* Content */}
-                <div className="space-y-3">
+                <div className="space-y-3 p-4">
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white line-clamp-2 group-hover:text-primary-600 transition-colors">
+                    <h3 className="text-xl font-bold text-white line-clamp-2 group-hover:text-cyan-400 transition-colors drop-shadow-md">
                         {trip.title}
                     </h3>
 
                     {/* Route */}
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="flex items-center text-sm text-gray-300">
+                        <svg className="w-4 h-4 mr-1 text-cyan-500" fill="currentColor" viewBox="0 0 20 20">
                             <path
                                 fillRule="evenodd"
                                 d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
                                 clipRule="evenodd"
                             />
                         </svg>
-                        <span className="font-medium">{trip.startPoint.name}</span>
-                        <svg className="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="font-medium text-white">{trip.startPoint.name}</span>
+                        <svg className="w-4 h-4 mx-2 text-cyan-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
-                        <span className="font-medium">{trip.endPoint.name}</span>
+                        <span className="font-medium text-white">{trip.endPoint.name}</span>
                     </div>
 
                     {/* Dates */}
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center text-sm text-gray-400">
+                        <svg className="w-4 h-4 mr-1 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -297,8 +297,8 @@ export default function TripCard({ trip }: TripCardProps) {
 
                     {/* Budget */}
                     {trip.budget && trip.budget.min !== undefined && trip.budget.max !== undefined && (
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center text-sm text-gray-400">
+                            <svg className="w-4 h-4 mr-1 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -316,13 +316,13 @@ export default function TripCard({ trip }: TripCardProps) {
                             {trip.tags.slice(0, 3).map((tag, index) => (
                                 <span
                                     key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cyan-900/30 text-cyan-300 border border-cyan-500/20"
                                 >
                                     {tag}
                                 </span>
                             ))}
                             {trip.tags.length > 3 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10">
                                     +{trip.tags.length - 3}
                                 </span>
                             )}
@@ -330,10 +330,10 @@ export default function TripCard({ trip }: TripCardProps) {
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
                         {/* Creator */}
                         <div className="flex items-center space-x-2">
-                            <div className="relative w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center overflow-hidden">
+                            <div className="relative w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center overflow-hidden border border-cyan-500/30">
                                 {trip.creator?.profilePicture ? (
                                     <Image
                                         src={trip.creator.profilePicture}
@@ -343,17 +343,17 @@ export default function TripCard({ trip }: TripCardProps) {
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                                    <span className="text-sm font-semibold text-cyan-400">
                                         {trip.creator?.name?.[0] || '?'}
                                     </span>
                                 )}
                                 {isPremiumUser(trip.creator) && <PremiumBadge size="sm" />}
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                                <p className="text-sm font-medium text-white flex items-center gap-1 group-hover:text-cyan-400 transition-colors">
                                     {trip.creator?.name || 'Unknown User'}
                                     {getGenderIcon(trip.creator?.gender) && (
-                                        <span className="text-gray-500 dark:text-gray-400" title={formatGender(trip.creator?.gender) || ''}>
+                                        <span className="text-gray-400 text-xs" title={formatGender(trip.creator?.gender) || ''}>
                                             {getGenderIcon(trip.creator?.gender)}
                                         </span>
                                     )}
@@ -365,11 +365,11 @@ export default function TripCard({ trip }: TripCardProps) {
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center space-x-4 text-sm text-gray-400">
                             {/* Squad Size */}
                             {trip.currentSquadSize !== undefined && (
                                 <div className="flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="w-4 h-4 mr-1 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                                     </svg>
                                     {trip.currentSquadSize}/{trip.maxSquadSize}
@@ -378,7 +378,7 @@ export default function TripCard({ trip }: TripCardProps) {
 
                             {/* Likes */}
                             <div className="flex items-center">
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className={`w-4 h-4 mr-1 ${liked ? 'text-red-500' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         fillRule="evenodd"
                                         d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"

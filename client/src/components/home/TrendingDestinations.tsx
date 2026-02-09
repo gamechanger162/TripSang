@@ -81,20 +81,26 @@ export default function TrendingDestinations() {
     const marqueeItems = [...displayItems, ...displayItems, ...displayItems].slice(0, 15);
 
     return (
-        <section className="py-16 bg-black border-y border-white/5 relative z-10 overflow-hidden">
-            <div className="text-center mb-10">
-                <h2 className="text-4xl font-bold text-white mb-6">Discover Popular Destinations</h2>
-                <p className="text-gray-400 mb-8">People don't just travel. They tell stories.</p>
+        <section className="py-16 bg-[#0a0a0a] border-y border-white/5 relative z-10 overflow-hidden">
+            {/* Premium Background */}
+            <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-orange-500/3 rounded-full blur-[120px] pointer-events-none" />
 
-                {/* Category Filters */}
+            <div className="text-center mb-10 relative z-10">
+                <span className="premium-badge mb-4">Explore</span>
+                <h2 className="text-4xl font-bold text-white mt-4 mb-6">Discover Popular <span className="text-premium-gold">Destinations</span></h2>
+                <p className="text-gray-400 mb-8 font-light">People don't just travel. They tell stories.</p>
+
+                {/* Category Filters with premium styling */}
                 <div className="flex flex-wrap justify-center gap-4 mb-8">
                     {['All', 'Chill Places', 'Adventure', 'Solo-Friendly'].map((cat) => (
                         <button
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
                             className={`px-6 py-2 rounded-full border transition-all duration-300 ${activeCategory === cat
-                                ? 'bg-primary-600 border-primary-600 text-white shadow-lg scale-105'
-                                : 'bg-transparent border-white/20 text-gray-400 hover:border-white/50 hover:text-white'
+                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                                : 'bg-transparent border-white/10 text-gray-400 hover:border-amber-500/30 hover:text-amber-300'
                                 }`}
                         >
                             {cat}
@@ -124,7 +130,10 @@ export default function TrendingDestinations() {
                             {/* Content Overlay */}
                             <div className="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-primary-400">📍</span>
+                                    <svg className="w-5 h-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
                                     <h4 className="text-2xl font-bold text-white font-display shadow-black drop-shadow-md">{item.name}</h4>
                                 </div>
 

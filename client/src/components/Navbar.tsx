@@ -194,14 +194,14 @@ export default function Navbar() {
         }
     };
 
-    // Styling
+    // Futuristic styling
     const navBackground = scrolled || !isHomePage
-        ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:border-gray-800'
-        : 'bg-transparent';
+        ? 'bg-black/80 backdrop-blur-xl border-b border-cyan-500/20 shadow-[0_0_20px_rgba(0,255,255,0.1)]'
+        : 'bg-black/30 backdrop-blur-md border-b border-white/5';
     const linkColor = scrolled || !isHomePage
-        ? 'text-gray-700 dark:text-gray-200 hover:text-primary-600'
+        ? 'text-gray-200 hover:text-cyan-400 transition-colors'
         : 'text-gray-200 hover:text-white';
-    const menuIconColor = scrolled || !isHomePage ? 'text-gray-700 dark:text-gray-200' : 'text-white';
+    const menuIconColor = scrolled || !isHomePage ? 'text-cyan-400' : 'text-white';
 
     // Hide navbar on /app routes (standalone chat app)
     if (isAppRoute) {
@@ -209,13 +209,16 @@ export default function Navbar() {
     }
 
     return (
-        <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${navBackground}`}>
+        <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${navBackground}`}>
+            {/* Futuristic top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
+                    {/* Logo with glow */}
                     <div className="flex-shrink-0 flex items-center -ml-2">
-                        <Link href="/" className="flex items-center gap-2">
-                            <Image src="/logo-new.png" alt="Tripसंग Logo" width={140} height={45} className="object-contain" />
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <Image src="/logo-new.png" alt="Tripसंग Logo" width={140} height={45} className="object-contain drop-shadow-[0_0_10px_rgba(0,255,255,0.3)] group-hover:drop-shadow-[0_0_15px_rgba(0,255,255,0.5)] transition-all" />
                         </Link>
                     </div>
 

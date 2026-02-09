@@ -136,86 +136,105 @@ function SearchPageContent() {
     };
 
     return (
-        <ExcitingBackground variant="dashboard" className="min-h-screen">
-            <div className="min-h-screen bg-gradient-to-b from-transparent to-gray-900/10">
+        <div className="min-h-screen relative bg-[#001428]">
+            {/* Background Layers */}
+            <div
+                className="fixed inset-0 z-0"
+                style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}
+            />
+            <div
+                className="fixed inset-0 z-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"
+            />
+
+            {/* Content Wrapper */}
+            <div className="relative z-10">
                 {/* Header */}
-                <div className="bg-white dark:bg-dark-800 shadow-sm">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="backdrop-blur-xl border-b border-white/10 md:sticky md:top-0 z-50 bg-[#001428]/95">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                        <div className="flex flex-col md:flex-row md:items-center gap-6">
                             {/* Search Summary */}
                             <div className="flex-1">
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <h1 className="text-2xl font-bold text-white drop-shadow-[0_0_15px_rgba(0,255,255,0.3)]">
                                     {startPoint || endPoint
                                         ? `${startPoint || 'Any'} → ${endPoint || 'Any'}`
-                                        : 'All Trips'}
+                                        : 'Explore Trips'}
                                 </h1>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    {loading ? 'Loading...' : `${pagination.totalTrips} trips found`}
+                                <p className="text-sm text-cyan-400/80 mt-1">
+                                    {loading ? 'Scanning universe...' : `${pagination.totalTrips} adventures found`}
                                 </p>
                             </div>
 
                             {/* Destination Search Bar */}
-                            <div className="flex flex-wrap md:flex-nowrap items-end gap-2 flex-1 max-w-2xl">
+                            <div className="flex flex-wrap md:flex-nowrap items-end gap-3 flex-1 max-w-2xl bg-white/5 p-2 rounded-xl border border-white/10">
                                 <div className="flex-1 min-w-[140px]">
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">From</label>
+                                    <label className="block text-xs font-medium text-cyan-300 mb-1 ml-1">From</label>
                                     <CityAutocomplete
                                         id="search-from"
                                         name="searchFrom"
                                         value={searchFrom}
                                         onChange={setSearchFrom}
-                                        placeholder="Any city"
+                                        placeholder="Origin"
                                         cities={INDIAN_CITIES}
-                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 text-sm border border-white/10 rounded-lg bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                     />
                                 </div>
                                 <div className="flex-1 min-w-[140px]">
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Destination</label>
+                                    <label className="block text-xs font-medium text-cyan-300 mb-1 ml-1">Destination</label>
                                     <CityAutocomplete
                                         id="search-to"
                                         name="searchTo"
                                         value={searchTo}
                                         onChange={setSearchTo}
-                                        placeholder="Any city"
+                                        placeholder="Anywhere"
                                         cities={INDIAN_CITIES}
-                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 text-sm border border-white/10 rounded-lg bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50"
                                     />
                                 </div>
                                 <button
                                     onClick={handleDestinationSearch}
-                                    className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                                    className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-bold transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)] whitespace-nowrap"
                                 >
                                     Search
                                 </button>
                             </div>
 
                             {/* Search by Code */}
-                            <div className="flex items-center gap-2">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={tripCode}
-                                        onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
-                                        placeholder="Trip Code"
-                                        maxLength={6}
-                                        className="w-28 px-3 py-2 text-sm font-mono uppercase tracking-wider border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
-                                    />
+                            <div className="flex-none md:w-auto w-full">
+                                <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 hover:border-purple-500/30 transition-colors group/code w-full">
+                                    <div className="relative flex-1 md:flex-none">
+                                        <input
+                                            type="text"
+                                            value={tripCode}
+                                            onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
+                                            placeholder="TRIP CODE"
+                                            maxLength={6}
+                                            className="w-full md:w-32 px-3 py-2 text-sm font-mono font-bold uppercase tracking-widest border border-transparent rounded-lg bg-black/20 text-white placeholder-gray-500 focus:outline-none focus:bg-black/40 focus:ring-1 focus:ring-purple-500/50 transition-all text-center"
+                                            onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={searchByCode}
+                                        disabled={searchingCode || tripCode.length !== 6}
+                                        className="w-9 h-9 flex-none flex items-center justify-center bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-all shadow-[0_0_10px_rgba(147,51,234,0.3)] hover:shadow-[0_0_15px_rgba(147,51,234,0.5)] active:scale-95"
+                                        title="Join Trip"
+                                    >
+                                        {searchingCode ? (
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                            </svg>
+                                        )}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={searchByCode}
-                                    disabled={searchingCode || tripCode.length !== 6}
-                                    className="px-3 py-2 bg-secondary-600 hover:bg-secondary-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors"
-                                >
-                                    {searchingCode ? '...' : 'Go'}
-                                </button>
                             </div>
 
                             {/* Filter Button */}
                             <button
                                 onClick={() => setShowFilters(true)}
-                                className="btn-primary flex items-center"
+                                className="flex items-center px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/10 transition-all backdrop-blur-md"
                             >
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -225,7 +244,7 @@ function SearchPageContent() {
                                 </svg>
                                 Filters
                                 {filters.tags.length > 0 && (
-                                    <span className="ml-2 w-6 h-6 bg-secondary-500 text-white rounded-full text-xs flex items-center justify-center">
+                                    <span className="ml-2 w-5 h-5 bg-cyan-500 text-black font-bold rounded-full text-[10px] flex items-center justify-center">
                                         {filters.tags.length}
                                     </span>
                                 )}
@@ -238,7 +257,7 @@ function SearchPageContent() {
                                 {filters.tags.map((tag) => (
                                     <span
                                         key={tag}
-                                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-cyan-900/30 text-cyan-200 border border-cyan-500/30"
                                     >
                                         {tag}
                                         <button
@@ -248,9 +267,9 @@ function SearchPageContent() {
                                                     tags: filters.tags.filter((t) => t !== tag),
                                                 });
                                             }}
-                                            className="ml-2 hover:text-primary-900"
+                                            className="ml-2 hover:text-white"
                                         >
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path
                                                     fillRule="evenodd"
                                                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -261,13 +280,13 @@ function SearchPageContent() {
                                     </span>
                                 ))}
                                 {filters.difficulty && (
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-secondary-100 text-secondary-700 capitalize">
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-purple-900/30 text-purple-200 border border-purple-500/30 capitalize">
                                         {filters.difficulty}
                                         <button
                                             onClick={() => setFilters({ ...filters, difficulty: undefined })}
-                                            className="ml-2 hover:text-secondary-900"
+                                            className="ml-2 hover:text-white"
                                         >
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path
                                                     fillRule="evenodd"
                                                     d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -287,38 +306,24 @@ function SearchPageContent() {
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[...Array(6)].map((_, i) => (
-                                <div key={i} className="card animate-pulse">
-                                    <div className="h-48 bg-gray-200 dark:bg-dark-700 rounded-lg mb-4" />
+                                <div key={i} className="card animate-pulse bg-white/5 border border-white/10 p-4">
+                                    <div className="h-48 bg-white/10 rounded-lg mb-4" />
                                     <div className="space-y-3">
-                                        <div className="h-4 bg-gray-200 dark:bg-dark-700 rounded w-3/4" />
-                                        <div className="h-4 bg-gray-200 dark:bg-dark-700 rounded w-1/2" />
-                                        <div className="h-4 bg-gray-200 dark:bg-dark-700 rounded w-2/3" />
+                                        <div className="h-4 bg-white/10 rounded w-3/4" />
+                                        <div className="h-4 bg-white/10 rounded w-1/2" />
+                                        <div className="h-4 bg-white/10 rounded w-2/3" />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : trips.length === 0 ? (
-                        <div className="text-center py-20">
-                            <svg
-                                className="w-24 h-24 mx-auto text-gray-400 mb-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
+                        <div className="text-center py-20 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
+                            <svg className="w-24 h-24 mx-auto text-white/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                No trips found
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                Try adjusting your filters or search criteria
-                            </p>
-                            <button onClick={() => setShowFilters(true)} className="btn-primary">
+                            <h3 className="text-xl font-semibold text-white mb-2">No trips found</h3>
+                            <p className="text-gray-400 mb-6">Try adjusting your filters or search criteria</p>
+                            <button onClick={() => setShowFilters(true)} className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors">
                                 Adjust Filters
                             </button>
                         </div>
@@ -364,7 +369,6 @@ function SearchPageContent() {
                     )}
                 </div>
 
-                {/* Filter Modal */}
                 <FilterModal
                     isOpen={showFilters}
                     onClose={() => setShowFilters(false)}
@@ -372,7 +376,7 @@ function SearchPageContent() {
                     initialFilters={filters}
                 />
             </div>
-        </ExcitingBackground>
+        </div>
     );
 }
 

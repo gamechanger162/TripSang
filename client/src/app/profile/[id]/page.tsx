@@ -198,19 +198,19 @@ export default function UserProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div className="min-h-screen pt-20 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
+                <div className="animate-spin rounded-full h-12 w-12" style={{ border: '3px solid rgba(0,255,255,0.2)', borderTopColor: '#00ffff' }}></div>
             </div>
         );
     }
 
     if (error || !profile) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <div className="min-h-screen pt-20 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Profile Not Found</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'User profile could not be loaded'}</p>
-                    <Link href="/search" className="btn-primary">
+                    <h2 className="text-2xl font-bold text-white mb-4" style={{ textShadow: '0 0 20px rgba(0,255,255,0.3)' }}>Profile Not Found</h2>
+                    <p className="text-gray-400 mb-6">{error || 'User profile could not be loaded'}</p>
+                    <Link href="/search" className="px-6 py-3 rounded-full font-medium" style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.4)', color: '#00ffff' }}>
                         Explore Trips
                     </Link>
                 </div>
@@ -221,19 +221,19 @@ export default function UserProfilePage() {
     const isOwnProfile = session?.user?.id === userId;
 
     return (
-        <div className="min-h-screen pt-20 bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen pt-20" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Profile Header */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-6">
+                <div className="rounded-2xl shadow-lg overflow-hidden mb-6" style={{ background: 'rgba(0,30,50,0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,255,255,0.15)' }}>
                     {/* Cover Image */}
-                    <div className="h-32 bg-gradient-to-r from-primary-500 via-secondary-500 to-primary-600"></div>
+                    <div className="h-32" style={{ background: 'linear-gradient(135deg, rgba(0,255,255,0.3) 0%, rgba(139,92,246,0.3) 50%, rgba(0,255,255,0.2) 100%)' }}></div>
 
                     {/* Profile Info */}
                     <div className="px-6 pb-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-16 sm:-mt-12">
                             {/* Avatar */}
                             <div className="relative">
-                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center shadow-xl">
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-xl" style={{ border: '4px solid rgba(0,255,255,0.5)', background: 'linear-gradient(135deg, #0891b2, #8b5cf6)', boxShadow: '0 0 30px rgba(0,255,255,0.4)' }}>
                                     {profile.profilePicture ? (
                                         <img
                                             src={profile.profilePicture}
@@ -250,7 +250,7 @@ export default function UserProfilePage() {
 
                             {/* Name & Info */}
                             <div className="flex-1">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2" style={{ textShadow: '0 0 20px rgba(0,255,255,0.4)' }}>
                                     {profile.name}
                                     <div className="flex items-center gap-1">
                                         {profile.isMobileVerified && (
@@ -272,7 +272,7 @@ export default function UserProfilePage() {
                                     </div>
                                 </h1>
                                 {profile.location && (profile.location.city || profile.location.country) && (
-                                    <p className="text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
+                                    <p className="flex items-center gap-1 mt-1" style={{ color: 'rgba(0,255,255,0.7)' }}>
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -289,7 +289,8 @@ export default function UserProfilePage() {
                                             .map((badge) => (
                                                 <span
                                                     key={badge}
-                                                    className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-primary-100 to-secondary-100 text-primary-700 dark:from-primary-900/30 dark:to-secondary-900/30 dark:text-primary-400 rounded-full border border-primary-200 dark:border-primary-800"
+                                                    className="px-3 py-1 text-xs font-semibold rounded-full"
+                                                    style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', color: '#00ffff' }}
                                                 >
                                                     {badge}
                                                 </span>
@@ -304,13 +305,15 @@ export default function UserProfilePage() {
                                     <>
                                         <Link
                                             href="/friends"
-                                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
+                                            className="px-4 py-2 rounded-lg transition-all text-sm font-medium"
+                                            style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', color: '#00ffff' }}
                                         >
                                             Friends ({friendsCount})
                                         </Link>
                                         <Link
                                             href="/profile/edit"
-                                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
+                                            className="px-4 py-2 rounded-lg transition-all text-sm font-medium"
+                                            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa' }}
                                         >
                                             Edit Profile
                                         </Link>
@@ -336,7 +339,8 @@ export default function UserProfilePage() {
                                         </button>
                                         <Link
                                             href={`/app?userId=${userId}`}
-                                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium"
+                                            className="px-4 py-2 rounded-lg transition-all text-sm font-medium"
+                                            style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', color: '#00ffff' }}
                                         >
                                             Message
                                         </Link>
@@ -355,47 +359,47 @@ export default function UserProfilePage() {
                         {/* Bio */}
                         {profile.bio && (
                             <div className="mt-6">
-                                <p className="text-gray-700 dark:text-gray-300">
+                                <p className="text-gray-300">
                                     {profile.bio}
                                 </p>
                             </div>
                         )}
 
                         {/* Stats */}
-                        <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div className="grid grid-cols-4 gap-4 mt-6 pt-6" style={{ borderTop: '1px solid rgba(0,255,255,0.15)' }}>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <div className="text-2xl font-bold" style={{ color: '#00ffff', textShadow: '0 0 15px rgba(0,255,255,0.4)' }}>
                                     {profile.stats?.tripsCreated || 0}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Trips Created</div>
+                                <div className="text-sm text-gray-400">Trips Created</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <div className="text-2xl font-bold" style={{ color: '#00ffff', textShadow: '0 0 15px rgba(0,255,255,0.4)' }}>
                                     {profile.stats?.tripsJoined || 0}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Trips Joined</div>
+                                <div className="text-sm text-gray-400">Trips Joined</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <div className="text-2xl font-bold" style={{ color: '#00ffff', textShadow: '0 0 15px rgba(0,255,255,0.4)' }}>
                                     {friendsCount}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Friends</div>
+                                <div className="text-sm text-gray-400">Friends</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <div className="text-2xl font-bold" style={{ color: '#a78bfa', textShadow: '0 0 15px rgba(139,92,246,0.4)' }}>
                                     {new Date(profile.createdAt).getFullYear()}
                                 </div>
-                                <div className="text-sm text-gray-600 dark:text-gray-400">Member Since</div>
+                                <div className="text-sm text-gray-400">Member Since</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Reviews Section */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                <div className="rounded-2xl shadow-lg p-6" style={{ background: 'rgba(0,30,50,0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,255,255,0.15)' }}>
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ textShadow: '0 0 15px rgba(0,255,255,0.3)' }}>
+                            <svg className="w-6 h-6" style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.5))' }} fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
                             Traveler Reviews
@@ -409,7 +413,7 @@ export default function UserProfilePage() {
                 <div className="mt-6 text-center">
                     <button
                         onClick={() => router.back()}
-                        className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                        className="font-medium" style={{ color: '#00ffff' }}
                     >
                         ← Back
                     </button>

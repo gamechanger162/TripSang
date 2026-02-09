@@ -15,6 +15,8 @@ const CommunityDetailsModal = dynamic(() => import('@/components/CommunityDetail
     ssr: false
 });
 
+import CommunityMessageBubble from '@/components/chat/CommunityMessageBubble';
+
 interface Message {
     _id: string;
     sender: string;
@@ -164,7 +166,10 @@ export default function CommunityChatPage() {
 
             if (response.success && response.message) {
                 setNewMessage('');
-                setMessages(prev => [...prev, response.message]);
+                setMessages(prev => {
+                    if (prev.some(m => m._id === response.message._id)) return prev;
+                    return [...prev, response.message];
+                });
             }
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -188,7 +193,10 @@ export default function CommunityChatPage() {
                 });
 
                 if (response.success && response.message) {
-                    setMessages(prev => [...prev, response.message]);
+                    setMessages(prev => {
+                        if (prev.some(m => m._id === response.message._id)) return prev;
+                        return [...prev, response.message];
+                    });
                 }
             }
         } catch (error) {
@@ -261,33 +269,14 @@ export default function CommunityChatPage() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => {
-                    const isOwn = msg.sender === currentUserId;
-                    return (
-                        <div key={msg._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[75%] ${isOwn ? 'order-2' : ''}`}>
-                                {!isOwn && (
-                                    <p className="text-xs text-gray-400 mb-1">{msg.senderName}</p>
-                                )}
-                                <div className={`rounded-2xl px-4 py-2 ${isOwn ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white' : 'bg-white/10 text-white'}`}>
-                                    {msg.type === 'image' && msg.imageUrl ? (
-                                        <div
-                                            className="cursor-pointer hover:opacity-90 transition-opacity"
-                                            onClick={() => handleImageClick(msg.imageUrl!)}
-                                        >
-                                            <img src={msg.imageUrl} alt="Shared" className="max-w-full rounded-lg" />
-                                        </div>
-                                    ) : (
-                                        <p>{msg.message}</p>
-                                    )}
-                                </div>
-                                <p className="text-[10px] text-gray-500 mt-1">
-                                    {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                                </p>
-                            </div>
-                        </div>
-                    );
-                })}
+                {messages.map((msg) => (
+                    <CommunityMessageBubble
+                        key={msg._id}
+                        message={msg}
+                        isOwn={msg.sender === currentUserId}
+                        onImageClick={handleImageClick}
+                    />
+                ))}
                 <div ref={messagesEndRef} />
             </div>
 

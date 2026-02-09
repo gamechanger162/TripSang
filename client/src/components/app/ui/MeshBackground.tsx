@@ -63,6 +63,7 @@ export default function MeshBackground() {
                     border-radius: 50%;
                     filter: blur(80px);
                     opacity: 0.6;
+                    will-change: transform;
                 }
                 
                 .orb-teal {
