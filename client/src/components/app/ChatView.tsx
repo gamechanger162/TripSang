@@ -8,8 +8,8 @@ import { messageAPI, uploadAPI, communityAPI } from '@/lib/api';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import {
-    ArrowLeft,
     MoreVertical,
+    ArrowLeft,
     Pin,
     Image as ImageIcon,
     Send,
@@ -19,7 +19,8 @@ import {
     VolumeX,
     User,
     Ban,
-    UserMinus
+    UserMinus,
+    Trash2
 } from 'lucide-react';
 import { socketManager } from '@/lib/socketManager';
 import type { Socket } from 'socket.io-client';
@@ -219,148 +220,128 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     }, [conversationId, conversationType]); // Only fetch when conversation changes
 
     // Socket connection - use singleton manager for better performance
+    // Socket Event Handlers
+    const handleReceiveDM = useCallback((message: any) => {
+        if (message.conversationId === conversationId) {
+            setMessages(prev => {
+                if (prev.some(m => m._id === message._id)) return prev;
+                const currentUserId = session?.user?.id;
+                const msgSenderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
+                if (currentUserId && String(msgSenderId) === String(currentUserId)) {
+                    const pendingIndex = prev.findIndex(m =>
+                        m.isPending &&
+                        m.type === message.type &&
+                        (m.type === 'text' ? m.message === message.message : m.imageUrl === message.imageUrl)
+                    );
+                    if (pendingIndex !== -1) {
+                        const newMessages = [...prev];
+                        newMessages[pendingIndex] = message;
+                        return newMessages;
+                    }
+                }
+                return [...prev, message];
+            });
+            virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+        }
+    }, [conversationId, session?.user?.id]);
+
+    const handleReceiveMessage = useCallback((message: any) => {
+        let formattedMessage = { ...message };
+        if (message.senderId && typeof message.senderId === 'object') {
+            formattedMessage.senderProfilePicture = message.senderId.profilePicture;
+            formattedMessage.senderName = message.senderId.name;
+            formattedMessage.senderId = message.senderId._id;
+        }
+
+        setMessages(prev => {
+            if (prev.some(m => m._id === formattedMessage._id)) return prev;
+            const currentUserId = session?.user?.id;
+            if (currentUserId && formattedMessage.senderId === currentUserId) {
+                const pendingIndex = prev.findIndex(m =>
+                    m.isPending &&
+                    m.type === formattedMessage.type &&
+                    (m.type === 'text' ? m.message === formattedMessage.message : m.imageUrl === formattedMessage.imageUrl)
+                );
+                if (pendingIndex !== -1) {
+                    const newMessages = [...prev];
+                    newMessages[pendingIndex] = formattedMessage;
+                    return newMessages;
+                }
+            }
+            return [...prev, formattedMessage];
+        });
+        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+    }, [session?.user?.id]);
+
+    const handleTyping = useCallback(({ userId, userName }: { userId: string; userName: string }) => {
+        setTypingUsers(prev => prev.includes(userName) ? prev : [...prev, userName]);
+        setTimeout(() => {
+            setTypingUsers(prev => prev.filter(u => u !== userName));
+        }, 3000);
+    }, []);
+
+    const handlePinnedMessage = useCallback((data: any) => {
+        setPinnedMessage({
+            _id: data.messageId,
+            senderName: data.senderName,
+            message: data.message,
+            type: data.type,
+            imageUrl: data.imageUrl,
+            timestamp: new Date().toISOString(),
+            senderId: '',
+            pinnedBy: data.pinnedById
+        });
+    }, []);
+
+    const handleMessageUnpinned = useCallback(() => setPinnedMessage(null), []);
+
+    const handleSocketError = useCallback((error: { message: string }) => {
+        console.error('Socket error:', error);
+        toast.error(error.message || 'An error occurred');
+        setMessages(prev => prev.filter(m => !m.isPending));
+        setSending(false);
+    }, []);
+
+    const handleMessageDeleted = useCallback(({ messageId }: { messageId: string }) => {
+        setMessages(prev => prev.filter(m => m._id !== messageId));
+        if (pinnedMessage?._id === messageId) {
+            setPinnedMessage(null);
+        }
+    }, [pinnedMessage]);
+
+    // Socket connection and listeners
     useEffect(() => {
         const token = session?.user?.accessToken || localStorage.getItem('token');
-        // Connect to socket (reuses existing connection if already connected)
         const socket = socketManager.connect(socketUrl, token || undefined);
         if (!socket) return;
 
         socketRef.current = socket;
-
-        // Join appropriate room based on conversation type
-        const roomType = conversationType === 'dm' ? 'dm' :
-            conversationType === 'community' ? 'community' : 'squad';
+        const roomType = conversationType === 'dm' ? 'dm' : conversationType === 'community' ? 'community' : 'squad';
         socketManager.joinRoom(conversationId, roomType);
 
-        // Handler for DM messages
-        // Handler for DM messages
-        const handleReceiveDM = (message: any) => {
-            if (message.conversationId === conversationId) {
-                setMessages(prev => {
-                    // 1. Check for exact duplicate by ID
-                    if (prev.some(m => m._id === message._id)) return prev;
-
-                    // 2. If it's my message, try to find and replace the pending/optimistic version
-                    // In DM, optimistic messages have senderId == session.user.id
-                    // Incoming message usually has sender field as ID string
-                    const currentUserId = session?.user?.id;
-
-                    // Normalize sender ID for comparison
-                    const msgSenderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
-
-                    if (currentUserId && String(msgSenderId) === String(currentUserId)) {
-                        const pendingIndex = prev.findIndex(m =>
-                            m.isPending &&
-                            m.type === message.type &&
-                            // For text: match content. For image: match URL if available
-                            (m.type === 'text' ? m.message === message.message : m.imageUrl === message.imageUrl)
-                        );
-
-                        if (pendingIndex !== -1) {
-                            const newMessages = [...prev];
-                            newMessages[pendingIndex] = message;
-                            return newMessages;
-                        }
-                    }
-
-                    // 3. New message, append it
-                    return [...prev, message];
-                });
-
-                // Scroll if we're near bottom or if it's our message
-                virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-            }
-        };
-
-        // Handler for squad/trip messages
-        const handleReceiveMessage = (message: any) => {
-            let formattedMessage = { ...message };
-            if (message.senderId && typeof message.senderId === 'object') {
-                formattedMessage.senderProfilePicture = message.senderId.profilePicture;
-                formattedMessage.senderName = message.senderId.name;
-                formattedMessage.senderId = message.senderId._id;
-            }
-
-            setMessages(prev => {
-                // 1. Check for exact duplicate by ID
-                if (prev.some(m => m._id === formattedMessage._id)) return prev;
-
-                // 2. If it's my message, try to find and replace the pending/optimistic version
-                const currentUserId = session?.user?.id;
-                if (currentUserId && formattedMessage.senderId === currentUserId) {
-                    const pendingIndex = prev.findIndex(m =>
-                        m.isPending &&
-                        m.type === formattedMessage.type &&
-                        // For text: match content. For image: match URL (or just type if we want to be loose, but URL is safer)
-                        (m.type === 'text' ? m.message === formattedMessage.message : m.imageUrl === formattedMessage.imageUrl)
-                    );
-
-                    if (pendingIndex !== -1) {
-                        const newMessages = [...prev];
-                        newMessages[pendingIndex] = formattedMessage;
-                        return newMessages;
-                    }
-                }
-
-                // 3. New message, append it
-                return [...prev, formattedMessage];
-            });
-            virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-        };
-
-        const handleTyping = ({ userId, userName }: { userId: string; userName: string }) => {
-            setTypingUsers(prev =>
-                prev.includes(userName) ? prev : [...prev, userName]
-            );
-            setTimeout(() => {
-                setTypingUsers(prev => prev.filter(u => u !== userName));
-            }, 3000);
-        };
-
-        const handlePinnedMessage = (data: any) => {
-            // data from socket event: { messageId, message, senderName, type, imageUrl, pinnedBy, pinnedById }
-            // We need to construct a Message-like object
-            setPinnedMessage({
-                _id: data.messageId,
-                senderName: data.senderName,
-                message: data.message,
-                type: data.type,
-                imageUrl: data.imageUrl,
-                timestamp: new Date().toISOString(), // Approximate
-                senderId: '', // Not needed for banner
-                pinnedBy: data.pinnedById
-            });
-        };
-        const handleMessageUnpinned = () => setPinnedMessage(null);
-
-        const handleSocketError = (error: { message: string }) => {
-            console.error('Socket error:', error);
-            toast.error(error.message || 'An error occurred');
-
-            // If it was a message send error, remove the optimistic message
-            setMessages(prev => prev.filter(m => !m.isPending));
-            setSending(false);
-        };
-
-        // Add listeners
         socketManager.on('receive_dm', handleReceiveDM);
         socketManager.on('receive_message', handleReceiveMessage);
         socketManager.on('typing_squad', handleTyping);
         socketManager.on('message_pinned', handlePinnedMessage);
         socketManager.on('message_unpinned', handleMessageUnpinned);
+        socketManager.on('message_deleted', handleMessageDeleted);
         socketManager.on('error', handleSocketError);
 
         return () => {
-            // Leave room but DON'T disconnect - other components may use the socket
             socketManager.leaveRoom(conversationId, roomType);
             socketManager.off('receive_dm', handleReceiveDM);
             socketManager.off('receive_message', handleReceiveMessage);
             socketManager.off('typing_squad', handleTyping);
             socketManager.off('message_pinned', handlePinnedMessage);
             socketManager.off('message_unpinned', handleMessageUnpinned);
+            socketManager.off('message_deleted', handleMessageDeleted);
             socketManager.off('error', handleSocketError);
         };
-    }, [socketUrl, conversationId, conversationType, session?.user?.id]);
+    }, [
+        socketUrl, conversationId, conversationType, session?.user?.id,
+        handleReceiveDM, handleReceiveMessage, handleTyping,
+        handlePinnedMessage, handleMessageUnpinned, handleMessageDeleted, handleSocketError
+    ]);
 
     // Auto-scroll to bottom when messages load initially
     useEffect(() => {
@@ -579,6 +560,42 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         }
     };
 
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!confirm('Are you sure you want to delete this message?')) return;
+
+        try {
+            if (conversationType === 'squad') {
+                socketRef.current?.emit('delete_message', {
+                    tripId: conversationId,
+                    messageId
+                });
+            } else if (conversationType === 'community') {
+                const token = session?.user?.accessToken || localStorage.getItem('token');
+                const response = await fetch(`${apiUrl}/api/communities/${conversationId}/messages/${messageId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to delete');
+                // Optimistic update handled by socket usually, but for REST we can remove locally too
+                setMessages(prev => prev.filter(m => m._id !== messageId));
+            } else {
+                // DM
+                const token = session?.user?.accessToken || localStorage.getItem('token');
+                const response = await fetch(`${apiUrl}/api/messages/${messageId}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to delete');
+                // DM uses socket for deletion broadcast, so wait for that or remove optimistically
+                setMessages(prev => prev.filter(m => m._id !== messageId));
+            }
+            toast.success('Message deleted');
+        } catch (error) {
+            console.error('Delete failed:', error);
+            toast.error('Failed to delete message');
+        }
+    };
+
     // Format timestamp
     const formatTime = (timestamp: string) => {
         return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -666,8 +683,11 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         }
                         setPinnedMessage(msg);
                     }}
+                    onDelete={() => handleDeleteMessage(msg._id)}
                     formatTime={formatTime}
                     onImageClick={setSelectedImage}
+                    conversationType={conversationType}
+                    isMobile={isMobile}
                 />
             </div>
         );
@@ -2000,22 +2020,28 @@ function MessageBubble({
     groupPosition,
     onReply,
     onPin,
+    onDelete,
     formatTime,
     onImageClick,
     isSelectionMode,
     isSelected,
-    onSelect
+    onSelect,
+    conversationType,
+    isMobile
 }: {
     message: Message;
     isOwn: boolean;
     groupPosition: 'single' | 'top' | 'middle' | 'bottom';
     onReply: () => void;
     onPin: () => void;
+    onDelete: () => void;
     formatTime: (ts: string) => string;
     onImageClick?: (url: string) => void;
     isSelectionMode?: boolean;
     isSelected?: boolean;
     onSelect?: () => void;
+    conversationType?: string;
+    isMobile?: boolean;
 }) {
     const x = useMotionValue(0);
     const replyOpacity = useTransform(x, [-100, -50], [1, 0]);
@@ -2135,9 +2161,9 @@ function MessageBubble({
             )}
 
             <div className="relative flex items-center max-w-[75%]">
-                {/* More Button (Visible on Hover/Focus) */}
+                {/* More Button (Visible on Hover/Focus or always on Mobile) */}
                 <button
-                    className={`p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 ${isOwn ? 'mr-2 order-first' : 'ml-2 order-last'}`}
+                    className={`p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'} ${isOwn ? 'mr-2 order-first' : 'ml-2 order-last'}`}
                     onClick={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         setMenuPosition({ x: rect.left, y: rect.bottom });
@@ -2231,16 +2257,32 @@ function MessageBubble({
                             >
                                 <Reply size={16} className="text-cyan-400" /> Reply
                             </button>
-                            <button
-                                className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-500/10 flex items-center gap-3 transition-colors"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onPin();
-                                    setShowActions(false);
-                                }}
-                            >
-                                <Pin size={16} className="text-purple-400" /> Pin Message
-                            </button>
+
+                            {conversationType === 'squad' && (
+                                <button
+                                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-500/10 flex items-center gap-3 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onPin();
+                                        setShowActions(false);
+                                    }}
+                                >
+                                    <Pin size={16} className="text-purple-400" /> Pin Message
+                                </button>
+                            )}
+
+                            {isOwn && (
+                                <button
+                                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-red-500/10 flex items-center gap-3 transition-colors border-t border-white/5"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete();
+                                        setShowActions(false);
+                                    }}
+                                >
+                                    <Trash2 size={16} className="text-red-400" /> Delete
+                                </button>
+                            )}
                         </motion.div>
                     </>
                 )}

@@ -28,10 +28,10 @@ const CallToAction = dynamic(
 
 // Loading skeleton for lazy components
 const SectionLoader = () => (
-    <div className="w-full py-16 flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-            <div className="h-8 w-48 bg-gray-700 rounded"></div>
-            <div className="h-4 w-64 bg-gray-800 rounded"></div>
+    <div className="w-full py-20 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-48 bg-zinc-800/50 rounded-lg animate-pulse"></div>
+            <div className="h-4 w-64 bg-zinc-800/30 rounded-lg animate-pulse"></div>
         </div>
     </div>
 );
@@ -41,7 +41,7 @@ export default function Home() {
     const [searchingCode, setSearchingCode] = useState(false);
 
     return (
-        <main className="bg-black min-h-screen overflow-x-hidden">
+        <main className="bg-zinc-950 min-h-screen overflow-x-hidden">
             {/* Hero Section with Search - loads immediately */}
             <HeroSection
                 tripCode={tripCode}
@@ -66,7 +66,9 @@ export default function Home() {
                 <VerifiedPartners />
             </Suspense>
 
-
+            <Suspense fallback={<SectionLoader />}>
+                <MomentsShowcase />
+            </Suspense>
 
             <Suspense fallback={<SectionLoader />}>
                 <CallToAction />

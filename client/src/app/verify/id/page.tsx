@@ -189,7 +189,7 @@ export default function IDVerificationPage() {
                         <div className="text-3xl mr-4">⏳</div>
                         <div>
                             <h3 className="font-bold text-yellow-800 dark:text-yellow-200">Under Approval</h3>
-                            <p className="text-sm text-yellow-700 dark:text-yellow-300">Your verification request is being reviewed. You'll receive a notification once approved.</p>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300">Your verification request is being reviewed. You&apos;ll receive a notification once approved.</p>
                         </div>
                     </div>
                 </div>

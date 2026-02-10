@@ -1,8 +1,21 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ToasterProvider from '@/components/ToasterProvider'
+import { Inter, Outfit } from 'next/font/google'
 
 const siteUrl = 'https://tripsang.com';
+
+const inter = Inter({
+    subsets: ['latin'],
+    variable: '--font-inter',
+    display: 'swap',
+});
+
+const outfit = Outfit({
+    subsets: ['latin'],
+    variable: '--font-outfit',
+    display: 'swap',
+});
 
 export const metadata: Metadata = {
     metadataBase: new URL(siteUrl),
@@ -76,14 +89,14 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en">
+        <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
             <head>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
                 <link rel="apple-touch-icon" href="/icon-192.png" />
                 <link rel="manifest" href="/manifest.json" />
-                <meta name="theme-color" content="#6366f1" />
+                <meta name="theme-color" content="#09090b" />
             </head>
-            <body className="pt-16 pb-16 md:pb-0">
+            <body className="pt-16 pb-16 md:pb-0 bg-dark-950 text-zinc-50 antialiased">
                 {/* JSON-LD Schema for Brand Identity */}
                 <script
                     type="application/ld+json"
@@ -132,4 +145,3 @@ export default function RootLayout({
         </html>
     )
 }
-

@@ -8,9 +8,10 @@ import ReportUserModal from '@/components/ReportUserModal';
 import Link from 'next/link';
 import { userAPI, friendAPI, tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Flag, Shield, Smartphone } from 'lucide-react';
+import { Flag, Shield, Smartphone, MapPin, Star, ArrowLeft, UserPlus, UserCheck, Clock, MessageCircle, Edit3, Users } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
 import { isPremiumUser } from '@/utils/linkify';
+import { motion } from 'framer-motion';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -88,13 +89,12 @@ export default function UserProfilePage() {
     const fetchUpcomingTrips = async () => {
         try {
             setLoadingTrips(true);
-            // Use tripAPI to get user's trips by their ID
             const response = await userAPI.getTrips();
             if (response.success) {
                 const now = new Date();
                 const upcoming = (response.trips || []).filter(
                     (t: any) => new Date(t.startDate) >= now
-                ).slice(0, 5); // Get first 5 upcoming trips
+                ).slice(0, 5);
                 setUpcomingTrips(upcoming);
             }
         } catch (error) {
@@ -183,34 +183,43 @@ export default function UserProfilePage() {
         }
     };
 
+    const getFriendButtonIcon = () => {
+        switch (friendStatus) {
+            case 'friends': return <UserCheck className="w-4 h-4" />;
+            case 'pending_sent': return <Clock className="w-4 h-4" />;
+            case 'pending_received': return <UserPlus className="w-4 h-4" />;
+            default: return <UserPlus className="w-4 h-4" />;
+        }
+    };
+
     const getFriendButtonStyle = () => {
         switch (friendStatus) {
             case 'friends':
-                return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-400';
+                return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20';
             case 'pending_sent':
-                return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+                return 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50';
             case 'pending_received':
-                return 'bg-primary-600 text-white hover:bg-primary-700';
+                return 'bg-teal-500/15 text-teal-400 border-teal-500/20 hover:bg-teal-500/25';
             default:
-                return 'bg-primary-600 text-white hover:bg-primary-700';
+                return 'bg-teal-500/15 text-teal-400 border-teal-500/20 hover:bg-teal-500/25';
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
-                <div className="animate-spin rounded-full h-12 w-12" style={{ border: '3px solid rgba(0,255,255,0.2)', borderTopColor: '#00ffff' }}></div>
+            <div className="min-h-screen bg-zinc-950 pt-20 flex items-center justify-center">
+                <div className="w-10 h-10 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
             </div>
         );
     }
 
     if (error || !profile) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-white mb-4" style={{ textShadow: '0 0 20px rgba(0,255,255,0.3)' }}>Profile Not Found</h2>
-                    <p className="text-gray-400 mb-6">{error || 'User profile could not be loaded'}</p>
-                    <Link href="/search" className="px-6 py-3 rounded-full font-medium" style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.4)', color: '#00ffff' }}>
+            <div className="min-h-screen bg-zinc-950 pt-20 flex items-center justify-center">
+                <div className="text-center glass-card max-w-sm mx-auto">
+                    <h2 className="text-2xl font-bold text-white mb-3 font-display">Profile Not Found</h2>
+                    <p className="text-zinc-500 text-sm mb-6">{error || 'User profile could not be loaded'}</p>
+                    <Link href="/search" className="btn-primary px-6 py-2.5 rounded-xl text-sm inline-block">
                         Explore Trips
                     </Link>
                 </div>
@@ -221,19 +230,32 @@ export default function UserProfilePage() {
     const isOwnProfile = session?.user?.id === userId;
 
     return (
-        <div className="min-h-screen pt-20" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Profile Header */}
-                <div className="rounded-2xl shadow-lg overflow-hidden mb-6" style={{ background: 'rgba(0,30,50,0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,255,255,0.15)' }}>
-                    {/* Cover Image */}
-                    <div className="h-32" style={{ background: 'linear-gradient(135deg, rgba(0,255,255,0.3) 0%, rgba(139,92,246,0.3) 50%, rgba(0,255,255,0.2) 100%)' }}></div>
+        <div className="min-h-screen bg-zinc-950 pt-20 relative">
+            {/* Background mesh */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-[10%] left-[30%] w-[500px] h-[500px] bg-teal-500/[0.04] blur-[120px] rounded-full" />
+                <div className="absolute bottom-[10%] right-[20%] w-[400px] h-[400px] bg-purple-500/[0.03] blur-[100px] rounded-full" />
+            </div>
 
-                    {/* Profile Info */}
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+                {/* Profile Header Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass-card p-0 overflow-hidden mb-6"
+                >
+                    {/* Cover gradient */}
+                    <div className="h-32 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 via-purple-500/15 to-orange-500/10" />
+                        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-5" />
+                    </div>
+
+                    {/* Profile info */}
                     <div className="px-6 pb-6">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-16 sm:-mt-12">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-14">
                             {/* Avatar */}
                             <div className="relative">
-                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-xl" style={{ border: '4px solid rgba(0,255,255,0.5)', background: 'linear-gradient(135deg, #0891b2, #8b5cf6)', boxShadow: '0 0 30px rgba(0,255,255,0.4)' }}>
+                                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center overflow-hidden border-4 border-zinc-950 ring-2 ring-teal-500/30 bg-gradient-to-br from-teal-500/20 to-purple-500/20">
                                     {profile.profilePicture ? (
                                         <img
                                             src={profile.profilePicture}
@@ -241,56 +263,51 @@ export default function UserProfilePage() {
                                             className="w-full h-full rounded-full object-cover"
                                         />
                                     ) : (
-                                        <span className="text-white text-4xl font-bold">
+                                        <span className="text-white text-3xl font-bold font-display">
                                             {profile.name[0]}
                                         </span>
                                     )}
                                 </div>
+                                {isPremiumUser(profile) && (
+                                    <div className="absolute -bottom-1 -right-1">
+                                        <PremiumBadge size="md" />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Name & Info */}
-                            <div className="flex-1">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2" style={{ textShadow: '0 0 20px rgba(0,255,255,0.4)' }}>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-white font-display flex items-center gap-2 flex-wrap">
                                     {profile.name}
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1.5">
                                         {profile.isMobileVerified && (
-                                            <div
-                                                className="w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center border border-blue-500/20"
-                                                title="Phone Verified"
-                                            >
-                                                <Smartphone size={14} className="text-blue-600 dark:text-blue-400" />
+                                            <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20" title="Phone Verified">
+                                                <Smartphone size={13} className="text-blue-400" />
                                             </div>
                                         )}
                                         {profile.verificationStatus === 'verified' && (
-                                            <div
-                                                className="w-6 h-6 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
-                                                title="Identity Verified (Aadhaar/PAN)"
-                                            >
-                                                <Shield size={14} className="text-emerald-600 dark:text-emerald-400" />
+                                            <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20" title="Identity Verified">
+                                                <Shield size={13} className="text-emerald-400" />
                                             </div>
                                         )}
                                     </div>
                                 </h1>
                                 {profile.location && (profile.location.city || profile.location.country) && (
-                                    <p className="flex items-center gap-1 mt-1" style={{ color: 'rgba(0,255,255,0.7)' }}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
+                                    <p className="flex items-center gap-1.5 mt-1 text-zinc-500 text-sm">
+                                        <MapPin className="w-3.5 h-3.5" />
                                         {[profile.location.city, profile.location.country].filter(Boolean).join(', ')}
                                     </p>
                                 )}
 
                                 {/* Badges */}
                                 {profile.badges.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-3">
+                                    <div className="flex flex-wrap gap-1.5 mt-3">
                                         {profile.badges
-                                            .filter(badge => badge !== 'Premium') // Filter out Premium badge
+                                            .filter(badge => badge !== 'Premium')
                                             .map((badge) => (
                                                 <span
                                                     key={badge}
-                                                    className="px-3 py-1 text-xs font-semibold rounded-full"
-                                                    style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', color: '#00ffff' }}
+                                                    className="px-2.5 py-0.5 text-[11px] font-medium rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/15"
                                                 >
                                                     {badge}
                                                 </span>
@@ -299,22 +316,22 @@ export default function UserProfilePage() {
                                 )}
                             </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-2">
+                            {/* Actions */}
+                            <div className="flex gap-2 flex-wrap">
                                 {isOwnProfile ? (
                                     <>
                                         <Link
                                             href="/friends"
-                                            className="px-4 py-2 rounded-lg transition-all text-sm font-medium"
-                                            style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', color: '#00ffff' }}
+                                            className="btn-glass px-4 py-2 rounded-xl text-sm flex items-center gap-2"
                                         >
+                                            <Users className="w-4 h-4" />
                                             Friends ({friendsCount})
                                         </Link>
                                         <Link
                                             href="/profile/edit"
-                                            className="px-4 py-2 rounded-lg transition-all text-sm font-medium"
-                                            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa' }}
+                                            className="btn-glass px-4 py-2 rounded-xl text-sm flex items-center gap-2"
                                         >
+                                            <Edit3 className="w-4 h-4" />
                                             Edit Profile
                                         </Link>
                                     </>
@@ -323,30 +340,25 @@ export default function UserProfilePage() {
                                         <button
                                             onClick={handleFriendAction}
                                             disabled={friendLoading}
-                                            className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 ${getFriendButtonStyle()}`}
+                                            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all disabled:opacity-50 flex items-center gap-2 ${getFriendButtonStyle()}`}
                                         >
                                             {friendLoading ? (
-                                                <span className="flex items-center gap-2">
-                                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                                    </svg>
-                                                    ...
-                                                </span>
+                                                <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                                             ) : (
-                                                getFriendButtonText()
+                                                getFriendButtonIcon()
                                             )}
+                                            {getFriendButtonText()}
                                         </button>
                                         <Link
                                             href={`/app?userId=${userId}`}
-                                            className="px-4 py-2 rounded-lg transition-all text-sm font-medium"
-                                            style={{ background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', color: '#00ffff' }}
+                                            className="btn-glass px-4 py-2 rounded-xl text-sm flex items-center gap-2"
                                         >
+                                            <MessageCircle className="w-4 h-4" />
                                             Message
                                         </Link>
                                         <button
                                             onClick={() => setShowReportModal(true)}
-                                            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
+                                            className="w-9 h-9 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-zinc-500 hover:text-red-400 hover:border-red-500/20 transition-all"
                                             title="Report User"
                                         >
                                             <Flag className="w-4 h-4" />
@@ -359,63 +371,51 @@ export default function UserProfilePage() {
                         {/* Bio */}
                         {profile.bio && (
                             <div className="mt-6">
-                                <p className="text-gray-300">
-                                    {profile.bio}
-                                </p>
+                                <p className="text-zinc-400 text-sm leading-relaxed">{profile.bio}</p>
                             </div>
                         )}
 
                         {/* Stats */}
-                        <div className="grid grid-cols-4 gap-4 mt-6 pt-6" style={{ borderTop: '1px solid rgba(0,255,255,0.15)' }}>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold" style={{ color: '#00ffff', textShadow: '0 0 15px rgba(0,255,255,0.4)' }}>
-                                    {profile.stats?.tripsCreated || 0}
+                        <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/[0.06]">
+                            {[
+                                { value: profile.stats?.tripsCreated || 0, label: 'Trips Created', color: 'text-teal-400' },
+                                { value: profile.stats?.tripsJoined || 0, label: 'Trips Joined', color: 'text-teal-400' },
+                                { value: friendsCount, label: 'Friends', color: 'text-teal-400' },
+                                { value: new Date(profile.createdAt).getFullYear(), label: 'Member Since', color: 'text-purple-400' },
+                            ].map((stat) => (
+                                <div key={stat.label} className="text-center">
+                                    <div className={`text-xl sm:text-2xl font-bold ${stat.color} font-display`}>
+                                        {stat.value}
+                                    </div>
+                                    <div className="text-[11px] text-zinc-600 mt-0.5">{stat.label}</div>
                                 </div>
-                                <div className="text-sm text-gray-400">Trips Created</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold" style={{ color: '#00ffff', textShadow: '0 0 15px rgba(0,255,255,0.4)' }}>
-                                    {profile.stats?.tripsJoined || 0}
-                                </div>
-                                <div className="text-sm text-gray-400">Trips Joined</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold" style={{ color: '#00ffff', textShadow: '0 0 15px rgba(0,255,255,0.4)' }}>
-                                    {friendsCount}
-                                </div>
-                                <div className="text-sm text-gray-400">Friends</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold" style={{ color: '#a78bfa', textShadow: '0 0 15px rgba(139,92,246,0.4)' }}>
-                                    {new Date(profile.createdAt).getFullYear()}
-                                </div>
-                                <div className="text-sm text-gray-400">Member Since</div>
-                            </div>
+                            ))}
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Reviews Section */}
-                <div className="rounded-2xl shadow-lg p-6" style={{ background: 'rgba(0,30,50,0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,255,255,0.15)' }}>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ textShadow: '0 0 15px rgba(0,255,255,0.3)' }}>
-                            <svg className="w-6 h-6" style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.5))' }} fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                            Traveler Reviews
-                        </h2>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="glass-card"
+                >
+                    <div className="flex items-center gap-2 mb-6">
+                        <Star className="w-5 h-5 text-amber-400" />
+                        <h2 className="text-lg font-semibold text-white font-display">Traveler Reviews</h2>
                     </div>
-
                     <UserReviews userId={userId} />
-                </div>
+                </motion.div>
 
-                {/* Back Button */}
+                {/* Back button */}
                 <div className="mt-6 text-center">
                     <button
                         onClick={() => router.back()}
-                        className="font-medium" style={{ color: '#00ffff' }}
+                        className="text-sm text-zinc-500 hover:text-teal-400 transition-colors flex items-center gap-2 mx-auto"
                     >
-                        ← Back
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
                     </button>
                 </div>
             </div>
@@ -432,5 +432,3 @@ export default function UserProfilePage() {
         </div>
     );
 }
-
-

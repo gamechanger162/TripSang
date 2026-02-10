@@ -8,84 +8,156 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                // TripSang Brand Colors
+                // TripSang Brand Colors — Billion-Dollar 2026
                 primary: {
-                    DEFAULT: '#0F766E', // Teal
+                    DEFAULT: '#14B8A6',
                     50: '#F0FDFA',
                     100: '#CCFBF1',
                     200: '#99F6E4',
                     300: '#5EEAD4',
                     400: '#2DD4BF',
                     500: '#14B8A6',
-                    600: '#0F766E', // Main
+                    600: '#0F766E',
                     700: '#0D9488',
                     800: '#115E59',
                     900: '#134E4A',
                 },
                 secondary: {
-                    DEFAULT: '#F97316', // Orange
+                    DEFAULT: '#F97316',
                     50: '#FFF7ED',
                     100: '#FFEDD5',
                     200: '#FED7AA',
                     300: '#FDBA74',
                     400: '#FB923C',
-                    500: '#F97316', // Main
+                    500: '#F97316',
                     600: '#EA580C',
                     700: '#C2410C',
                     800: '#9A3412',
                     900: '#7C2D12',
                 },
-                // Additional TripSang Colors
                 accent: {
                     blue: '#3B82F6',
                     purple: '#8B5CF6',
                     pink: '#EC4899',
                 },
-                // Dark mode colors
                 dark: {
-                    DEFAULT: '#0F172A',
-                    50: '#F8FAFC',
-                    100: '#F1F5F9',
-                    200: '#E2E8F0',
-                    300: '#CBD5E1',
-                    400: '#94A3B8',
-                    500: '#64748B',
-                    600: '#475569',
-                    700: '#334155',
-                    800: '#1E293B',
-                    900: '#0F172A',
-                }
+                    DEFAULT: '#09090b',
+                    50: '#fafafa',
+                    100: '#f4f4f5',
+                    200: '#e4e4e7',
+                    300: '#d4d4d8',
+                    400: '#a1a1aa',
+                    500: '#71717a',
+                    600: '#52525b',
+                    700: '#3f3f46',
+                    800: '#27272a',
+                    900: '#18181b',
+                    950: '#09090b',
+                },
             },
             fontFamily: {
                 sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
                 display: ['var(--font-outfit)', 'Outfit', 'system-ui', 'sans-serif'],
             },
             borderRadius: {
-                'trip': '1.5rem', // Custom border radius for trip cards
+                'trip': '1.5rem',
+                '4xl': '2rem',
+                '5xl': '2.5rem',
             },
             boxShadow: {
-                'trip': '0 10px 30px -10px rgba(15, 118, 110, 0.2)',
-                'trip-hover': '0 20px 40px -10px rgba(15, 118, 110, 0.3)',
+                'trip': '0 10px 30px -10px rgba(20, 184, 166, 0.2)',
+                'trip-hover': '0 20px 40px -10px rgba(20, 184, 166, 0.3)',
                 'glow': '0 0 20px rgba(249, 115, 22, 0.4)',
+                'glow-teal': '0 0 40px rgba(20, 184, 166, 0.3)',
+                'glow-orange': '0 0 40px rgba(249, 115, 22, 0.3)',
+                'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
+                'glass-lg': '0 16px 48px rgba(0, 0, 0, 0.4)',
+                'inner-glow': 'inset 0 1px 1px rgba(255,255,255,0.1)',
+            },
+            backdropBlur: {
+                'xs': '2px',
+                '3xl': '64px',
             },
             animation: {
-                'fade-in': 'fadeIn 0.5s ease-in-out',
-                'slide-up': 'slideUp 0.5s ease-out',
+                'fade-in': 'fadeIn 0.6s ease-out forwards',
+                'slide-up': 'slideUp 0.6s ease-out forwards',
                 'slide-down': 'slideDown 0.5s ease-out',
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'float': 'float 6s ease-in-out infinite',
+                'float-slow': 'float 8s ease-in-out infinite',
+                'float-delayed': 'float 6s ease-in-out 2s infinite',
+                'jelly': 'jelly 0.5s ease-out',
+                'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+                'mesh-rotate': 'meshRotate 20s linear infinite',
+                'stagger-in': 'staggerIn 0.6s ease-out forwards',
+                'count-up': 'countUp 2s ease-out forwards',
+                'slide-in-right': 'slideInRight 0.4s ease-out forwards',
+                'slide-in-left': 'slideInLeft 0.4s ease-out forwards',
+                'scale-in': 'scaleIn 0.3s ease-out forwards',
+                'shimmer': 'shimmer 2s linear infinite',
+                'morph': 'morph 8s ease-in-out infinite',
+                'bounce-subtle': 'bounceSubtle 0.6s ease-out',
             },
             keyframes: {
                 fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
+                    '0%': { opacity: '0', transform: 'translateY(10px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
                 },
                 slideUp: {
-                    '0%': { transform: 'translateY(20px)', opacity: '0' },
-                    '100%': { transform: 'translateY(0)', opacity: '1' },
+                    '0%': { opacity: '0', transform: 'translateY(30px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
                 },
                 slideDown: {
                     '0%': { transform: 'translateY(-20px)', opacity: '0' },
                     '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                float: {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-20px)' },
+                },
+                jelly: {
+                    '0%': { transform: 'scale(1, 1)' },
+                    '25%': { transform: 'scale(0.95, 1.05)' },
+                    '50%': { transform: 'scale(1.05, 0.95)' },
+                    '75%': { transform: 'scale(0.98, 1.02)' },
+                    '100%': { transform: 'scale(1, 1)' },
+                },
+                glowPulse: {
+                    '0%, 100%': { boxShadow: '0 0 20px rgba(20, 184, 166, 0.3)' },
+                    '50%': { boxShadow: '0 0 40px rgba(20, 184, 166, 0.6)' },
+                },
+                meshRotate: {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
+                },
+                staggerIn: {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                slideInRight: {
+                    '0%': { opacity: '0', transform: 'translateX(30px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
+                slideInLeft: {
+                    '0%': { opacity: '0', transform: 'translateX(-30px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
+                scaleIn: {
+                    '0%': { opacity: '0', transform: 'scale(0.9)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
+                },
+                shimmer: {
+                    '0%': { backgroundPosition: '-200% 0' },
+                    '100%': { backgroundPosition: '200% 0' },
+                },
+                morph: {
+                    '0%, 100%': { borderRadius: '60% 40% 30% 70%/60% 30% 70% 40%' },
+                    '50%': { borderRadius: '30% 60% 70% 40%/50% 60% 30% 60%' },
+                },
+                bounceSubtle: {
+                    '0%': { transform: 'scale(0.95)', opacity: '0' },
+                    '60%': { transform: 'scale(1.02)' },
+                    '100%': { transform: 'scale(1)', opacity: '1' },
                 },
             },
         },

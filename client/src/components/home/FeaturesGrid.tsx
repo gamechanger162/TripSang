@@ -1,71 +1,142 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Users, Map, Shield, Zap, MessageCircle, CreditCard } from 'lucide-react';
+
+const features = [
+    {
+        icon: Users,
+        title: 'Find Your Squad',
+        description: 'Connect with verified travelers who share your vibe and travel style.',
+        span: 'md:col-span-2 md:row-span-1', // wide card
+        gradient: 'from-teal-500/10 to-teal-600/5',
+    },
+    {
+        icon: Map,
+        title: 'Plan Together',
+        description: 'Collaborative trip planning with real-time maps and itineraries.',
+        span: 'md:col-span-1 md:row-span-2', // tall card
+        gradient: 'from-orange-500/10 to-orange-600/5',
+    },
+    {
+        icon: Shield,
+        title: 'Verified & Safe',
+        description: 'Aadhaar-verified profiles. Travel with confidence every time.',
+        span: 'md:col-span-1 md:row-span-1',
+        gradient: 'from-emerald-500/10 to-emerald-600/5',
+    },
+    {
+        icon: Zap,
+        title: 'Instant Match',
+        description: 'Get matched with compatible travelers based on your preferences.',
+        span: 'md:col-span-1 md:row-span-1',
+        gradient: 'from-purple-500/10 to-purple-600/5',
+    },
+    {
+        icon: MessageCircle,
+        title: 'Squad Chat',
+        description: 'Real-time group messaging with media sharing and location updates.',
+        span: 'md:col-span-1 md:row-span-1',
+        gradient: 'from-blue-500/10 to-blue-600/5',
+    },
+    {
+        icon: CreditCard,
+        title: 'Split Costs',
+        description: 'Transparent cost-sharing with secure in-app payments via Razorpay.',
+        span: 'md:col-span-2 md:row-span-1',
+        gradient: 'from-teal-500/10 to-orange-500/5',
+    },
+];
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.97 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
+    }
+};
 
 export default function FeaturesGrid() {
     return (
-        <section className="py-24 relative bg-[#0a0a0a] z-20 overflow-hidden">
-            {/* Premium Background */}
-            <div className="absolute inset-0 bg-grid-pattern opacity-20" />
-            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-[150px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-500/3 rounded-full blur-[120px] pointer-events-none" />
+        <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+            {/* Background glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-teal-500/[0.03] blur-[120px] rounded-full" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="text-center mb-16">
-                    <span className="premium-badge mb-6">Features</span>
-                    <h2 className="text-4xl md:text-5xl font-black text-white mt-4 mb-6 leading-tight">
-                        Everything you need <br />
-                        <span className="text-premium-gold">to travel together.</span>
+            <div className="max-w-6xl mx-auto relative z-10">
+                {/* Section heading */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16"
+                >
+                    <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4">
+                        Everything You Need
                     </h2>
-                </div>
+                    <p className="text-zinc-500 text-lg max-w-xl mx-auto">
+                        A complete ecosystem for social travel — from discovery to memories.
+                    </p>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Desktop: 3D Bento Grid */}
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    className="hidden md:grid grid-cols-3 gap-4"
+                >
+                    {features.map((feature) => (
+                        <motion.div
+                            key={feature.title}
+                            variants={itemVariants}
+                            className={`glass-card group cursor-default p-6 ${feature.span} relative overflow-hidden`}
+                        >
+                            {/* Gradient overlay on hover */}
+                            <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
-                    {/* Stats - Premium Card */}
-                    <div className="md:col-span-3 premium-card rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between group hover:border-amber-500/20 transition-all border border-white/5">
-                        <div className="flex flex-col gap-1">
-                            <h4 className="text-amber-400/70 uppercase text-xs font-semibold tracking-widest">Community Stats</h4>
-                            <div className="flex items-center gap-2 text-3xl font-bold text-white">
-                                Growing Strong
-                                <svg className="w-8 h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
+                            <div className="relative z-10">
+                                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-4 group-hover:border-teal-500/30 transition-colors duration-300">
+                                    <feature.icon className="w-6 h-6 text-teal-400" />
+                                </div>
+                                <h3 className="font-display text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                                <p className="text-zinc-500 text-sm leading-relaxed">{feature.description}</p>
                             </div>
-                        </div>
-                        <div className="flex gap-12 mt-6 md:mt-0">
-                            <div className="text-center">
-                                <div className="text-4xl font-black text-premium-gold">1.2k+</div>
-                                <div className="text-xs text-gray-400/70 uppercase mt-1 tracking-wider">Trips Planned</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-4xl font-black text-premium-gold">15k+</div>
-                                <div className="text-xs text-gray-400/70 uppercase mt-1 tracking-wider">Happy Travelers</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-4xl font-black text-premium-gold">₹2Cr+</div>
-                                <div className="text-xs text-gray-400/70 uppercase mt-1 tracking-wider">Expenses Split</div>
-                            </div>
-                        </div>
+                        </motion.div>
+                    ))}
+                </motion.div>
+
+                {/* Mobile: Snap-scroll carousel */}
+                <div className="md:hidden overflow-x-auto snap-x-mandatory scrollbar-hide -mx-4 px-4">
+                    <div className="flex gap-4" style={{ width: 'max-content' }}>
+                        {features.map((feature, i) => (
+                            <motion.div
+                                key={feature.title}
+                                initial={{ opacity: 0, x: 20 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
+                                className="glass-card p-5 w-[280px] snap-start flex-shrink-0"
+                            >
+                                <div className="w-10 h-10 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-3">
+                                    <feature.icon className="w-5 h-5 text-teal-400" />
+                                </div>
+                                <h3 className="font-display text-lg font-semibold text-white mb-1.5">{feature.title}</h3>
+                                <p className="text-zinc-500 text-sm leading-relaxed">{feature.description}</p>
+                            </motion.div>
+                        ))}
                     </div>
-
-                    {/* Shared Gallery - Premium Full Width */}
-                    <div className="md:col-span-3 h-[400px] premium-card rounded-2xl p-8 relative overflow-hidden group hover:border-amber-500/20 transition-all duration-500 border border-white/5">
-                        <Link href="/gallery" className="absolute inset-0 z-20" />
-                        <div className="relative z-10 h-full flex flex-col justify-end">
-                            <span className="text-amber-400/60 text-xs font-semibold tracking-widest uppercase mb-2">Shared Gallery</span>
-                            <h3 className="text-3xl font-bold text-white mb-2">Shared Gallery</h3>
-                            <p className="text-lg text-gray-300/80 max-w-lg font-light">
-                                Relive the best moments. High-res photos, collected automatically from everyone in the group.
-                            </p>
-                        </div>
-                        <div className="absolute inset-0 z-0 opacity-30 group-hover:opacity-50 transition-opacity duration-700">
-                            <Image src="/images/home/gallery_cover.png" alt="Gallery" fill className="object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#030308] via-[#030308]/70 to-transparent" />
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </section>

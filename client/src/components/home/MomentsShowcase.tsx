@@ -1,54 +1,88 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
+import { useRef, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+
+const SAMPLE_PHOTOS = [
+    { src: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&q=80', caption: 'Beach vibes in Goa', height: 'h-64' },
+    { src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80', caption: 'Mountain trekking', height: 'h-80' },
+    { src: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=80', caption: 'Sunset at Udaipur', height: 'h-56' },
+    { src: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=400&q=80', caption: 'Camping under stars', height: 'h-72' },
+    { src: 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=400&q=80', caption: 'City exploration', height: 'h-60' },
+    { src: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&q=80', caption: 'Desert safari', height: 'h-80' },
+    { src: 'https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=400&q=80', caption: 'Heritage walks', height: 'h-64' },
+    { src: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&q=80', caption: 'Lake serenity', height: 'h-56' },
+    { src: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&q=80', caption: 'Temple journeys', height: 'h-72' },
+];
 
 export default function MomentsShowcase() {
+    const [isVisible, setIsVisible] = useState(false);
+    const sectionRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (sectionRef.current) {
+            observer.observe(sectionRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
     return (
-        <section className="py-20 md:py-24 relative overflow-hidden z-0 mt-12 md:mt-0" style={{ background: 'linear-gradient(180deg, #000a14 0%, #001428 50%, #000a14 100%)' }}>
-            {/* Ambient glow effects */}
-            <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <section ref={sectionRef} className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+            {/* Background glow */}
+            <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-orange-500/[0.03] blur-[120px] rounded-full" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-                <div className="flex flex-col md:flex-row items-center gap-12">
-                    <div className="md:w-1/2 relative">
-                        <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 mb-6 leading-tight" style={{ textShadow: '0 0 40px rgba(0,255,255,0.3)' }}>
-                            CAPTURE.<br />SHARE.<br />INSPIRE.
-                        </h2>
-                        <p className="text-gray-400 text-lg mb-8 max-w-md">
-                            Your trip doesn't end when you return home. Post your favorite shots to the <strong className="text-cyan-400">Trip Moments</strong> gallery and inspire the next wave of travelers.
-                        </p>
-                        <Link
-                            href="/gallery"
-                            className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105"
-                            style={{
-                                background: 'linear-gradient(135deg, rgba(0,255,255,0.15) 0%, rgba(139,92,246,0.15) 100%)',
-                                border: '1px solid rgba(0,255,255,0.4)',
-                                color: '#00ffff',
-                                boxShadow: '0 0 30px rgba(0,255,255,0.2)'
-                            }}
+            <div className="max-w-6xl mx-auto relative z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16"
+                >
+                    <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4">
+                        Trip Moments
+                    </h2>
+                    <p className="text-zinc-500 text-lg max-w-xl mx-auto">
+                        Real photos from real travelers. Your next adventure awaits.
+                    </p>
+                </motion.div>
+
+                {/* Masonry Grid */}
+                <div className="masonry-grid">
+                    {SAMPLE_PHOTOS.map((photo, index) => (
+                        <div
+                            key={index}
+                            className={`masonry-item transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                                }`}
+                            style={{ transitionDelay: `${index * 100}ms` }}
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            Visit Gallery
-                        </Link>
-                    </div>
-
-                    <div className="md:w-1/2 relative">
-                        {/* Floating Cards Effect */}
-                        <div className="relative w-full aspect-square md:aspect-[4/3]">
-                            <div className="absolute top-0 right-0 w-2/3 h-5/6 rounded-2xl rotate-6 overflow-hidden opacity-60 transform translate-x-4" style={{ background: 'rgba(0,30,50,0.5)', border: '2px solid rgba(139,92,246,0.3)' }}>
-                                <Image src="/images/home/moment_hike.png" fill alt="Travel 1" loading="lazy" className="object-cover" />
-                            </div>
-                            <div className="absolute top-10 right-12 w-2/3 h-5/6 rounded-2xl -rotate-3 overflow-hidden shadow-2xl z-10" style={{ background: 'rgba(0,30,50,0.5)', border: '2px solid rgba(0,255,255,0.4)', boxShadow: '0 0 40px rgba(0,255,255,0.2)' }}>
-                                <Image src="/images/home/moment_bali.png" fill alt="Travel 2" loading="lazy" className="object-cover" />
-                                <div className="absolute bottom-4 left-4 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(0,255,255,0.2)', border: '1px solid rgba(0,255,255,0.3)', color: 'white' }}>
-                                    @Sarah in Bali 🌴
+                            <div className="glass-card overflow-hidden group cursor-pointer p-0">
+                                <div className={`relative ${photo.height} overflow-hidden`}>
+                                    <img
+                                        src={photo.src}
+                                        alt={photo.caption}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        loading="lazy"
+                                    />
+                                    {/* Glass overlay on hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                        <span className="text-white text-sm font-medium">{photo.caption}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="absolute -bottom-4 -left-4 w-32 h-32 rounded-full blur-3xl" style={{ background: 'rgba(0,255,255,0.15)' }}></div>
                         </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </section>

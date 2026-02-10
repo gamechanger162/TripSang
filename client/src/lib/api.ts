@@ -231,6 +231,7 @@ export const tripAPI = {
         budget?: { min: number; max: number; currency?: string };
         difficulty?: 'easy' | 'moderate' | 'difficult' | 'extreme';
         isPublic?: boolean;
+        inviteFriends?: string[];
     }) => {
         return fetchWithAuth('/api/trips/create', {
             method: 'POST',

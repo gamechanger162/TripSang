@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import { authAPI } from '@/lib/api';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
 import PhoneInput from '@/components/PhoneInput';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, User, CheckCircle, ArrowRight, Sparkles, Shield } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -16,8 +18,8 @@ export const dynamic = 'force-dynamic';
 export default function SignUpPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const nameRef = useRef<HTMLInputElement>(null);
 
-    // All hooks must be declared BEFORE any early returns
     const [loading, setLoading] = useState(false);
     const [verifyingPhone, setVerifyingPhone] = useState(false);
     const [otpSent, setOtpSent] = useState(false);
@@ -26,6 +28,7 @@ export default function SignUpPage() {
     const [isPhoneVerified, setIsPhoneVerified] = useState(false);
     const [showTrialDialog, setShowTrialDialog] = useState(false);
     const [trialEndsDate, setTrialEndsDate] = useState<string>('');
+    const [emailValid, setEmailValid] = useState<boolean | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -43,8 +46,14 @@ export default function SignUpPage() {
         }
     }, [status, router]);
 
+    // Auto-focus first field
     useEffect(() => {
-        // Cleanup function to reset recaptcha on unmount
+        if (nameRef.current && status === 'unauthenticated') {
+            nameRef.current.focus();
+        }
+    }, [status]);
+
+    useEffect(() => {
         return () => {
             if (window.recaptchaVerifier) {
                 try {
@@ -57,11 +66,17 @@ export default function SignUpPage() {
         };
     }, []);
 
+    const validateEmail = (email: string) => {
+        if (!email) { setEmailValid(null); return; }
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        setEmailValid(re.test(email));
+    };
+
     // Show loading while checking auth
     if (status === 'loading' || status === 'authenticated') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+                <div className="w-10 h-10 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
             </div>
         );
     }
@@ -75,7 +90,6 @@ export default function SignUpPage() {
             }
             window.recaptchaVerifier = null;
         }
-        // Clear the container
         const container = document.getElementById('recaptcha-container');
         if (container) {
             container.innerHTML = '';
@@ -109,15 +123,12 @@ export default function SignUpPage() {
             return;
         }
 
-        // Simple regex to ensure it has +countrycode
         if (!formData.mobileNumber.startsWith('+')) {
             toast.error('Please enter phone number with country code (e.g., +919876543210)');
             return;
         }
 
-        // Initialize recaptcha when user clicks verify
         initializeRecaptcha();
-
         setVerifyingPhone(true);
 
         try {
@@ -134,7 +145,6 @@ export default function SignUpPage() {
             console.error('OTP sending error:', error);
             let errorMessage = 'Error sending OTP';
 
-            // Better error messages
             if (error.code === 'auth/invalid-phone-number') {
                 errorMessage = 'Invalid phone number format';
             } else if (error.code === 'auth/too-many-requests') {
@@ -147,7 +157,6 @@ export default function SignUpPage() {
 
             toast.error(errorMessage);
 
-            // Reset recaptcha on error
             if (window.recaptchaVerifier) {
                 try {
                     window.recaptchaVerifier.clear();
@@ -193,18 +202,14 @@ export default function SignUpPage() {
             return;
         }
 
-
-        // Require phone verification
         if (formData.mobileNumber && !isPhoneVerified) {
             toast.error('Please verify your phone number first');
             return;
         }
 
-
         setLoading(true);
 
         try {
-            // 1. Register User
             const registerResponse = await authAPI.register({
                 name: formData.name,
                 email: formData.email,
@@ -214,7 +219,6 @@ export default function SignUpPage() {
             });
 
             if (registerResponse.success) {
-                // 2. Auto Login via NextAuth
                 const result = await signIn('credentials', {
                     email: formData.email,
                     password: formData.password,
@@ -225,7 +229,6 @@ export default function SignUpPage() {
                     toast.error('Login failed. Please sign in manually.');
                     router.push('/auth/signin');
                 } else {
-                    // Show trial welcome dialog
                     if (registerResponse.trialActivated && registerResponse.trialEndsAt) {
                         setTrialEndsDate(new Date(registerResponse.trialEndsAt).toLocaleDateString());
                         setShowTrialDialog(true);
@@ -249,121 +252,137 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen relative flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-900">
-            {/* Background Image */}
-            <div className="absolute inset-0 z-0 overflow-hidden">
-                <Image
-                    src="/hero-bg.jpg"
-                    alt="Background"
-                    fill
-                    className="object-cover opacity-30"
-                    priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-gray-900/50 to-gray-900" />
-            </div>
-
-            <div className="max-w-md w-full space-y-8 relative z-10 bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-                        Create your account
-                    </h2>
-                    <p className="mt-2 text-center text-sm text-gray-300">
-                        Join the community of travelers
-                    </p>
+        <div className="min-h-screen flex bg-zinc-950">
+            {/* Left Side — 3D Mesh Globe */}
+            <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center overflow-hidden">
+                <div className="absolute inset-0">
+                    <div className="absolute top-[15%] left-[15%] w-[500px] h-[500px] bg-orange-500/[0.06] blur-[120px] rounded-full" />
+                    <div className="absolute bottom-[15%] right-[15%] w-[400px] h-[400px] bg-teal-500/[0.08] blur-[100px] rounded-full" />
                 </div>
 
-                <div className="mt-8 space-y-6">
+                <div className="absolute inset-0 bg-grid opacity-20" />
+
+                {/* CSS Mesh Globe */}
+                <div className="relative">
+                    <div className="mesh-globe" />
+                    <div className="absolute inset-[-30px] border border-orange-500/10 rounded-full animate-[meshRotate_25s_linear_infinite]" />
+                    <div className="absolute inset-[-60px] border border-white/5 rounded-full animate-[meshRotate_30s_linear_infinite_reverse]" style={{ borderStyle: 'dashed' }} />
+                </div>
+
+                <div className="absolute bottom-12 left-12 right-12">
+                    <p className="text-zinc-600 text-sm">Join the community</p>
+                    <h2 className="font-display text-3xl font-bold text-white mt-1">Trip<span className="text-teal-400">संग</span></h2>
+                    <p className="text-zinc-500 text-sm mt-2">Find your travel tribe. Adventure together.</p>
+                </div>
+            </div>
+
+            {/* Right Side — Glass Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 relative overflow-y-auto">
+                <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-teal-500/[0.04] blur-[100px] rounded-full" />
+
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="glass-card p-8 md:p-10 w-full max-w-md relative z-10"
+                >
+                    {/* Header */}
+                    <div className="text-center mb-6">
+                        <div className="lg:hidden mb-4">
+                            <Image src="/logo-new.png" alt="Tripसंग" width={160} height={54} className="object-contain mx-auto" />
+                        </div>
+                        <h1 className="font-display text-2xl font-bold text-white">Create Account</h1>
+                        <p className="text-zinc-500 text-sm mt-1">Join thousands of verified travelers</p>
+                    </div>
+
                     {/* Google Login */}
                     <button
                         onClick={handleGoogleLogin}
-                        className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-xl text-gray-900 bg-white hover:bg-gray-50 transition-colors shadow-lg"
+                        className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-zinc-100 text-zinc-900 rounded-xl font-medium text-sm transition-all mb-4"
                     >
-                        <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                            <path
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                fill="#4285F4"
-                            />
-                            <path
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                fill="#34A853"
-                            />
-                            <path
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                fill="#FBBC05"
-                            />
-                            <path
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                fill="#EA4335"
-                            />
+                        <svg className="h-5 w-5" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
                         Sign up with Google
                     </button>
 
-                    <div className="relative">
+                    {/* Divider */}
+                    <div className="relative mb-5">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-600" />
+                            <div className="w-full border-t border-white/[0.06]" />
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-transparent text-gray-400">Or register with email</span>
+                        <div className="relative flex justify-center text-xs">
+                            <span className="px-3 bg-zinc-950/80 text-zinc-600 uppercase tracking-wider">or with email</span>
                         </div>
                     </div>
 
-                    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="name" className="sr-only">Full Name</label>
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    required
-                                    className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
-                                    placeholder="Full Name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
+                    {/* Registration Form */}
+                    <form onSubmit={handleSubmit} className="space-y-3.5">
+                        {/* Name */}
+                        <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                            <input
+                                ref={nameRef}
+                                id="name"
+                                name="name"
+                                type="text"
+                                required
+                                className="glass-input !pl-10"
+                                placeholder="Full Name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
 
+                        {/* Phone Verification */}
+                        <div className="flex gap-2">
+                            <PhoneInput
+                                value={formData.mobileNumber}
+                                onChange={(value) => setFormData({ ...formData, mobileNumber: value })}
+                                placeholder="Phone number"
+                                disabled={isPhoneVerified}
+                                id="mobileNumber"
+                                name="mobileNumber"
+                                required
+                            />
+                            {!isPhoneVerified && (
+                                <button
+                                    type="button"
+                                    onClick={handleSendOTP}
+                                    disabled={verifyingPhone || !formData.mobileNumber}
+                                    className="btn-glass px-4 py-2 text-sm whitespace-nowrap disabled:opacity-50 !rounded-xl"
+                                >
+                                    {verifyingPhone ? 'Sending...' : 'Verify'}
+                                </button>
+                            )}
+                            {isPhoneVerified && (
+                                <span className="flex items-center justify-center px-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                                    <CheckCircle className="w-5 h-5 text-emerald-400" />
+                                </span>
+                            )}
+                        </div>
 
-                            {/* Phone Verification Field */}
-                            <div className="flex gap-2">
-                                <PhoneInput
-                                    value={formData.mobileNumber}
-                                    onChange={(value) => setFormData({ ...formData, mobileNumber: value })}
-                                    placeholder="Phone number"
-                                    disabled={isPhoneVerified}
-                                    id="mobileNumber"
-                                    name="mobileNumber"
-                                    required
-                                />
-                                {!isPhoneVerified && (
-                                    <button
-                                        type="button"
-                                        onClick={handleSendOTP}
-                                        disabled={verifyingPhone || !formData.mobileNumber}
-                                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-sm whitespace-nowrap disabled:opacity-50"
-                                    >
-                                        {verifyingPhone ? 'Sending...' : 'Verify'}
-                                    </button>
-                                )}
-                                {isPhoneVerified && (
-                                    <span className="flex items-center justify-center px-4 text-green-500 bg-green-500/10 rounded-xl">
-                                        ✓
-                                    </span>
-                                )}
-                            </div>
+                        <div id="recaptcha-container" className="flex justify-center" />
 
-                            <div id="recaptcha-container" className="flex justify-center"></div>
-
+                        {/* OTP Input */}
+                        <AnimatePresence>
                             {otpSent && !isPhoneVerified && (
-                                <div className="space-y-2">
-                                    <p className="text-sm text-gray-300">Enter the 6-digit OTP sent to your phone:</p>
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="space-y-2 overflow-hidden"
+                                >
+                                    <p className="text-sm text-zinc-400">Enter the 6-digit OTP sent to your phone:</p>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
                                             placeholder="Enter OTP"
                                             maxLength={6}
-                                            className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            className="glass-input text-center font-mono tracking-widest"
                                             value={otp}
                                             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                                         />
@@ -371,157 +390,188 @@ export default function SignUpPage() {
                                             type="button"
                                             onClick={handleVerifyOTP}
                                             disabled={verifyingPhone || otp.length !== 6}
-                                            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm disabled:opacity-50"
+                                            className="btn-primary px-4 py-2 text-sm disabled:opacity-50 !rounded-xl"
                                         >
                                             {verifyingPhone ? 'Verifying...' : 'Confirm'}
                                         </button>
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
+                        </AnimatePresence>
 
-
-                            <div>
-                                <label htmlFor="email-address" className="sr-only">Email address</label>
-                                <input
-                                    id="email-address"
-                                    name="email"
-                                    type="email"
-                                    required
-                                    className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
-                                    placeholder="Email address"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="password" className="sr-only">Password</label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
-                                    placeholder="Password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
-                                <input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    required
-                                    className="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
-                                    placeholder="Confirm Password"
-                                    value={formData.confirmPassword}
-                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                />
-                            </div>
-
-                            {/* Gender Selection */}
-                            <div>
-                                <label htmlFor="gender" className="sr-only">Gender</label>
-                                <select
-                                    id="gender"
-                                    name="gender"
-                                    value={formData.gender}
-                                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                    className="appearance-none relative block w-full px-4 py-3 border border-gray-600 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent sm:text-sm"
+                        {/* Email */}
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                            <input
+                                id="email-address"
+                                name="email"
+                                type="email"
+                                required
+                                className="glass-input !pl-10 !pr-10"
+                                placeholder="Email address"
+                                value={formData.email}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, email: e.target.value });
+                                    validateEmail(e.target.value);
+                                }}
+                            />
+                            {emailValid === true && (
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2"
                                 >
-                                    <option value="prefer-not-to-say">Prefer not to say</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="transgender">Transgender</option>
-                                </select>
-                            </div>
+                                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                </motion.div>
+                            )}
                         </div>
 
-                        <div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Creating Account...' : 'Create Account'}
-                            </button>
+                        {/* Password */}
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                className="glass-input !pl-10"
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            />
                         </div>
+
+                        {/* Confirm Password */}
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                className="glass-input !pl-10"
+                                placeholder="Confirm Password"
+                                value={formData.confirmPassword}
+                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                            />
+                            {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                                >
+                                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                </motion.div>
+                            )}
+                        </div>
+
+                        {/* Gender */}
+                        <select
+                            id="gender"
+                            name="gender"
+                            value={formData.gender}
+                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                            className="glass-input"
+                        >
+                            <option value="prefer-not-to-say">Prefer not to say</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="transgender">Transgender</option>
+                        </select>
+
+                        {/* Submit */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="btn-primary w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>Create Account <ArrowRight className="w-4 h-4" /></>
+                            )}
+                        </button>
                     </form>
 
-                    <p className="text-center text-sm text-gray-400">
+                    <p className="text-center text-sm text-zinc-500 mt-5">
                         Already have an account?{' '}
-                        <Link href="/auth/signin" className="font-medium text-primary-400 hover:text-primary-300">
-                            Sign in here
+                        <Link href="/auth/signin" className="text-teal-400 hover:text-teal-300 font-medium">
+                            Sign in
                         </Link>
                     </p>
-                </div>
+                </motion.div>
             </div>
 
             {/* Trial Welcome Dialog */}
-            {showTrialDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-8 max-w-md mx-4 shadow-2xl border border-white/10 animate-fadeIn">
-                        {/* Celebration Icon */}
-                        <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-primary-500 to-purple-500 flex items-center justify-center animate-pulse">
-                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/* Title */}
-                        <h2 className="text-2xl font-bold text-center text-white mb-2">
-                            Welcome to TripSang! 🎉
-                        </h2>
-
-                        {/* Subtitle */}
-                        <p className="text-center text-gray-300 mb-6">
-                            Your account has been created successfully!
-                        </p>
-
-                        {/* Trial Badge */}
-                        <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl p-4 mb-6 border border-green-500/30">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p className="text-green-400 font-bold text-lg">30-Day Free Trial Activated!</p>
-                                    <p className="text-gray-400 text-sm">Enjoy all premium features until {trialEndsDate}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Features */}
-                        <ul className="space-y-3 mb-6">
-                            {['Unlimited Trip Creation', 'Premium Badge on Profile', 'Access to Exclusive Squads', 'Priority Support'].map((feature, i) => (
-                                <li key={i} className="flex items-center gap-3 text-gray-300 text-sm">
-                                    <svg className="w-5 h-5 text-primary-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    {feature}
-                                </li>
-                            ))}
-                        </ul>
-
-                        {/* CTA Button */}
-                        <button
-                            onClick={() => {
-                                setShowTrialDialog(false);
-                                router.push('/');
-                                router.refresh();
-                            }}
-                            className="w-full py-3 px-6 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-primary-500/25"
+            <AnimatePresence>
+                {showTrialDialog && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="glass-strong rounded-3xl p-8 max-w-md mx-4 relative overflow-hidden"
                         >
-                            Start Exploring →
-                        </button>
-                    </div>
-                </div>
-            )}
+                            {/* Mesh glow */}
+                            <div className="absolute top-0 left-0 w-32 h-32 bg-teal-500/20 blur-[60px] rounded-full" />
+                            <div className="absolute bottom-0 right-0 w-32 h-32 bg-orange-500/20 blur-[60px] rounded-full" />
+
+                            <div className="relative z-10">
+                                <div className="flex justify-center mb-6">
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 flex items-center justify-center animate-glow-pulse">
+                                        <CheckCircle className="w-10 h-10 text-white" />
+                                    </div>
+                                </div>
+
+                                <h2 className="text-2xl font-bold text-center text-white mb-2 font-display">
+                                    Welcome to TripSang! 🎉
+                                </h2>
+
+                                <p className="text-center text-zinc-400 mb-6">
+                                    Your account has been created successfully!
+                                </p>
+
+                                <div className="glass-card rounded-xl p-4 mb-6 border-emerald-500/20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                                            <Sparkles className="w-6 h-6 text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-emerald-400 font-bold">30-Day Free Trial Activated!</p>
+                                            <p className="text-zinc-500 text-sm">Enjoy all premium features until {trialEndsDate}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <ul className="space-y-2.5 mb-6">
+                                    {['Unlimited Trip Creation', 'Premium Badge on Profile', 'Access to Exclusive Squads', 'Priority Support'].map((feature, i) => (
+                                        <li key={i} className="flex items-center gap-2.5 text-zinc-300 text-sm">
+                                            <CheckCircle className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <button
+                                    onClick={() => {
+                                        setShowTrialDialog(false);
+                                        router.push('/');
+                                        router.refresh();
+                                    }}
+                                    className="btn-primary w-full py-3 rounded-xl flex items-center justify-center gap-2"
+                                >
+                                    Start Exploring <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

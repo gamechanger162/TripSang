@@ -137,6 +137,12 @@ export default function CommunityChatPage() {
             scrollToBottom();
         });
 
+        socketRef.current.on('message_deleted', (data: { messageId: string }) => {
+            if (data?.messageId) {
+                setMessages(prev => prev.filter(m => m._id !== data.messageId));
+            }
+        });
+
         socketRef.current.on('error', (err: any) => {
             console.error('❌ Socket error:', err);
         });
@@ -203,6 +209,22 @@ export default function CommunityChatPage() {
         } catch (error) {
             console.error('Failed to upload image:', error);
             toast.error('Failed to send image');
+        }
+    };
+
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!window.confirm('Are you sure you want to delete this message?')) return;
+
+        // Optimistic update
+        setMessages(prev => prev.filter(m => m._id !== messageId));
+
+        try {
+            await communityAPI.deleteMessage(id as string, messageId);
+        } catch (error) {
+            console.error('Failed to delete message:', error);
+            toast.error('Failed to delete message');
+            // Reload messages to restore state if failed
+            loadMessages();
         }
     };
 
@@ -279,6 +301,8 @@ export default function CommunityChatPage() {
                                 message={msg}
                                 isOwn={msg.sender === currentUserId}
                                 onImageClick={handleImageClick}
+                                onDelete={() => handleDeleteMessage(msg._id)}
+                                isMobile={isMobile}
                             />
                         </div>
                     ))}

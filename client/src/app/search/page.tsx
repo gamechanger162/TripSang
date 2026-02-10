@@ -9,7 +9,8 @@ import CityAutocomplete from '@/components/CityAutocomplete';
 import { INDIAN_CITIES } from '@/data/cities';
 import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
-import ExcitingBackground from '@/components/ExcitingBackground';
+import { motion } from 'framer-motion';
+import { Search, SlidersHorizontal, X, MapPin, ArrowRight, Hash } from 'lucide-react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -32,22 +33,18 @@ function SearchPageContent() {
         totalTrips: 0,
     });
 
-    // Get initial params from URL
     const startPoint = searchParams.get('startPoint') || '';
     const endPoint = searchParams.get('endPoint') || '';
     const startDate = searchParams.get('startDate') || '';
 
-    // Local search state (for the input fields)
     const [searchFrom, setSearchFrom] = useState(startPoint);
     const [searchTo, setSearchTo] = useState(endPoint);
 
-    // Update local state when URL params change
     useEffect(() => {
         setSearchFrom(startPoint);
         setSearchTo(endPoint);
     }, [startPoint, endPoint]);
 
-    // Handle destination search
     const handleDestinationSearch = () => {
         const params = new URLSearchParams();
         if (searchFrom) params.append('startPoint', searchFrom);
@@ -55,7 +52,6 @@ function SearchPageContent() {
         router.push(`/search?${params.toString()}`);
     };
 
-    // Fetch trips
     const fetchTrips = async (page = 1) => {
         setLoading(true);
 
@@ -88,7 +84,6 @@ function SearchPageContent() {
         } catch (error: any) {
             console.error('Error fetching trips:', error);
 
-            // Check for auth-related errors and redirect
             const errorMessage = error.message?.toLowerCase() || '';
             if (errorMessage.includes('login required') || errorMessage.includes('access denied') || errorMessage.includes('no token')) {
                 toast.error('Please login to view trips');
@@ -136,246 +131,239 @@ function SearchPageContent() {
     };
 
     return (
-        <div className="min-h-screen relative bg-[#001428]">
-            {/* Background Layers */}
-            <div
-                className="fixed inset-0 z-0"
-                style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}
-            />
-            <div
-                className="fixed inset-0 z-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"
-            />
+        <div className="min-h-screen bg-zinc-950 relative">
+            {/* Background mesh */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[10%] right-[10%] w-[500px] h-[500px] bg-teal-500/[0.04] blur-[120px] rounded-full" />
+                <div className="absolute bottom-[20%] left-[5%] w-[400px] h-[400px] bg-orange-500/[0.03] blur-[100px] rounded-full" />
+            </div>
 
-            {/* Content Wrapper */}
-            <div className="relative z-10">
-                {/* Header */}
-                <div className="backdrop-blur-xl border-b border-white/10 md:sticky md:top-0 z-50 bg-[#001428]/95">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-                        <div className="flex flex-col md:flex-row md:items-center gap-6">
-                            {/* Search Summary */}
-                            <div className="flex-1">
-                                <h1 className="text-2xl font-bold text-white drop-shadow-[0_0_15px_rgba(0,255,255,0.3)]">
-                                    {startPoint || endPoint
-                                        ? `${startPoint || 'Any'} → ${endPoint || 'Any'}`
-                                        : 'Explore Trips'}
-                                </h1>
-                                <p className="text-sm text-cyan-400/80 mt-1">
-                                    {loading ? 'Scanning universe...' : `${pagination.totalTrips} adventures found`}
-                                </p>
+            {/* ═══ Dynamic Island Search Bar ═══ */}
+            <div className="sticky top-16 z-40">
+                <div className="max-w-5xl mx-auto px-4 pt-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass-strong rounded-2xl p-3 border border-white/[0.08]"
+                    >
+                        <div className="flex flex-col md:flex-row items-stretch gap-3">
+                            {/* Search fields */}
+                            <div className="flex flex-1 items-center gap-2 bg-white/[0.03] rounded-xl border border-white/[0.06] px-3">
+                                <MapPin className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                                <CityAutocomplete
+                                    id="search-from"
+                                    name="searchFrom"
+                                    value={searchFrom}
+                                    onChange={setSearchFrom}
+                                    placeholder="From"
+                                    cities={INDIAN_CITIES}
+                                    className="w-full py-2.5 text-sm bg-transparent text-white placeholder-zinc-600 focus:outline-none"
+                                />
+                                <ArrowRight className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                                <CityAutocomplete
+                                    id="search-to"
+                                    name="searchTo"
+                                    value={searchTo}
+                                    onChange={setSearchTo}
+                                    placeholder="To"
+                                    cities={INDIAN_CITIES}
+                                    className="w-full py-2.5 text-sm bg-transparent text-white placeholder-zinc-600 focus:outline-none"
+                                />
                             </div>
 
-                            {/* Destination Search Bar */}
-                            <div className="flex flex-wrap md:flex-nowrap items-end gap-3 flex-1 max-w-2xl bg-white/5 p-2 rounded-xl border border-white/10">
-                                <div className="flex-1 min-w-[140px]">
-                                    <label className="block text-xs font-medium text-cyan-300 mb-1 ml-1">From</label>
-                                    <CityAutocomplete
-                                        id="search-from"
-                                        name="searchFrom"
-                                        value={searchFrom}
-                                        onChange={setSearchFrom}
-                                        placeholder="Origin"
-                                        cities={INDIAN_CITIES}
-                                        className="w-full px-3 py-2 text-sm border border-white/10 rounded-lg bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50"
-                                    />
-                                </div>
-                                <div className="flex-1 min-w-[140px]">
-                                    <label className="block text-xs font-medium text-cyan-300 mb-1 ml-1">Destination</label>
-                                    <CityAutocomplete
-                                        id="search-to"
-                                        name="searchTo"
-                                        value={searchTo}
-                                        onChange={setSearchTo}
-                                        placeholder="Anywhere"
-                                        cities={INDIAN_CITIES}
-                                        className="w-full px-3 py-2 text-sm border border-white/10 rounded-lg bg-black/40 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50"
-                                    />
-                                </div>
+                            {/* Trip Code */}
+                            <div className="flex items-center gap-2 bg-white/[0.03] rounded-xl border border-white/[0.06] px-3">
+                                <Hash className="w-4 h-4 text-zinc-600 flex-shrink-0" />
+                                <input
+                                    type="text"
+                                    value={tripCode}
+                                    onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
+                                    placeholder="CODE"
+                                    maxLength={6}
+                                    className="w-20 py-2.5 text-sm font-mono font-semibold uppercase tracking-widest bg-transparent text-white placeholder-zinc-600 focus:outline-none text-center"
+                                    onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
+                                />
                                 <button
-                                    onClick={handleDestinationSearch}
-                                    className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-bold transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)] whitespace-nowrap"
+                                    onClick={searchByCode}
+                                    disabled={searchingCode || tripCode.length !== 6}
+                                    className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/20 flex items-center justify-center disabled:opacity-30 hover:bg-teal-500/25 transition-all flex-shrink-0"
                                 >
-                                    Search
+                                    {searchingCode ? (
+                                        <div className="w-3.5 h-3.5 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
+                                    ) : (
+                                        <ArrowRight className="w-3.5 h-3.5 text-teal-400" />
+                                    )}
                                 </button>
                             </div>
 
-                            {/* Search by Code */}
-                            <div className="flex-none md:w-auto w-full">
-                                <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 hover:border-purple-500/30 transition-colors group/code w-full">
-                                    <div className="relative flex-1 md:flex-none">
-                                        <input
-                                            type="text"
-                                            value={tripCode}
-                                            onChange={(e) => setTripCode(e.target.value.toUpperCase().slice(0, 6))}
-                                            placeholder="TRIP CODE"
-                                            maxLength={6}
-                                            className="w-full md:w-32 px-3 py-2 text-sm font-mono font-bold uppercase tracking-widest border border-transparent rounded-lg bg-black/20 text-white placeholder-gray-500 focus:outline-none focus:bg-black/40 focus:ring-1 focus:ring-purple-500/50 transition-all text-center"
-                                            onKeyDown={(e) => e.key === 'Enter' && searchByCode()}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={searchByCode}
-                                        disabled={searchingCode || tripCode.length !== 6}
-                                        className="w-9 h-9 flex-none flex items-center justify-center bg-purple-600 hover:bg-purple-500 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg transition-all shadow-[0_0_10px_rgba(147,51,234,0.3)] hover:shadow-[0_0_15px_rgba(147,51,234,0.5)] active:scale-95"
-                                        title="Join Trip"
-                                    >
-                                        {searchingCode ? (
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : (
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                            </svg>
-                                        )}
-                                    </button>
-                                </div>
+                            {/* Search + Filter buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleDestinationSearch}
+                                    className="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"
+                                >
+                                    <Search className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Search</span>
+                                </button>
+                                <button
+                                    onClick={() => setShowFilters(true)}
+                                    className="btn-glass px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 relative"
+                                >
+                                    <SlidersHorizontal className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Filters</span>
+                                    {filters.tags.length > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-teal-500 text-black font-bold rounded-full text-[10px] flex items-center justify-center">
+                                            {filters.tags.length}
+                                        </span>
+                                    )}
+                                </button>
                             </div>
-
-                            {/* Filter Button */}
-                            <button
-                                onClick={() => setShowFilters(true)}
-                                className="flex items-center px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/10 transition-all backdrop-blur-md"
-                            >
-                                <svg className="w-5 h-5 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                    />
-                                </svg>
-                                Filters
-                                {filters.tags.length > 0 && (
-                                    <span className="ml-2 w-5 h-5 bg-cyan-500 text-black font-bold rounded-full text-[10px] flex items-center justify-center">
-                                        {filters.tags.length}
-                                    </span>
-                                )}
-                            </button>
                         </div>
+                    </motion.div>
+                </div>
+            </div>
 
-                        {/* Active Filters */}
-                        {(filters.tags.length > 0 || filters.difficulty) && (
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {filters.tags.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-cyan-900/30 text-cyan-200 border border-cyan-500/30"
-                                    >
-                                        {tag}
-                                        <button
-                                            onClick={() => {
-                                                setFilters({
-                                                    ...filters,
-                                                    tags: filters.tags.filter((t) => t !== tag),
-                                                });
-                                            }}
-                                            className="ml-2 hover:text-white"
-                                        >
-                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                        </button>
-                                    </span>
-                                ))}
-                                {filters.difficulty && (
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-purple-900/30 text-purple-200 border border-purple-500/30 capitalize">
-                                        {filters.difficulty}
-                                        <button
-                                            onClick={() => setFilters({ ...filters, difficulty: undefined })}
-                                            className="ml-2 hover:text-white"
-                                        >
-                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                        </button>
-                                    </span>
-                                )}
-                            </div>
-                        )}
+            {/* ═══ Results Header & Active Filters ═══ */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10">
+                <div className="flex items-end justify-between mb-4">
+                    <div>
+                        <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
+                            {startPoint || endPoint
+                                ? <>{startPoint || 'Any'} <span className="text-zinc-600">→</span> {endPoint || 'Any'}</>
+                                : 'Explore Trips'}
+                        </h1>
+                        <p className="text-sm text-zinc-500 mt-1">
+                            {loading ? 'Finding adventures...' : `${pagination.totalTrips} trips found`}
+                        </p>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {[...Array(6)].map((_, i) => (
-                                <div key={i} className="card animate-pulse bg-white/5 border border-white/10 p-4">
-                                    <div className="h-48 bg-white/10 rounded-lg mb-4" />
-                                    <div className="space-y-3">
-                                        <div className="h-4 bg-white/10 rounded w-3/4" />
-                                        <div className="h-4 bg-white/10 rounded w-1/2" />
-                                        <div className="h-4 bg-white/10 rounded w-2/3" />
+                {/* Active Filters */}
+                {(filters.tags.length > 0 || filters.difficulty) && (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        {filters.tags.map((tag) => (
+                            <span
+                                key={tag}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-teal-500/10 text-teal-400 border border-teal-500/15"
+                            >
+                                {tag}
+                                <button
+                                    onClick={() => {
+                                        setFilters({
+                                            ...filters,
+                                            tags: filters.tags.filter((t) => t !== tag),
+                                        });
+                                    }}
+                                    className="hover:text-white"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </span>
+                        ))}
+                        {filters.difficulty && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/15 capitalize">
+                                {filters.difficulty}
+                                <button
+                                    onClick={() => setFilters({ ...filters, difficulty: undefined })}
+                                    className="hover:text-white"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* ═══ Content Grid ═══ */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="glass-card p-0 overflow-hidden">
+                                <div className="h-52 bg-zinc-800/50 animate-pulse" />
+                                <div className="p-4 space-y-3">
+                                    <div className="h-5 bg-zinc-800/50 rounded-lg w-3/4 animate-pulse" />
+                                    <div className="h-4 bg-zinc-800/30 rounded-lg w-1/2 animate-pulse" />
+                                    <div className="h-4 bg-zinc-800/20 rounded-lg w-2/3 animate-pulse" />
+                                    <div className="flex gap-2 pt-3 border-t border-white/[0.04]">
+                                        <div className="w-7 h-7 rounded-full bg-zinc-800/50 animate-pulse" />
+                                        <div className="h-4 bg-zinc-800/30 rounded-lg w-20 animate-pulse" />
                                     </div>
                                 </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : trips.length === 0 ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center py-20 glass-card max-w-md mx-auto"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-white/[0.03] border border-white/[0.06] mx-auto mb-6 flex items-center justify-center">
+                            <Search className="w-8 h-8 text-zinc-600" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-white mb-2 font-display">No trips found</h3>
+                        <p className="text-zinc-500 text-sm mb-6">Try adjusting your filters or search criteria</p>
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium"
+                        >
+                            Adjust Filters
+                        </button>
+                    </motion.div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {trips.map((trip, index) => (
+                                <motion.div
+                                    key={trip._id}
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05, duration: 0.4 }}
+                                >
+                                    <TripCard trip={trip} />
+                                    {(index + 1) % 5 === 0 && (
+                                        <div className="mt-5">
+                                            <GoogleAd className="min-h-[250px]" />
+                                        </div>
+                                    )}
+                                </motion.div>
                             ))}
                         </div>
-                    ) : trips.length === 0 ? (
-                        <div className="text-center py-20 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
-                            <svg className="w-24 h-24 mx-auto text-white/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3 className="text-xl font-semibold text-white mb-2">No trips found</h3>
-                            <p className="text-gray-400 mb-6">Try adjusting your filters or search criteria</p>
-                            <button onClick={() => setShowFilters(true)} className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors">
-                                Adjust Filters
-                            </button>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {trips.map((trip, index) => (
-                                    <div key={trip._id}>
-                                        <TripCard trip={trip} />
-                                        {/* Insert Google Ad after every 5th card */}
-                                        {(index + 1) % 5 === 0 && (
-                                            <div className="mt-6 mb-6">
-                                                <GoogleAd className="min-h-[250px]" />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+
+                        {/* Pagination */}
+                        {pagination.totalPages > 1 && (
+                            <div className="mt-12 flex items-center justify-center gap-3">
+                                <button
+                                    onClick={() => fetchTrips(pagination.currentPage - 1)}
+                                    disabled={pagination.currentPage === 1}
+                                    className="btn-glass px-5 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-zinc-500 text-sm px-4">
+                                    Page {pagination.currentPage} of {pagination.totalPages}
+                                </span>
+                                <button
+                                    onClick={() => fetchTrips(pagination.currentPage + 1)}
+                                    disabled={pagination.currentPage === pagination.totalPages}
+                                    className="btn-glass px-5 py-2.5 rounded-xl text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
                             </div>
-
-                            {/* Pagination */}
-                            {pagination.totalPages > 1 && (
-                                <div className="mt-12 flex items-center justify-center space-x-2">
-                                    <button
-                                        onClick={() => fetchTrips(pagination.currentPage - 1)}
-                                        disabled={pagination.currentPage === 1}
-                                        className="btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Previous
-                                    </button>
-                                    <span className="text-gray-700 dark:text-gray-300 px-4">
-                                        Page {pagination.currentPage} of {pagination.totalPages}
-                                    </span>
-                                    <button
-                                        onClick={() => fetchTrips(pagination.currentPage + 1)}
-                                        disabled={pagination.currentPage === pagination.totalPages}
-                                        className="btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-
-                <FilterModal
-                    isOpen={showFilters}
-                    onClose={() => setShowFilters(false)}
-                    onApply={handleApplyFilters}
-                    initialFilters={filters}
-                />
+                        )}
+                    </>
+                )}
             </div>
+
+            <FilterModal
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                onApply={handleApplyFilters}
+                initialFilters={filters}
+            />
         </div>
     );
 }
@@ -383,11 +371,8 @@ function SearchPageContent() {
 export default function SearchPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+                <div className="w-10 h-10 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
             </div>
         }>
             <SearchPageContent />

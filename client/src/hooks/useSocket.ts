@@ -20,6 +20,13 @@ export function useSocket(options: UseSocketOptions = {}) {
     const [isConnected, setIsConnected] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
 
+    const optionsRef = useRef(options);
+
+    // Update ref when options change
+    useEffect(() => {
+        optionsRef.current = options;
+    }, [options]);
+
     // Initialize socket connection
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -41,8 +48,8 @@ export function useSocket(options: UseSocketOptions = {}) {
             setConnectionError(null);
 
             // Join room if specified
-            if (options.roomId) {
-                socketRef.current?.emit('join_room', { tripId: options.roomId });
+            if (optionsRef.current.roomId) {
+                socketRef.current?.emit('join_room', { tripId: optionsRef.current.roomId });
             }
         });
 
@@ -54,38 +61,52 @@ export function useSocket(options: UseSocketOptions = {}) {
             setConnectionError(error.message);
         });
 
-        // Message handlers
-        if (options.onMessage) {
-            socketRef.current.on('receive_message', options.onMessage);
-        }
+        // Message handlers - use ref to access latest handlers
+        // We create wrapper functions to ensure we always call the latest handler from ref
+        const handleReceiveMessage = (message: any) => {
+            optionsRef.current.onMessage?.(message);
+        };
 
-        if (options.onTyping) {
-            socketRef.current.on('typing_squad', options.onTyping);
-        }
+        const handleTyping = (data: { userId: string; userName: string }) => {
+            optionsRef.current.onTyping?.(data);
+        };
 
-        if (options.onUserJoined) {
-            socketRef.current.on('user_joined', options.onUserJoined);
-        }
+        const handleUserJoined = (data: any) => {
+            optionsRef.current.onUserJoined?.(data);
+        };
 
-        if (options.onUserLeft) {
-            socketRef.current.on('user_left', options.onUserLeft);
-        }
+        const handleUserLeft = (data: any) => {
+            optionsRef.current.onUserLeft?.(data);
+        };
 
-        if (options.onPinnedMessage) {
-            socketRef.current.on('pinned_message', options.onPinnedMessage);
-        }
+        const handlePinnedMessage = (message: any) => {
+            optionsRef.current.onPinnedMessage?.(message);
+        };
 
-        if (options.onMessageUnpinned) {
-            socketRef.current.on('message_unpinned', options.onMessageUnpinned);
-        }
+        const handleMessageUnpinned = () => {
+            optionsRef.current.onMessageUnpinned?.();
+        };
+
+        socketRef.current.on('receive_message', handleReceiveMessage);
+        socketRef.current.on('typing_squad', handleTyping);
+        socketRef.current.on('user_joined', handleUserJoined);
+        socketRef.current.on('user_left', handleUserLeft);
+        socketRef.current.on('pinned_message', handlePinnedMessage);
+        socketRef.current.on('message_unpinned', handleMessageUnpinned);
 
         return () => {
-            if (options.roomId) {
-                socketRef.current?.emit('leave_room', { tripId: options.roomId });
+            if (optionsRef.current.roomId) {
+                socketRef.current?.emit('leave_room', { tripId: optionsRef.current.roomId });
             }
+            socketRef.current?.off('receive_message', handleReceiveMessage);
+            socketRef.current?.off('typing_squad', handleTyping);
+            socketRef.current?.off('user_joined', handleUserJoined);
+            socketRef.current?.off('user_left', handleUserLeft);
+            socketRef.current?.off('pinned_message', handlePinnedMessage);
+            socketRef.current?.off('message_unpinned', handleMessageUnpinned);
             socketRef.current?.disconnect();
         };
-    }, [socketUrl, options.roomId]);
+    }, [socketUrl, options.roomId]); // Only re-connect if socketUrl or roomId changes
 
     // Send message
     const sendMessage = useCallback((data: {

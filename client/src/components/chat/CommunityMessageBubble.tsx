@@ -1,5 +1,7 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import Image from 'next/image';
+import { MoreVertical, Trash2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface Message {
     _id: string;
@@ -16,12 +18,57 @@ interface CommunityMessageBubbleProps {
     message: Message;
     isOwn: boolean;
     onImageClick: (url: string) => void;
+    onDelete: () => void;
+    isMobile: boolean;
 }
 
-const CommunityMessageBubble = memo(({ message, isOwn, onImageClick }: CommunityMessageBubbleProps) => {
+const CommunityMessageBubble = memo(({ message, isOwn, onImageClick, onDelete, isMobile }: CommunityMessageBubbleProps) => {
+    const [showActions, setShowActions] = useState(false);
+
     return (
-        <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group mb-4`}>
-            <div className={`max-w-[75%] ${isOwn ? 'order-2' : 'order-2'}`}>
+        <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group mb-4 relative`}>
+            <div className={`max-w-[75%] ${isOwn ? 'order-2' : 'order-2'} relative group/bubble`}>
+                {isOwn && (
+                    <button
+                        className={`absolute top-2 -left-8 p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all ${isMobile || showActions ? 'opacity-100' : 'opacity-0 group-hover/bubble:opacity-100'}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowActions(!showActions);
+                        }}
+                    >
+                        <MoreVertical size={16} />
+                    </button>
+                )}
+
+                <AnimatePresence>
+                    {showActions && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40 bg-transparent"
+                                onClick={() => setShowActions(false)}
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                className={`absolute top-8 ${isOwn ? 'right-0' : 'left-0'} z-50 min-w-[140px] bg-gray-900/95 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl overflow-hidden`}
+                            >
+                                <button
+                                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/5 hover:text-red-300 flex items-center gap-2 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete();
+                                        setShowActions(false);
+                                    }}
+                                >
+                                    <Trash2 size={14} />
+                                    <span>Delete</span>
+                                </button>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+
                 {!isOwn && (
                     <p className="text-xs text-cyan-400 mb-1 ml-3 font-medium tracking-wide">{message.senderName}</p>
                 )}

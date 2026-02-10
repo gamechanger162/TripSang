@@ -9,6 +9,7 @@ import { tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import PremiumBadge from '@/components/PremiumBadge';
 import { isPremiumUser } from '@/utils/linkify';
+import { Heart, Share2, MapPin, Calendar, Users, IndianRupee, ArrowRight } from 'lucide-react';
 
 interface TripCardProps {
     trip: {
@@ -52,7 +53,6 @@ export default function TripCard({ trip }: TripCardProps) {
         e.preventDefault();
         e.stopPropagation();
 
-        // Check if user is authenticated
         if (status === 'unauthenticated') {
             toast.error('Please login to like trips');
             router.push('/auth/signin');
@@ -94,7 +94,6 @@ export default function TripCard({ trip }: TripCardProps) {
             }
         }
 
-        // Fallback: copy link
         try {
             await navigator.clipboard.writeText(shareUrl);
             toast.success('Link copied to clipboard!');
@@ -113,15 +112,15 @@ export default function TripCard({ trip }: TripCardProps) {
     const getDifficultyColor = (difficulty?: string) => {
         switch (difficulty) {
             case 'easy':
-                return 'bg-green-500/20 text-green-200 border-green-500/30';
+                return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
             case 'moderate':
-                return 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30';
+                return 'bg-amber-500/15 text-amber-400 border-amber-500/20';
             case 'difficult':
-                return 'bg-orange-500/20 text-orange-200 border-orange-500/30';
+                return 'bg-orange-500/15 text-orange-400 border-orange-500/20';
             case 'extreme':
-                return 'bg-red-500/20 text-red-200 border-red-500/30';
+                return 'bg-red-500/15 text-red-400 border-red-500/20';
             default:
-                return 'bg-gray-500/20 text-gray-200 border-gray-500/30';
+                return 'bg-zinc-500/15 text-zinc-400 border-zinc-500/20';
         }
     };
 
@@ -148,7 +147,7 @@ export default function TripCard({ trip }: TripCardProps) {
         const start = new Date(trip.startDate);
         const end = new Date(trip.endDate);
         const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
         return {
             days: diffDays,
@@ -162,15 +161,15 @@ export default function TripCard({ trip }: TripCardProps) {
 
     return (
         <Link href={`/trips/${trip._id}`}>
-            <div className="card hover:shadow-cyan-500/20 transition-all duration-300 overflow-hidden group cursor-pointer border border-white/10 bg-white/5 backdrop-blur-sm">
+            <div className="glass-card overflow-hidden group cursor-pointer p-0 hover:border-teal-500/20 transition-all duration-300">
                 {/* Cover Image */}
-                <div className="relative h-48 w-full overflow-hidden rounded-lg mb-4">
+                <div className="relative h-52 w-full overflow-hidden">
                     {trip.coverPhoto ? (
                         <Image
                             src={trip.coverPhoto}
                             alt={trip.title}
                             fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
@@ -180,79 +179,41 @@ export default function TripCard({ trip }: TripCardProps) {
                         />
                     ) : null}
 
-                    {/* Fallback Gradient if no image or error */}
-                    <div className={`w-full h-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center ${trip.coverPhoto ? 'hidden' : ''}`}>
-                        <svg
-                            className="w-16 h-16 text-white/50"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
+                    {/* Fallback Gradient */}
+                    <div className={`w-full h-full bg-gradient-to-br from-teal-500/30 to-orange-500/20 flex items-center justify-center ${trip.coverPhoto ? 'hidden' : ''}`}>
+                        <MapPin className="w-12 h-12 text-white/20" />
                     </div>
+
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent" />
 
                     {/* Action Buttons */}
                     <div className="absolute top-3 right-3 flex items-center gap-2">
-                        {/* Share Button */}
                         <button
                             onClick={handleShare}
-                            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all group/share"
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-all"
                             title="Share trip"
                         >
-                            <svg
-                                className="w-5 h-5 text-gray-600 group-hover/share:text-primary-600 transition-colors"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                                />
-                            </svg>
+                            <Share2 className="w-4 h-4 text-white/80" />
                         </button>
 
-                        {/* Like Button */}
                         <button
                             onClick={handleLike}
-                            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all group/like"
+                            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-all"
                         >
-                            <svg
-                                className={`w-5 h-5 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                                    } group-hover/like:text-red-500`}
-                                fill={liked ? 'currentColor' : 'none'}
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                />
-                            </svg>
+                            <Heart className={`w-4 h-4 ${liked ? 'fill-red-500 text-red-500' : 'text-white/80'} transition-colors`} />
                         </button>
                     </div>
 
                     {/* Bottom Badges */}
                     <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                        {/* Trip Duration Badge */}
-                        <div className={`badge text-xs backdrop-blur-md border border-white/20 ${tripDuration.isShort ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/30' : 'bg-purple-500/20 text-purple-200 border-purple-500/30'}`}>
+                        <div className={`text-[11px] font-medium px-2.5 py-1 rounded-full backdrop-blur-sm border ${tripDuration.isShort ? 'bg-teal-500/20 text-teal-300 border-teal-500/20' : 'bg-purple-500/20 text-purple-300 border-purple-500/20'}`}>
                             <span className="mr-1">{tripDuration.icon}</span>
-                            {tripDuration.label}
+                            {tripDuration.days}D
                         </div>
 
-                        {/* Difficulty Badge */}
                         {trip.difficulty && (
-                            <div className={`badge capitalize text-xs backdrop-blur-md border border-white/20 ${getDifficultyColor(trip.difficulty)}`}>
+                            <div className={`text-[11px] font-medium capitalize px-2.5 py-1 rounded-full backdrop-blur-sm border ${getDifficultyColor(trip.difficulty)}`}>
                                 {trip.difficulty}
                             </div>
                         )}
@@ -260,69 +221,48 @@ export default function TripCard({ trip }: TripCardProps) {
                 </div>
 
                 {/* Content */}
-                <div className="space-y-3 p-4">
+                <div className="p-4 space-y-3">
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-white line-clamp-2 group-hover:text-cyan-400 transition-colors drop-shadow-md">
+                    <h3 className="text-lg font-semibold text-white line-clamp-1 group-hover:text-teal-400 transition-colors font-display">
                         {trip.title}
                     </h3>
 
                     {/* Route */}
-                    <div className="flex items-center text-sm text-gray-300">
-                        <svg className="w-4 h-4 mr-1 text-cyan-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                                fillRule="evenodd"
-                                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                        <span className="font-medium text-white">{trip.startPoint.name}</span>
-                        <svg className="w-4 h-4 mx-2 text-cyan-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                        <span className="font-medium text-white">{trip.endPoint.name}</span>
+                    <div className="flex items-center text-sm text-zinc-400">
+                        <MapPin className="w-3.5 h-3.5 mr-1.5 text-teal-500" />
+                        <span className="text-zinc-200 font-medium">{trip.startPoint.name}</span>
+                        <ArrowRight className="w-3.5 h-3.5 mx-1.5 text-zinc-600" />
+                        <span className="text-zinc-200 font-medium">{trip.endPoint.name}</span>
                     </div>
 
-                    {/* Dates */}
-                    <div className="flex items-center text-sm text-gray-400">
-                        <svg className="w-4 h-4 mr-1 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                        </svg>
-                        {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
-                    </div>
-
-                    {/* Budget */}
-                    {trip.budget && trip.budget.min !== undefined && trip.budget.max !== undefined && (
-                        <div className="flex items-center text-sm text-gray-400">
-                            <svg className="w-4 h-4 mr-1 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                            {trip.budget.currency || 'INR'} {trip.budget.min.toLocaleString()} - {trip.budget.max.toLocaleString()}
+                    {/* Date & Budget row */}
+                    <div className="flex items-center gap-4 text-sm text-zinc-500">
+                        <div className="flex items-center">
+                            <Calendar className="w-3.5 h-3.5 mr-1.5 text-zinc-600" />
+                            {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
                         </div>
-                    )}
+
+                        {trip.budget && trip.budget.min !== undefined && trip.budget.max !== undefined && (
+                            <div className="flex items-center">
+                                <IndianRupee className="w-3.5 h-3.5 mr-0.5 text-zinc-600" />
+                                {trip.budget.min.toLocaleString()} - {trip.budget.max.toLocaleString()}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Tags */}
                     {trip.tags && trip.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                             {trip.tags.slice(0, 3).map((tag, index) => (
                                 <span
                                     key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cyan-900/30 text-cyan-300 border border-cyan-500/20"
+                                    className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-teal-500/10 text-teal-400 border border-teal-500/10"
                                 >
                                     {tag}
                                 </span>
                             ))}
                             {trip.tags.length > 3 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10">
+                                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/5 text-zinc-500 border border-white/5">
                                     +{trip.tags.length - 3}
                                 </span>
                             )}
@@ -330,62 +270,52 @@ export default function TripCard({ trip }: TripCardProps) {
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
                         {/* Creator */}
                         <div className="flex items-center space-x-2">
-                            <div className="relative w-8 h-8 rounded-full bg-cyan-900/30 flex items-center justify-center overflow-hidden border border-cyan-500/30">
+                            <div className="relative w-7 h-7 rounded-full bg-teal-500/10 flex items-center justify-center overflow-hidden border border-teal-500/20">
                                 {trip.creator?.profilePicture ? (
                                     <Image
                                         src={trip.creator.profilePicture}
                                         alt={trip.creator.name || 'User'}
-                                        width={32}
-                                        height={32}
+                                        width={28}
+                                        height={28}
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <span className="text-sm font-semibold text-cyan-400">
+                                    <span className="text-xs font-semibold text-teal-400">
                                         {trip.creator?.name?.[0] || '?'}
                                     </span>
                                 )}
                                 {isPremiumUser(trip.creator) && <PremiumBadge size="sm" />}
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-white flex items-center gap-1 group-hover:text-cyan-400 transition-colors">
+                                <p className="text-xs font-medium text-zinc-300 flex items-center gap-1">
                                     {trip.creator?.name || 'Unknown User'}
                                     {getGenderIcon(trip.creator?.gender) && (
-                                        <span className="text-gray-400 text-xs" title={formatGender(trip.creator?.gender) || ''}>
+                                        <span className="text-zinc-600 text-[10px]" title={formatGender(trip.creator?.gender) || ''}>
                                             {getGenderIcon(trip.creator?.gender)}
                                         </span>
                                     )}
                                 </p>
                                 {trip.creator?.badges && trip.creator.badges.length > 0 && (
-                                    <p className="text-xs text-gray-500">{trip.creator.badges[0]}</p>
+                                    <p className="text-[10px] text-zinc-600">{trip.creator.badges[0]}</p>
                                 )}
                             </div>
                         </div>
 
                         {/* Stats */}
-                        <div className="flex items-center space-x-4 text-sm text-gray-400">
-                            {/* Squad Size */}
+                        <div className="flex items-center space-x-3 text-xs text-zinc-500">
                             {trip.currentSquadSize !== undefined && (
-                                <div className="flex items-center">
-                                    <svg className="w-4 h-4 mr-1 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                                    </svg>
-                                    {trip.currentSquadSize}/{trip.maxSquadSize}
+                                <div className="flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5 text-zinc-600" />
+                                    <span>{trip.currentSquadSize}/{trip.maxSquadSize}</span>
                                 </div>
                             )}
 
-                            {/* Likes */}
-                            <div className="flex items-center">
-                                <svg className={`w-4 h-4 mr-1 ${liked ? 'text-red-500' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 20 20">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                                {likes}
+                            <div className="flex items-center gap-1">
+                                <Heart className={`w-3.5 h-3.5 ${liked ? 'text-red-500 fill-red-500' : 'text-zinc-600'}`} />
+                                <span>{likes}</span>
                             </div>
                         </div>
                     </div>

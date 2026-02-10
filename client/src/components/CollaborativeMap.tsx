@@ -106,23 +106,31 @@ function RoutingController({
 
     // Initialize/Update Routing Machine
     useEffect(() => {
+        // All routing logic relies on map being present and valid
         if (!map) return;
 
-        // Clean up previous routing control
-        if (routingControlRef.current) {
-            try {
-                // Check if control is still added to map before removing
-                // Validating internal state of control to avoid crash
-                if (map.hasLayer && map.hasLayer(routingControlRef.current)) {
-                    map.removeControl(routingControlRef.current);
-                } else {
-                    try { map.removeControl(routingControlRef.current); } catch (e) { }
+        // Clean up previous routing control safely
+        const cleanupRouting = () => {
+            if (routingControlRef.current) {
+                try {
+                    const control = routingControlRef.current;
+                    // Prevent OSRM callback crash
+                    if (control._clearLines) {
+                        try { control._clearLines = () => { }; } catch (e) { }
+                    }
+
+                    // Only remove if map still exists and has this control layer
+                    if (map && map.hasLayer && map.hasLayer(control)) {
+                        map.removeControl(control);
+                    }
+                } catch (e) {
+                    console.warn('Error cleaning up routing control:', e);
                 }
-            } catch (e) {
-                // Ignore removal errors
+                routingControlRef.current = null;
             }
-            routingControlRef.current = null;
-        }
+        };
+
+        cleanupRouting();
 
         // Define waypoints for routing
         // Format: [Start, ...Waypoints, End]
@@ -165,6 +173,12 @@ function RoutingController({
                     );
                 }
             }).addTo(map);
+
+            // Hide the container explicitly via JS as well
+            const container = routingControlRef.current.getContainer();
+            if (container) {
+                container.style.display = 'none';
+            }
 
             // Listen for route changes
             if (!isReadOnly) {
