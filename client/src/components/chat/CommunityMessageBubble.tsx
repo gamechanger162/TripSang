@@ -16,25 +16,11 @@ interface CommunityMessageBubbleProps {
     message: Message;
     isOwn: boolean;
     onImageClick: (url: string) => void;
-    isSelectionMode?: boolean;
-    isSelected?: boolean;
-    onSelect?: () => void;
 }
 
-const CommunityMessageBubble = memo(({ message, isOwn, onImageClick, isSelectionMode, isSelected, onSelect }: CommunityMessageBubbleProps) => {
+const CommunityMessageBubble = memo(({ message, isOwn, onImageClick }: CommunityMessageBubbleProps) => {
     return (
-        <div
-            className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group mb-4 ${isSelectionMode ? 'cursor-pointer' : ''}`}
-            onClick={() => isSelectionMode && onSelect?.()}
-        >
-            {/* Selection Checkbox */}
-            {isSelectionMode && (
-                <div className="flex items-center mr-2 order-1">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-cyan-500 border-cyan-500' : 'border-gray-500'}`}>
-                        {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                    </div>
-                </div>
-            )}
+        <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group mb-4`}>
             <div className={`max-w-[75%] ${isOwn ? 'order-2' : 'order-2'}`}>
                 {!isOwn && (
                     <p className="text-xs text-cyan-400 mb-1 ml-3 font-medium tracking-wide">{message.senderName}</p>

@@ -61,38 +61,6 @@ export default function CommunityChatPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [isSelectionMode, setIsSelectionMode] = useState(false);
-    const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
-
-    const toggleSelection = (messageId: string) => {
-        setSelectedMessageIds(prev =>
-            prev.includes(messageId)
-                ? prev.filter(id => id !== messageId)
-                : [...prev, messageId]
-        );
-    };
-
-    const handleDeleteSelected = async () => {
-        if (!selectedMessageIds.length) return;
-
-        const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedMessageIds.length} messages?`);
-        if (!confirmDelete) return;
-
-        try {
-            await Promise.all(selectedMessageIds.map(messageId => communityAPI.deleteMessage(id as string, messageId)));
-
-            // Optimistic update
-            setMessages(prev => prev.filter(m => !selectedMessageIds.includes(m._id)));
-
-            toast.success('Messages deleted');
-            setIsSelectionMode(false);
-            setSelectedMessageIds([]);
-        } catch (error) {
-            console.error('Failed to delete messages:', error);
-            toast.error('Failed to delete some messages');
-        }
-    };
-
     const currentUserId = (session?.user as any)?.id;
 
     useEffect(() => {
@@ -269,63 +237,32 @@ export default function CommunityChatPage() {
             <MeshBackground />
 
             {/* Header */}
-            {isSelectionMode ? (
-                <div className="relative z-10 p-4 border-b border-white/5 bg-cyan-900/40 backdrop-blur-xl shadow-lg flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => { setIsSelectionMode(false); setSelectedMessageIds([]); }}
-                            className="p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
-                        <span className="text-white font-medium">{selectedMessageIds.length} Selected</span>
-                    </div>
-                    <button
-                        onClick={handleDeleteSelected}
-                        disabled={!selectedMessageIds.length}
-                        className="text-red-400 font-medium px-4 py-1 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
-                    >
-                        Delete
-                    </button>
-                </div>
-            ) : (
-                <div className="relative z-10 flex items-center gap-3 p-4 border-b border-white/5 bg-black/20 backdrop-blur-xl shadow-lg">
-                    <button
-                        onClick={handleBack}
-                        className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
+            <div className="relative z-10 flex items-center gap-3 p-4 border-b border-white/5 bg-black/20 backdrop-blur-xl shadow-lg">
+                <button
+                    onClick={handleBack}
+                    className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
+                >
+                    <ArrowLeft size={20} />
+                </button>
 
-                    <div
-                        className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setShowDetailsModal(true)}
-                    >
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center overflow-hidden">
-                            {community?.logo ? (
-                                <img src={community.logo} alt={community.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <Users size={20} className="text-white" />
-                            )}
-                        </div>
-
-                        <div>
-                            <h2 className="text-white font-semibold">{community?.name || 'Community'}</h2>
-                            <p className="text-xs text-gray-400">{community?.memberCount || 0} members</p>
-                        </div>
+                <div
+                    className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setShowDetailsModal(true)}
+                >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center overflow-hidden">
+                        {community?.logo ? (
+                            <img src={community.logo} alt={community.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <Users size={20} className="text-white" />
+                        )}
                     </div>
 
-                    <button
-                        onClick={() => setIsSelectionMode(true)}
-                        className="p-2 rounded-full hover:bg-white/10 text-white/60 transition-colors"
-                        title="Select Messages"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                    </button>
+                    <div>
+                        <h2 className="text-white font-semibold">{community?.name || 'Community'}</h2>
+                        <p className="text-xs text-gray-400">{community?.memberCount || 0} members</p>
+                    </div>
                 </div>
-            )}
+            </div>
 
             <CommunityDetailsModal
                 isOpen={showDetailsModal}
@@ -342,24 +279,7 @@ export default function CommunityChatPage() {
                                 message={msg}
                                 isOwn={msg.sender === currentUserId}
                                 onImageClick={handleImageClick}
-                                isSelectionMode={isSelectionMode}
-                                isSelected={selectedMessageIds.includes(msg._id)}
-                                onSelect={() => toggleSelection(msg._id)}
                             />
-                            {!isSelectionMode && (msg.sender === currentUserId) && (
-                                <button
-                                    className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 p-1 bg-black/50 rounded-full text-white/50 hover:text-white transition-opacity z-10"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsSelectionMode(true);
-                                        toggleSelection(msg._id);
-                                    }}
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </button>
-                            )}
                         </div>
                     ))}
                     <div ref={messagesEndRef} />

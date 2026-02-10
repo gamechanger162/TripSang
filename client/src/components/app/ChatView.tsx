@@ -106,46 +106,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
     const [isBlocked, setIsBlocked] = useState(false);
     const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false); // State for remove member modal
     const [showTripDetails, setShowTripDetails] = useState(false); // State for trip details modal
-
     const [isSelectionMode, setIsSelectionMode] = useState(false);
-    const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
+    const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
 
-    const toggleSelection = (messageId: string) => {
-        setSelectedMessageIds(prev =>
-            prev.includes(messageId)
-                ? prev.filter(id => id !== messageId)
-                : [...prev, messageId]
-        );
-    };
 
-    const handleDeleteSelected = async () => {
-        if (!selectedMessageIds.length) return;
-
-        const confirmDelete = window.confirm(`Are you sure you want to delete ${selectedMessageIds.length} messages?`);
-        if (!confirmDelete) return;
-
-        try {
-            await Promise.all(selectedMessageIds.map(async (id) => {
-                if (conversationType === 'squad') {
-                    socketRef.current?.emit('delete_message', { tripId: conversationId, messageId: id });
-                } else if (conversationType === 'community') {
-                    await communityAPI.deleteMessage(conversationId, id);
-                } else {
-                    await messageAPI.deleteMessage(id);
-                }
-            }));
-
-            // Optimistic update
-            setMessages(prev => prev.filter(m => !selectedMessageIds.includes(m._id)));
-
-            toast.success('Messages deleted');
-            setIsSelectionMode(false);
-            setSelectedMessageIds([]);
-        } catch (error) {
-            console.error('Failed to delete messages:', error);
-            toast.error('Failed to delete some messages');
-        }
-    };
 
     // Fetch messages
     const fetchMessages = useCallback(async () => {
@@ -704,31 +668,14 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     }}
                     formatTime={formatTime}
                     onImageClick={setSelectedImage}
-                    isSelectionMode={isSelectionMode}
-                    isSelected={selectedMessageIds.includes(msg._id)}
-                    onSelect={() => toggleSelection(msg._id)}
                 />
-                {!isSelectionMode && (
-                    <button
-                        className="absolute top-2 right-2 opacity-0 group-hover/msg:opacity-100 p-1 bg-black/50 rounded-full text-white/50 hover:text-white transition-opacity z-10"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsSelectionMode(true);
-                            toggleSelection(msg._id);
-                        }}
-                        title="Select"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
-                )}
             </div>
         );
     };
 
     return (
         <div className="chat-view">
+            {/* Header */}
             {/* Header */}
             <div className="chat-header">
                 {isMobile && (
@@ -737,68 +684,45 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     </button>
                 )}
 
-                {isSelectionMode ? (
-                    <div className="flex-1 flex items-center justify-between mx-4">
-                        <div className="flex items-center gap-3">
-                            <span className="text-white font-medium">{selectedMessageIds.length} Selected</span>
+                <div
+                    className={`header-info cursor-pointer hover:opacity-80 transition-opacity`}
+                    onClick={() => {
+                        if (conversationType === 'dm' && conversationInfo?.otherUserId) {
+                            router.push(`/profile/${conversationInfo.otherUserId}`);
+                        } else if (conversationType === 'squad') {
+                            setShowTripDetails(true);
+                        } else if (conversationType === 'community') {
+                            router.push(`/app/communities/${conversationId}`);
+                        }
+                    }}
+                >
+                    {conversationInfo?.avatar ? (
+                        <div className="header-avatar-container">
+                            <Image
+                                src={conversationInfo.avatar}
+                                alt=""
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                            />
                         </div>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={handleDeleteSelected}
-                                disabled={!selectedMessageIds.length}
-                                className="text-red-400 font-medium px-4 py-1 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
-                            >
-                                Delete
-                            </button>
-                            <button
-                                onClick={() => { setIsSelectionMode(false); setSelectedMessageIds([]); }}
-                                className="p-2 hover:bg-white/10 rounded-full text-white/70"
-                            >
-                                <X size={20} />
-                            </button>
+                    ) : (
+                        <div className="header-avatar-placeholder">
+                            {conversationInfo?.name?.charAt(0) || '?'}
                         </div>
-                    </div>
-                ) : (
-                    <div
-                        className={`header-info cursor-pointer hover:opacity-80 transition-opacity`}
-                        onClick={() => {
-                            if (conversationType === 'dm' && conversationInfo?.otherUserId) {
-                                router.push(`/profile/${conversationInfo.otherUserId}`);
-                            } else if (conversationType === 'squad') {
-                                setShowTripDetails(true);
-                            } else if (conversationType === 'community') {
-                                router.push(`/app/communities/${conversationId}`);
-                            }
-                        }}
-                    >
-                        {conversationInfo?.avatar ? (
-                            <div className="header-avatar-container">
-                                <Image
-                                    src={conversationInfo.avatar}
-                                    alt=""
-                                    fill
-                                    sizes="40px"
-                                    className="object-cover"
-                                />
-                            </div>
-                        ) : (
-                            <div className="header-avatar-placeholder">
-                                {conversationInfo?.name?.charAt(0) || '?'}
-                            </div>
+                    )}
+                    <div>
+                        <h3 className="header-name">
+                            {conversationInfo?.name || 'Loading...'}
+                            {conversationInfo?.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
+                        </h3>
+                        {typingUsers.length > 0 && (
+                            <span className="typing-indicator">
+                                {typingUsers.join(', ')} typing...
+                            </span>
                         )}
-                        <div>
-                            <h3 className="header-name">
-                                {conversationInfo?.name || 'Loading...'}
-                                {conversationInfo?.isVerified && <VerifiedBadge size="sm" className="ml-1" />}
-                            </h3>
-                            {typingUsers.length > 0 && (
-                                <span className="typing-indicator">
-                                    {typingUsers.join(', ')} typing...
-                                </span>
-                            )}
-                        </div>
                     </div>
-                )}
+                </div>
 
                 {!isSelectionMode && (
                     <button
@@ -2065,11 +1989,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             </AnimatePresence>
 
 
-        </div >
+        </div>
     );
 }
 
-// Message Bubble Component with swipe-to-reply and smart grouping
 // Message Bubble Component with swipe-to-reply and smart grouping
 function MessageBubble({
     message,
