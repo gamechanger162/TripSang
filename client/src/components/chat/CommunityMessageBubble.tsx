@@ -1,7 +1,8 @@
 import { memo, useState } from 'react';
 import Image from 'next/image';
-import { MoreVertical, Trash2 } from 'lucide-react';
+import { MoreVertical, Trash2, Copy, Reply } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface Message {
     _id: string;
@@ -19,86 +20,137 @@ interface CommunityMessageBubbleProps {
     isOwn: boolean;
     onImageClick: (url: string) => void;
     onDelete: () => void;
+    onReply?: () => void;
     isMobile: boolean;
+    groupPosition?: 'single' | 'top' | 'middle' | 'bottom';
 }
 
-const CommunityMessageBubble = memo(({ message, isOwn, onImageClick, onDelete, isMobile }: CommunityMessageBubbleProps) => {
+const CommunityMessageBubble = memo(({ message, isOwn, onImageClick, onDelete, onReply, isMobile, groupPosition = 'single' }: CommunityMessageBubbleProps) => {
     const [showActions, setShowActions] = useState(false);
 
+    const formatTime = (ts: string) => {
+        return new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    };
+
     return (
-        <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group mb-4 relative`}>
-            <div className={`max-w-[75%] ${isOwn ? 'order-2' : 'order-2'} relative group/bubble`}>
-                {isOwn && (
-                    <button
-                        className={`absolute top-2 -left-8 p-1.5 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all ${isMobile || showActions ? 'opacity-100' : 'opacity-0 group-hover/bubble:opacity-100'}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setShowActions(!showActions);
-                        }}
-                    >
-                        <MoreVertical size={16} />
-                    </button>
-                )}
+        <div className={`flex w-full px-2 sm:px-4 py-0.5 group relative hover:bg-white/[0.02] transition-colors ${isOwn ? 'justify-end' : 'justify-start'}`}>
 
-                <AnimatePresence>
-                    {showActions && (
-                        <>
-                            <div
-                                className="fixed inset-0 z-40 bg-transparent"
-                                onClick={() => setShowActions(false)}
-                            />
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                className={`absolute top-8 ${isOwn ? 'right-0' : 'left-0'} z-50 min-w-[140px] bg-gray-900/95 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl overflow-hidden`}
-                            >
-                                <button
-                                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/5 hover:text-red-300 flex items-center gap-2 transition-colors"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDelete();
-                                        setShowActions(false);
-                                    }}
-                                >
-                                    <Trash2 size={14} />
-                                    <span>Delete</span>
-                                </button>
-                            </motion.div>
-                        </>
+            {/* Avatar (Only for received messages) */}
+            {!isOwn && (
+                <div className={`w-8 h-8 mr-2 shrink-0 flex flex-col justify-end ${(groupPosition === 'bottom' || groupPosition === 'single') ? 'visible' : 'invisible'}`}>
+                    {(groupPosition === 'bottom' || groupPosition === 'single') && (
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden border border-white/10">
+                            {message.senderProfilePicture ? (
+                                <Image
+                                    src={message.senderProfilePicture}
+                                    alt={message.senderName}
+                                    width={32} height={32}
+                                    className="object-cover w-full h-full"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-zinc-400">
+                                    {message.senderName?.[0]}
+                                </div>
+                            )}
+                        </div>
                     )}
-                </AnimatePresence>
+                </div>
+            )}
 
-                {!isOwn && (
-                    <p className="text-xs text-cyan-400 mb-1 ml-3 font-medium tracking-wide">{message.senderName}</p>
+            {/* Bubble Container */}
+            <div className={`relative max-w-[85%] sm:max-w-[75%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+
+                {/* Sender Name */}
+                {!isOwn && (groupPosition === 'top' || groupPosition === 'single') && (
+                    <span className="text-[11px] text-zinc-400 ml-1 mb-1 font-medium">
+                        {message.senderName}
+                    </span>
                 )}
+
+                {/* Message Bubble */}
                 <div
-                    className={`relative rounded-3xl px-5 py-3 shadow-lg backdrop-blur-md border ${isOwn
-                        ? 'bg-gradient-to-br from-cyan-600/20 to-blue-600/20 border-cyan-500/30 rounded-br-none shadow-[0_0_15px_rgba(6,182,212,0.15)] text-white'
-                        : 'bg-white/5 border-white/10 rounded-bl-none hover:bg-white/10 transition-colors text-gray-200'
-                        }`}
+                    className={`
+                        relative px-3 py-2 text-sm shadow-sm break-words min-w-[60px]
+                        ${isOwn
+                            ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white rounded-2xl rounded-tr-sm'
+                            : 'bg-zinc-800 text-zinc-100 rounded-2xl rounded-tl-sm border border-white/5'}
+                    `}
                 >
-                    {message.type === 'image' && message.imageUrl ? (
-                        <div
-                            className="cursor-pointer hover:opacity-90 transition-all duration-300 relative w-full aspect-video min-w-[240px] rounded-2xl overflow-hidden border border-white/10"
-                            onClick={() => onImageClick(message.imageUrl!)}
-                        >
+                    {/* Image Content */}
+                    {message.type === 'image' && message.imageUrl && (
+                        <div className="mb-1 rounded-lg overflow-hidden cursor-pointer relative group/image">
                             <Image
                                 src={message.imageUrl}
-                                alt="Shared"
-                                fill
-                                className="object-cover hover:scale-105 transition-transform duration-500"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                alt="Shared image"
+                                width={300} height={200}
+                                className="object-cover max-h-60 w-full"
+                                onClick={() => onImageClick(message.imageUrl!)}
                             />
                         </div>
-                    ) : (
-                        <p className={`text-[15px] leading-relaxed ${isOwn ? 'text-white/95' : 'text-gray-200'}`}>{message.message}</p>
                     )}
 
-                    <p className={`text-[10px] mt-2 flex items-center gap-1 ${isOwn ? 'text-cyan-200/60 justify-end' : 'text-gray-500'}`}>
-                        {new Date(message.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                        {isOwn && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>}
-                    </p>
+                    {/* Text Content */}
+                    {message.message && (
+                        <p className="whitespace-pre-wrap leading-relaxed">{message.message}</p>
+                    )}
+
+                    {/* Time */}
+                    <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${isOwn ? 'text-white/70' : 'text-zinc-500'}`}>
+                        <span>{formatTime(message.timestamp)}</span>
+                        {isOwn && <span>• Sent</span>}
+                    </div>
+
+                    {/* Options Button */}
+                    <div className={`absolute top-0 ${isOwn ? '-left-8' : '-right-8'} opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 items-center justify-center h-full`}>
+                        <button
+                            className="p-1.5 rounded-full bg-zinc-800 border border-white/10 text-zinc-400 hover:text-white shadow-lg backdrop-blur-md"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowActions(!showActions);
+                            }}
+                        >
+                            <MoreVertical size={14} />
+                        </button>
+                    </div>
+
+                    {/* Dropdown Menu */}
+                    <AnimatePresence>
+                        {showActions && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    className={`absolute bottom-full ${isOwn ? 'right-0' : 'left-0'} mb-1 bg-zinc-800 border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden min-w-[140px] py-1`}
+                                >
+                                    {onReply && (
+                                        <button
+                                            onClick={() => { onReply(); setShowActions(false); }}
+                                            className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-white/5 flex items-center gap-2"
+                                        >
+                                            <Reply size={14} /> Reply
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => { navigator.clipboard.writeText(message.message); setShowActions(false); toast.success('Copied'); }}
+                                        className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-white/5 flex items-center gap-2"
+                                    >
+                                        <Copy size={14} /> Copy
+                                    </button>
+
+                                    {isOwn && (
+                                        <button
+                                            onClick={() => { onDelete(); setShowActions(false); }}
+                                            className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 flex items-center gap-2 border-t border-white/5"
+                                        >
+                                            <Trash2 size={14} /> Delete
+                                        </button>
+                                    )}
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>

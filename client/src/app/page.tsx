@@ -1,75 +1,52 @@
 'use client';
 
-import { useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { HeroSection, HowItWorks } from '@/components/home';
+import { Suspense } from 'react';
+import { SectionLoader } from '../components/ui/SectionLoader';
 
-// Lazy load below-fold components for faster initial load
-const TrendingDestinations = dynamic(
-    () => import('@/components/home').then(m => ({ default: m.TrendingDestinations })),
-    { ssr: false }
-);
-const FeaturesGrid = dynamic(
-    () => import('@/components/home').then(m => ({ default: m.FeaturesGrid })),
-    { ssr: false }
-);
-const VerifiedPartners = dynamic(
-    () => import('@/components/home').then(m => ({ default: m.VerifiedPartners })),
-    { ssr: false }
-);
-const MomentsShowcase = dynamic(
-    () => import('@/components/home').then(m => ({ default: m.MomentsShowcase })),
-    { ssr: false }
-);
-const CallToAction = dynamic(
-    () => import('@/components/home').then(m => ({ default: m.CallToAction })),
-    { ssr: false }
-);
+// Heavy components are lazy loaded to improve initial load performance
+const HeroSection = dynamic(() => import('@/components/home/HeroSection'), {
+    loading: () => <SectionLoader />,
+});
 
-// Loading skeleton for lazy components
-const SectionLoader = () => (
-    <div className="w-full py-20 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-48 bg-zinc-800/50 rounded-lg animate-pulse"></div>
-            <div className="h-4 w-64 bg-zinc-800/30 rounded-lg animate-pulse"></div>
-        </div>
-    </div>
-);
+const DiscoverHub = dynamic(() => import('@/components/home/DiscoverHub'), {
+    loading: () => <SectionLoader />,
+});
+
+const WhyTripSang = dynamic(() => import('@/components/home/WhyTripSang'), {
+    loading: () => <SectionLoader />,
+});
+
+const MomentsMarquee = dynamic(() => import('@/components/home/MomentsMarquee'), {
+    loading: () => <SectionLoader />,
+});
+
+const CallToAction = dynamic(() => import('@/components/home/CallToAction'), {
+    loading: () => <SectionLoader />,
+});
 
 export default function Home() {
-    const [tripCode, setTripCode] = useState('');
-    const [searchingCode, setSearchingCode] = useState(false);
-
     return (
         <main className="bg-zinc-950 min-h-screen overflow-x-hidden">
-            {/* Hero Section with Search - loads immediately */}
-            <HeroSection
-                tripCode={tripCode}
-                setTripCode={setTripCode}
-                searchingCode={searchingCode}
-                setSearchingCode={setSearchingCode}
-            />
+            {/* 1. Cinematic Hero (Viewport Height) */}
+            <HeroSection />
 
-            {/* How It Works - loads immediately (above fold) */}
-            <HowItWorks />
-
-            {/* Below-fold content - lazy loaded */}
+            {/* 2. Consolidated Discovery (Upcoming Trips, Communities) */}
             <Suspense fallback={<SectionLoader />}>
-                <TrendingDestinations />
+                <DiscoverHub />
             </Suspense>
 
+            {/* 3. The "Why" Strip (Horizontal Scroll) */}
             <Suspense fallback={<SectionLoader />}>
-                <FeaturesGrid />
+                <WhyTripSang />
             </Suspense>
 
+            {/* 4. Visual Vibes (Marquee) */}
             <Suspense fallback={<SectionLoader />}>
-                <VerifiedPartners />
+                <MomentsMarquee />
             </Suspense>
 
-            <Suspense fallback={<SectionLoader />}>
-                <MomentsShowcase />
-            </Suspense>
-
+            {/* 5. Final Push */}
             <Suspense fallback={<SectionLoader />}>
                 <CallToAction />
             </Suspense>

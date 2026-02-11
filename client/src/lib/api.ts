@@ -29,8 +29,17 @@ const removeToken = () => {
     }
 };
 
+// Global rate-limit circuit breaker
+let rateLimitedUntil: number = 0;
+
 // Helper to make authenticated requests
 const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
+    // If we're rate-limited, silently reject without making a network request
+    if (rateLimitedUntil > Date.now()) {
+        const secsLeft = Math.ceil((rateLimitedUntil - Date.now()) / 1000);
+        throw new Error(`Rate limited. Try again in ${secsLeft}s`);
+    }
+
     // Try to get token from NextAuth session first
     let token = null;
 
@@ -57,6 +66,17 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
         ...options,
         headers,
     });
+
+    // Handle rate limiting globally
+    if (response.status === 429) {
+        // Default 15 min cooldown; parse from Retry-After header if available
+        const retryAfter = response.headers.get('Retry-After');
+        const cooldownMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : 15 * 60 * 1000;
+        rateLimitedUntil = Date.now() + cooldownMs;
+        console.warn(`[API] Rate limited. Suppressing all requests for ${cooldownMs / 1000}s`);
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Too many requests, please try again later');
+    }
 
     const data = await response.json();
 
@@ -719,8 +739,10 @@ export const messageAPI = {
     },
 
     // Get message history for a conversation
-    getMessageHistory: async (conversationId: string, page = 1, limit = 50) => {
-        return fetchWithAuth(`/api/messages/${conversationId}/history?page=${page}&limit=${limit}`);
+    getMessageHistory: async (conversationId: string, page = 1, limit = 100) => {
+        return fetchWithAuth(`/api/messages/${conversationId}/history?page=${page}&limit=${limit}&_t=${Date.now()}`, {
+            cache: 'no-store'
+        });
     },
 
     // Mark conversation as read
@@ -820,6 +842,18 @@ export const userAPI = {
      */
     getTrips: async () => {
         return fetchWithAuth('/api/users/trips');
+    },
+
+    /**
+     * Discover users for Explore page
+     * GET /api/users/discover
+     */
+    discoverUsers: async (options?: { search?: string; limit?: number; page?: number }) => {
+        const params = new URLSearchParams();
+        if (options?.search) params.append('search', options.search);
+        if (options?.limit) params.append('limit', String(options.limit));
+        if (options?.page) params.append('page', String(options.page));
+        return fetchWithAuth(`/api/users/discover?${params.toString()}`);
     },
 
     /**

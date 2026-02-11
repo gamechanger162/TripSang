@@ -92,7 +92,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
             if (retryCount < MAX_RETRIES) {
                 console.log(`Retrying... attempt ${retryCount + 1}/${MAX_RETRIES}`);
                 setTimeout(() => fetchConversations(retryCount + 1), RETRY_DELAY);
-                return; // Don't set loading to false yet
+                return;
             }
 
             // All retries failed
@@ -111,7 +111,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
     useEffect(() => {
         fetchConversations();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshTrigger]); // Fetch on mount and when refreshTrigger changes
+    }, [refreshTrigger]);
 
     // Socket integration for real-time updates
     useEffect(() => {
@@ -122,23 +122,16 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
 
         const handleReceiveDM = (message: any) => {
             setConversations(prev => {
-                // Find if conversation exists
                 const existingIndex = prev.findIndex(c => c._id === message.conversationId);
 
                 if (existingIndex === -1) {
-                    // New conversation - fetch to get full details (user name, avatar etc)
                     fetchConversations();
                     return prev;
                 }
 
-                // Existing conversation - update it
                 const updatedConversations = [...prev];
                 const existingConv = updatedConversations[existingIndex];
-
-                // Remove from current position
                 updatedConversations.splice(existingIndex, 1);
-
-                // Add to top with updated details
                 updatedConversations.unshift({
                     ...existingConv,
                     lastMessage: {
@@ -146,7 +139,6 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         timestamp: message.timestamp || new Date().toISOString(),
                         senderId: typeof message.sender === 'object' ? message.sender._id : message.sender
                     },
-                    // Increment unread count ONLY if not currently selected
                     unreadCount: selectedId === message.conversationId ? 0 : (existingConv.unreadCount || 0) + 1
                 });
 
@@ -186,37 +178,48 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
         return (
             <motion.div
                 key={conv._id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.02, duration: 0.3 }}
-                className="px-2 py-0.5"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.015, duration: 0.3 }}
+                className="px-3 py-0.5"
             >
                 <motion.div
                     onClick={() => onSelectConversation(conv._id, conv.type)}
                     className={`
-                        group relative flex items-center gap-3 p-3 rounded-2xl cursor-pointer
+                        group relative flex items-center gap-3.5 p-3 rounded-2xl cursor-pointer
                         transition-all duration-300
                         ${isSelected
-                            ? 'bg-cyan-900/20 border border-cyan-500/30'
-                            : 'bg-transparent hover:bg-white/5 border border-transparent hover:border-white/5'
+                            ? 'bg-white/[0.06] border border-white/[0.08]'
+                            : 'bg-transparent hover:bg-white/[0.03] border border-transparent'
                         }
                     `}
-                    whileHover={{ scale: 1.01, x: 2 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.995 }}
                 >
-                    {/* Active Indicator */}
-                    {isSelected && (
-                        <motion.div
-                            layoutId="activeConversation"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-cyan-500 rounded-r-full shadow-[0_0_15px_rgba(6,182,212,0.6)]"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        />
-                    )}
+                    {/* Active Indicator - warm glow */}
+                    <AnimatePresence>
+                        {isSelected && (
+                            <motion.div
+                                layoutId="activeConversation"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-r-full"
+                                style={{
+                                    background: 'linear-gradient(to bottom, #FF9A76, #FECDA6)',
+                                    boxShadow: '0 0 12px rgba(255,154,118,0.4)',
+                                }}
+                                initial={{ opacity: 0, scaleY: 0 }}
+                                animate={{ opacity: 1, scaleY: 1 }}
+                                exit={{ opacity: 0, scaleY: 0 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                            />
+                        )}
+                    </AnimatePresence>
 
-                    {/* Avatar - FIXED SIZE */}
+                    {/* Avatar */}
                     <div className="relative flex-shrink-0">
-                        <div className={`w-12 h-12 rounded-full overflow-hidden transition-all duration-300 ${isSelected ? 'ring-2 ring-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'ring-1 ring-white/10 group-hover:ring-white/30'}`}>
+                        <div className={`w-12 h-12 rounded-full overflow-hidden transition-all duration-300 ${isSelected
+                                ? 'ring-2 ring-orange-400/30 shadow-[0_0_12px_rgba(255,154,118,0.15)]'
+                                : 'ring-1 ring-white/[0.06] group-hover:ring-white/[0.12]'
+                            }`}>
                             {conv.avatar && !failedImages.has(conv._id) ? (
                                 <Image
                                     src={conv.avatar}
@@ -225,13 +228,12 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                                     height={48}
                                     className="w-12 h-12 object-cover"
                                     onError={() => {
-                                        // Track failed images to show fallback
                                         setFailedImages(prev => new Set(prev).add(conv._id));
                                     }}
                                 />
                             ) : (
-                                <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                                    <span className="text-gray-400 font-bold text-lg group-hover:text-white transition-colors">
+                                <div className="w-12 h-12 bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center">
+                                    <span className="text-white/40 font-semibold text-lg group-hover:text-white/60 transition-colors">
                                         {conv.name.charAt(0).toUpperCase()}
                                     </span>
                                 </div>
@@ -244,13 +246,14 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         {/* Row 1: Name + Time */}
                         <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 min-w-0">
-                                <span className={`font-medium truncate text-[15px] transition-colors ${isSelected ? 'text-cyan-100' : 'text-gray-200 group-hover:text-white'}`}>
+                                <span className={`font-medium truncate text-[15px] transition-colors ${isSelected ? 'text-white' : 'text-white/70 group-hover:text-white/90'
+                                    }`}>
                                     {conv.name}
                                 </span>
                                 {conv.isVerified && <VerifiedBadge size="sm" />}
                             </div>
                             {conv.lastMessage && (
-                                <span className="text-[10px] text-gray-500 flex-shrink-0 group-hover:text-gray-400 transition-colors">
+                                <span className="text-[10px] text-white/25 flex-shrink-0 group-hover:text-white/35 transition-colors">
                                     {formatTime(conv.lastMessage.timestamp)}
                                 </span>
                             )}
@@ -258,8 +261,8 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
 
                         {/* Row 2: Last Message + Unread Badge */}
                         <div className="flex items-center justify-between gap-2 mt-0.5">
-                            <p className={`text-sm truncate transition-colors ${isSelected ? 'text-cyan-200/60' :
-                                    conv.unreadCount > 0 ? 'text-gray-100 font-medium' : 'text-gray-500 group-hover:text-gray-400'
+                            <p className={`text-sm truncate transition-colors ${isSelected ? 'text-white/40' :
+                                    conv.unreadCount > 0 ? 'text-white/60 font-medium' : 'text-white/25 group-hover:text-white/35'
                                 }`}>
                                 {conv.lastMessage?.text || 'No messages yet'}
                             </p>
@@ -267,7 +270,11 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                                 <motion.span
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="flex-shrink-0 min-w-[20px] h-[20px] px-1 bg-cyan-500 rounded-full text-[10px] font-bold text-black flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.4)]"
+                                    className="flex-shrink-0 min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #FF9A76, #e8725a)',
+                                        boxShadow: '0 0 10px rgba(255,154,118,0.3)',
+                                    }}
                                 >
                                     {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                                 </motion.span>
@@ -280,34 +287,50 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
     };
 
     return (
-        <div className="h-full flex flex-col bg-[#000a1f] backdrop-blur-xl border-r border-white/5 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-cyan-900/20 to-transparent pointer-events-none" />
+        <div className="h-full flex flex-col relative overflow-hidden"
+            style={{
+                background: 'rgba(6, 10, 16, 0.6)',
+                borderRight: '1px solid rgba(255,255,255,0.04)',
+            }}
+        >
+            {/* Subtle top gradient */}
+            <div className="absolute top-0 left-0 w-full h-32 pointer-events-none"
+                style={{ background: 'linear-gradient(to bottom, rgba(255,154,118,0.03), transparent)' }}
+            />
 
             {/* Header */}
-            <div className="p-4 pb-3 border-b border-white/5 relative z-10">
+            <div className="p-4 pb-3 relative z-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">Messages</span>
-                        <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">{conversations.length}</span>
+                    <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2.5">
+                        <span className="text-white/80">Messages</span>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full text-white/30"
+                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                            {conversations.length}
+                        </span>
                     </h2>
                     <motion.button
-                        whileHover={{ scale: 1.05, rotate: 90 }}
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="w-9 h-9 flex items-center justify-center bg-white/5 hover:bg-cyan-500/10 border border-white/10 hover:border-cyan-500/30 rounded-xl text-gray-400 hover:text-cyan-400 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-white/30 hover:text-white/60 transition-colors"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
                     >
-                        <Plus size={18} strokeWidth={2.5} />
+                        <Plus size={16} strokeWidth={2.5} />
                     </motion.button>
                 </div>
 
                 {/* Search */}
                 <div className="relative group">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-white/40 transition-colors" />
                     <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-cyan-500/40 focus:bg-black/40 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-white text-sm placeholder:text-white/20 focus:outline-none transition-all"
+                        style={{
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                        }}
                     />
                 </div>
             </div>
@@ -318,25 +341,27 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                     <div className="p-4 space-y-3">
                         {[1, 2, 3, 4, 5].map(i => (
                             <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
-                                <div className="w-12 h-12 rounded-full bg-white/10" />
+                                <div className="w-12 h-12 rounded-full bg-white/[0.04]" />
                                 <div className="flex-1 space-y-2">
-                                    <div className="h-4 bg-white/10 rounded w-3/4" />
-                                    <div className="h-3 bg-white/5 rounded w-1/2" />
+                                    <div className="h-4 bg-white/[0.04] rounded w-3/4" />
+                                    <div className="h-3 bg-white/[0.02] rounded w-1/2" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                        <div className="w-16 h-16 mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-                            <MessageSquare className="w-8 h-8 text-red-400" />
+                        <div className="w-14 h-14 mb-4 rounded-full flex items-center justify-center"
+                            style={{ background: 'rgba(255,100,100,0.06)', border: '1px solid rgba(255,100,100,0.1)' }}>
+                            <MessageSquare className="w-7 h-7 text-red-400/60" />
                         </div>
-                        <p className="text-gray-400 mb-4">{error}</p>
+                        <p className="text-white/30 mb-4 text-sm">{error}</p>
                         <motion.button
                             onClick={() => fetchConversations()}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-cyan-400 text-sm font-medium shadow-[0_0_15px_rgba(0,255,255,0.15)]"
+                            className="px-4 py-2 rounded-xl text-white/50 text-sm font-medium"
+                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
                         >
                             Retry
                         </motion.button>
@@ -346,14 +371,18 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-cyan-500/15 to-purple-500/15 flex items-center justify-center border border-cyan-500/30"
+                            className="w-16 h-16 mb-4 rounded-full flex items-center justify-center"
+                            style={{
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid rgba(255,255,255,0.05)',
+                            }}
                         >
-                            <Sparkles className="w-10 h-10 text-cyan-400" style={{ filter: 'drop-shadow(0 0 10px rgba(0,255,255,0.5))' }} />
+                            <Sparkles className="w-8 h-8 text-white/15" />
                         </motion.div>
-                        <p className="text-gray-300 font-medium mb-1">
+                        <p className="text-white/40 font-medium mb-1 text-sm">
                             {searchQuery ? 'No results found' : 'No conversations yet'}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-white/20">
                             Start a chat or join a trip!
                         </p>
                     </div>
@@ -362,7 +391,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         style={{ height: '100%' }}
                         data={filteredConversations}
                         itemContent={renderConversation}
-                        className="scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                        className="app-scrollable"
                     />
                 )}
             </div>

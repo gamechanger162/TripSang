@@ -39,6 +39,7 @@ const Footer = () => {
                                     src="/logo-text.png"
                                     alt="TripSang"
                                     fill
+                                    sizes="128px"
                                     className="object-contain object-left drop-shadow-[0_0_10px_rgba(0,255,255,0.3)] group-hover:drop-shadow-[0_0_15px_rgba(0,255,255,0.5)] transition-all"
                                 />
                             </div>

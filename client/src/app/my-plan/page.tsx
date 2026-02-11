@@ -270,15 +270,15 @@ export default function MyPlanPage() {
 
 function BenefitRow({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
     return (
-        <div className="flex items-center gap-4 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 flex-shrink-0">
+        <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 flex-shrink-0 mt-0.5">
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="font-medium text-white text-sm">{title}</p>
-                <p className="text-xs text-gray-400 truncate">{description}</p>
+                <p className="font-medium text-white text-sm leading-tight mb-0.5">{title}</p>
+                <p className="text-xs text-gray-400 leading-relaxed">{description}</p>
             </div>
-            <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
         </div>
     );
 }

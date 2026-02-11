@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import GlassCard from '@/components/app/ui/GlassCard';
-import { GlassButton } from '@/components/app/ui/GlassCard';
-import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
 import Image from 'next/image';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
     User,
     Bell,
@@ -18,9 +17,9 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    Smartphone
+    Lock,
+    Globe
 } from 'lucide-react';
-import Link from 'next/link';
 
 export default function SettingsPage() {
     const { data: session, status } = useSession();
@@ -28,13 +27,11 @@ export default function SettingsPage() {
     const [notifications, setNotifications] = useState(true);
     const [sounds, setSounds] = useState(true);
 
-    // Redirect if not authenticated
     if (status === 'unauthenticated') {
         router.push('/auth/signin?callbackUrl=/app/settings');
         return null;
     }
 
-    // Don't render while loading or no session
     if (!session) return null;
 
     const user = session.user as any;
@@ -43,7 +40,6 @@ export default function SettingsPage() {
         await signOut({ callbackUrl: '/' });
     };
 
-    // Helper to determine verification status display
     const getVerificationStatus = () => {
         const isIdentityVerified = user?.verificationStatus === 'verified';
         const isPhoneVerified = user?.isMobileVerified;
@@ -52,483 +48,259 @@ export default function SettingsPage() {
         if (isIdentityVerified && isPhoneVerified) {
             return {
                 label: 'Verified',
-                icon: <CheckCircle2 size={18} className="text-emerald-400" />,
+                icon: <CheckCircle2 size={16} className="text-emerald-400" />,
                 color: 'text-emerald-400',
                 subtext: 'Identity & Phone verified',
-                href: '/profile/edit' // Or nowhere if we want it disabled
+                href: '/profile/edit',
+                bgColor: 'bg-emerald-500/10',
+                borderColor: 'border-emerald-500/20'
             };
         }
-
         if (status === 'pending') {
             return {
                 label: 'Pending Approval',
-                icon: <Clock size={18} className="text-yellow-400" />,
+                icon: <Clock size={16} className="text-yellow-400" />,
                 color: 'text-yellow-400',
                 subtext: 'Review in progress',
-                href: '/verify/status' // Assuming a status page exists, or back to identity
+                href: '/verify/status',
+                bgColor: 'bg-yellow-500/10',
+                borderColor: 'border-yellow-500/20'
             };
         }
-
         if (status === 'rejected') {
             return {
                 label: 'Identity Rejected',
-                icon: <AlertCircle size={18} className="text-red-400" />,
+                icon: <AlertCircle size={16} className="text-red-400" />,
                 color: 'text-red-400',
                 subtext: 'Tap to try again',
-                href: '/verify/identity'
+                href: '/verify/identity',
+                bgColor: 'bg-red-500/10',
+                borderColor: 'border-red-500/20'
             };
         }
-
         if (isPhoneVerified && !isIdentityVerified) {
             return {
                 label: 'Verify Government ID',
-                icon: <Shield size={18} className="text-blue-400" />,
-                color: 'text-gray-200',
+                icon: <Shield size={16} className="text-cyan-400" />,
+                color: 'text-zinc-200',
                 subtext: 'Phone verified',
-                href: '/verify/id'
+                href: '/verify/id',
+                bgColor: 'bg-cyan-500/10',
+                borderColor: 'border-cyan-500/20'
             };
         }
-
         return {
             label: 'Verify Identity',
-            icon: <Shield size={18} className="text-blue-400" />,
-            color: 'text-gray-200',
+            icon: <Shield size={16} className="text-cyan-400" />,
+            color: 'text-zinc-200',
             subtext: 'Get verified badge',
-            href: '/verify/identity'
+            href: '/verify/identity',
+            bgColor: 'bg-blue-500/10',
+            borderColor: 'border-blue-500/20'
         };
     };
 
     const verStatus = getVerificationStatus();
 
-    return (
-        <>
-            <div className="settings-content">
-                <h1 className="page-title">Settings</h1>
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.05
+            }
+        }
+    };
 
-                {/* Profile Section */}
-                <div className="settings-section">
-                    <h2 className="section-title">Profile</h2>
-                    <Link href="/dashboard">
-                        <GlassCard padding="md" hover className="profile-card">
-                            <div className="profile-info-container">
-                                <div className="profile-avatar-wrapper">
+    const itemVariants = {
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0 }
+    };
+
+    return (
+        <div className="flex-1 w-full h-full overflow-y-auto bg-gradient-to-b from-[#0B0E11] to-[#0f1216] p-4 md:p-8 pb-32">
+            <motion.div
+                className="max-w-2xl mx-auto space-y-8"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
+                {/* Header */}
+                <motion.div variants={itemVariants}>
+                    <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+                    <p className="text-zinc-400 text-sm">Manage your account preferences and profile.</p>
+                </motion.div>
+
+                {/* Profile Card */}
+                <motion.div variants={itemVariants}>
+                    <Link href="/profile" className="block group">
+                        <div className="bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-5 flex items-center gap-5 transition-all hover:bg-zinc-800/40 hover:border-white/10 hover:shadow-xl hover:shadow-black/20">
+                            <div className="relative">
+                                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-white/10 shadow-lg bg-zinc-800">
                                     {user?.image ? (
-                                        <div className="profile-avatar-container">
-                                            <Image
-                                                src={user.image}
-                                                alt={user.name || 'User'}
-                                                fill
-                                                sizes="64px"
-                                                className="object-cover"
-                                                unoptimized
-                                                referrerPolicy="no-referrer"
-                                            />
-                                        </div>
+                                        <Image
+                                            src={user.image}
+                                            alt={user.name || 'User'}
+                                            fill
+                                            className="object-cover"
+                                            referrerPolicy="no-referrer"
+                                        />
                                     ) : (
-                                        <div className="profile-avatar-placeholder">
+                                        <div className="w-full h-full flex items-center justify-center text-zinc-500">
                                             <User size={32} />
                                         </div>
                                     )}
                                 </div>
-                                <div className="profile-text">
-                                    <h3 className="profile-name">
-                                        {user?.name || 'User'}
-                                        <div className="flex items-center gap-1 ml-2">
-                                            {user?.isMobileVerified && (
-                                                <div
-                                                    className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30"
-                                                    title="Phone Verified"
-                                                >
-                                                    <Smartphone size={12} className="text-blue-400" />
-                                                </div>
-                                            )}
-                                            {user?.verificationStatus === 'verified' && (
-                                                <div
-                                                    className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30"
-                                                    title="Identity Verified (Aadhaar/PAN)"
-                                                >
-                                                    <Shield size={12} className="text-emerald-400" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </h3>
-                                    <p className="profile-email">{user?.email}</p>
-                                    <p className="profile-view-text">View Profile</p>
+                                {user?.verificationStatus === 'verified' && (
+                                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-black p-1 rounded-full border-4 border-[#0e1115]">
+                                        <CheckCircle2 size={14} strokeWidth={3} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-xl font-bold text-white truncate flex items-center gap-2">
+                                    {user?.name || 'User'}
+                                </h3>
+                                <p className="text-zinc-400 text-sm truncate mb-1">{user?.email}</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-cyan-400 group-hover:underline">View Profile</span>
                                 </div>
                             </div>
-                            <div className="chevron-wrapper">
-                                <ChevronRight size={20} className="chevron" />
+
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 group-hover:bg-white/10 group-hover:text-white transition-colors">
+                                <ChevronRight size={20} />
                             </div>
-                        </GlassCard>
+                        </div>
                     </Link>
-                </div>
+                </motion.div>
 
                 {/* Account Settings */}
-                <div className="settings-section">
-                    <h2 className="section-title">Account</h2>
-                    <GlassCard padding="none" className="settings-group">
-                        <Link href="/profile/edit" className="setting-item clickable">
-                            <div className="setting-main">
-                                <div className="setting-icon-bg bg-blue-500/20 text-blue-400">
-                                    <User size={20} />
+                <motion.div variants={itemVariants} className="space-y-4">
+                    <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider ml-2">Account</h2>
+                    <div className="bg-zinc-900/30 backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
+
+                        <Link href="/profile/edit" className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                                    <User size={18} />
                                 </div>
-                                <div className="setting-label">
-                                    <span className="setting-title">Edit Profile</span>
+                                <div>
+                                    <p className="text-zinc-200 font-medium group-hover:text-white transition-colors">Edit Profile</p>
+                                    <p className="text-zinc-500 text-xs">Update your personal information</p>
                                 </div>
                             </div>
-                            <ChevronRight size={18} className="chevron" />
+                            <ChevronRight size={18} className="text-zinc-600 group-hover:text-zinc-400" />
                         </Link>
 
-                        <Link href={verStatus.href} className="setting-item clickable">
-                            <div className="setting-main">
-                                <div className={`setting-icon-bg ${verStatus.color === 'text-emerald-400' ? 'bg-emerald-500/20' : 'bg-purple-500/20 text-purple-400'}`}>
+                        <Link href={verStatus.href} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${verStatus.bgColor} ${verStatus.color.replace('text-', 'text-')}`}>
                                     {verStatus.icon}
                                 </div>
-                                <div className="setting-label">
-                                    <span className={`setting-title ${verStatus.color !== 'text-gray-200' ? verStatus.color : ''}`}>
+                                <div>
+                                    <p className={`font-medium group-hover:text-white transition-colors ${verStatus.color === 'text-zinc-200' ? 'text-zinc-200' : verStatus.color}`}>
                                         {verStatus.label}
-                                    </span>
-                                    {verStatus.subtext && (
-                                        <span className="setting-subtitle">{verStatus.subtext}</span>
-                                    )}
+                                    </p>
+                                    <p className="text-zinc-500 text-xs">{verStatus.subtext}</p>
                                 </div>
                             </div>
                             {user?.verificationStatus !== 'verified' && (
-                                <ChevronRight size={18} className="chevron" />
+                                <ChevronRight size={18} className="text-zinc-600 group-hover:text-zinc-400" />
                             )}
                         </Link>
-                    </GlassCard>
-                </div>
+
+                        <Link href="/security" className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center">
+                                    <Lock size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-zinc-200 font-medium group-hover:text-white transition-colors">Privacy & Security</p>
+                                    <p className="text-zinc-500 text-xs">Manage password and security</p>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="text-zinc-600 group-hover:text-zinc-400" />
+                        </Link>
+                    </div>
+                </motion.div>
 
                 {/* Preferences */}
-                <div className="settings-section">
-                    <h2 className="section-title">Preferences</h2>
-                    <GlassCard padding="none" className="settings-group">
-                        <div className="setting-item">
-                            <div className="setting-main">
-                                <div className="setting-icon-bg bg-orange-500/20 text-orange-400">
-                                    <Bell size={20} />
+                <motion.div variants={itemVariants} className="space-y-4">
+                    <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider ml-2">Preferences</h2>
+                    <div className="bg-zinc-900/30 backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
+
+                        <div className="flex items-center justify-between p-4 px-5">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center">
+                                    <Bell size={18} />
                                 </div>
-                                <span className="setting-title">Push Notifications</span>
+                                <span className="text-zinc-200 font-medium">Push Notifications</span>
                             </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={notifications}
-                                    onChange={() => setNotifications(!notifications)}
-                                />
-                                <span className="slider" />
-                            </label>
+                            <button
+                                onClick={() => setNotifications(!notifications)}
+                                className={`w-12 h-7 rounded-full transition-colors relative ${notifications ? 'bg-cyan-600' : 'bg-zinc-700'}`}
+                            >
+                                <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${notifications ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </button>
                         </div>
 
-                        <div className="setting-item">
-                            <div className="setting-main">
-                                <div className="setting-icon-bg bg-pink-500/20 text-pink-400">
-                                    <Volume2 size={20} />
+                        <div className="flex items-center justify-between p-4 px-5">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center">
+                                    <Volume2 size={18} />
                                 </div>
-                                <span className="setting-title">Message Sounds</span>
+                                <span className="text-zinc-200 font-medium">Sound Effects</span>
                             </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={sounds}
-                                    onChange={() => setSounds(!sounds)}
-                                />
-                                <span className="slider" />
-                            </label>
+                            <button
+                                onClick={() => setSounds(!sounds)}
+                                className={`w-12 h-7 rounded-full transition-colors relative ${sounds ? 'bg-cyan-600' : 'bg-zinc-700'}`}
+                            >
+                                <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${sounds ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </button>
                         </div>
-                    </GlassCard>
-                </div>
 
-                {/* Support */}
-                <div className="settings-section">
-                    <h2 className="section-title">Support</h2>
-                    <GlassCard padding="none" className="settings-group">
-                        <Link href="/help-support" className="setting-item clickable">
-                            <div className="setting-main">
-                                <div className="setting-icon-bg bg-teal-500/20 text-teal-400">
-                                    <MessageCircle size={20} />
+                        <div className="flex items-center justify-between p-4 px-5">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                                    <Globe size={18} />
                                 </div>
-                                <span className="setting-title">Help & Support</span>
+                                <span className="text-zinc-200 font-medium">Language</span>
                             </div>
-                            <ChevronRight size={18} className="chevron" />
+                            <span className="text-zinc-500 text-sm flex items-center gap-2">
+                                English <ChevronRight size={14} />
+                            </span>
+                        </div>
+
+                    </div>
+                </motion.div>
+
+                {/* Support & Logout */}
+                <motion.div variants={itemVariants} className="space-y-4">
+                    <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider ml-2">Support</h2>
+                    <div className="bg-zinc-900/30 backdrop-blur-sm border border-white/5 rounded-2xl overflow-hidden mb-6">
+                        <Link href="/help-support" className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                                    <MessageCircle size={18} />
+                                </div>
+                                <span className="text-zinc-200 font-medium group-hover:text-white">Help & Support</span>
+                            </div>
+                            <ChevronRight size={18} className="text-zinc-600 group-hover:text-zinc-400" />
                         </Link>
-                    </GlassCard>
-                </div>
+                    </div>
 
-                {/* Logout */}
-                <button
-                    onClick={handleLogout}
-                    className="logout-button"
-                >
-                    <LogOut size={18} />
-                    Log Out
-                </button>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full p-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-red-400 font-semibold hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        Sign Out
+                    </button>
 
-                <p className="version-text">Version 1.0.0</p>
-            </div>
-
-            <style jsx>{`
-                .settings-content {
-                    flex: 1;
-                    padding: 24px;
-                    max-width: 600px;
-                    margin: 0 auto;
-                    width: 100%;
-                    padding-bottom: 240px;
-                    overflow-y: auto;
-                    height: 100%;
-                    background: linear-gradient(180deg, rgba(0, 20, 40, 0.3) 0%, rgba(0, 10, 25, 0.5) 100%);
-                }
-
-                @media (min-width: 768px) {
-                    .settings-content {
-                        padding-bottom: 40px;
-                    }
-                }
-
-                .page-title {
-                    font-size: 28px;
-                    font-weight: 800;
-                    color: white;
-                    margin-bottom: 32px;
-                    letter-spacing: -0.02em;
-                    text-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-                }
-
-                .settings-section {
-                    margin-bottom: 32px;
-                }
-
-                .section-title {
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: rgba(0, 255, 255, 0.6);
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                    margin-bottom: 12px;
-                    padding-left: 8px;
-                }
-
-                /* Profile Card Styles */
-                .profile-card {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 20px !important;
-                    background: rgba(0, 30, 50, 0.6) !important;
-                    border: 1px solid rgba(0, 255, 255, 0.2) !important;
-                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1) !important;
-                }
-
-                .profile-info-container {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                }
-
-                .profile-avatar-wrapper {
-                    position: relative;
-                }
-
-                .profile-avatar-container {
-                    width: 64px;
-                    height: 64px;
-                    min-width: 64px;
-                    border-radius: 50%;
-                    overflow: hidden;
-                    position: relative;
-                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-                    border: 2px solid rgba(0, 255, 255, 0.4);
-                }
-
-                .profile-avatar-placeholder {
-                    width: 64px;
-                    height: 64px;
-                    min-width: 64px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #0891b2, #8b5cf6);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-                    border: 2px solid rgba(0, 255, 255, 0.4);
-                }
-
-                .profile-text {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2px;
-                }
-
-                .profile-name {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    text-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-                }
-
-                .profile-email {
-                    font-size: 14px;
-                    color: rgba(255, 255, 255, 0.5);
-                }
-
-                .profile-view-text {
-                    font-size: 12px;
-                    color: #00ffff;
-                    margin-top: 4px;
-                    font-weight: 500;
-                    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-                }
-
-                /* Settings Group & Items */
-                .settings-group {
-                    overflow: hidden;
-                    border: 1px solid rgba(0, 255, 255, 0.15) !important;
-                    background: rgba(0, 30, 50, 0.5) !important;
-                }
-
-                .setting-item {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 16px 20px;
-                    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
-                    transition: all 0.3s;
-                    min-height: 72px;
-                }
-
-                .setting-item:last-child {
-                    border-bottom: none;
-                }
-
-                .setting-item.clickable:hover {
-                    background: rgba(0, 255, 255, 0.05);
-                }
-
-                .setting-main {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                }
-
-                .setting-icon-bg {
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-shrink: 0;
-                    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
-                }
-
-                .setting-label {
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .setting-title {
-                    font-size: 16px;
-                    font-weight: 500;
-                    color: rgba(255, 255, 255, 0.9);
-                }
-
-                .setting-subtitle {
-                    font-size: 12px;
-                    color: rgba(0, 255, 255, 0.5);
-                    margin-top: 2px;
-                }
-
-                .chevron {
-                    color: rgba(0, 255, 255, 0.4);
-                }
-
-                /* Toggle Switch */
-                .toggle {
-                    position: relative;
-                    width: 50px;
-                    height: 30px;
-                    cursor: pointer;
-                }
-
-                .toggle input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-
-                .slider {
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(0, 255, 255, 0.1);
-                    border-radius: 20px;
-                    transition: all 0.3s;
-                    border: 1px solid rgba(0, 255, 255, 0.2);
-                }
-
-                .slider:before {
-                    content: '';
-                    position: absolute;
-                    width: 24px;
-                    height: 24px;
-                    left: 2px;
-                    top: 2px;
-                    background: white;
-                    border-radius: 50%;
-                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-
-                .toggle input:checked + .slider {
-                    background: linear-gradient(135deg, #0891b2, #06b6d4);
-                    border-color: #00ffff;
-                    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
-                }
-
-                .toggle input:checked + .slider:before {
-                    transform: translateX(20px);
-                }
-
-                /* Logout Button */
-                .logout-button {
-                    width: 100%;
-                    padding: 16px;
-                    margin-top: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid rgba(239, 68, 68, 0.3);
-                    border-radius: 16px;
-                    color: #f87171;
-                    font-weight: 600;
-                    font-size: 15px;
-                    transition: all 0.3s;
-                }
-
-                .logout-button:hover {
-                    background: rgba(239, 68, 68, 0.2);
-                    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
-                }
-
-                .logout-button:active {
-                    transform: scale(0.98);
-                    opacity: 0.8;
-                }
-
-                .version-text {
-                    text-align: center;
-                    color: rgba(0, 255, 255, 0.3);
-                    font-size: 12px;
-                    margin-top: 32px;
-                }
-            `}</style>
-        </>
+                    <p className="text-center text-zinc-600 text-xs font-mono pt-4">v1.2.0 • TripSang Inc.</p>
+                </motion.div>
+            </motion.div>
+        </div>
     );
 }

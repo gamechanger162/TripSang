@@ -53,7 +53,7 @@ class SocketManager {
 
         this.socket = io(socketUrl, {
             auth: { token },
-            transports: ['websocket', 'polling'],
+            transports: ['polling', 'websocket'],
             timeout: 10000,
             reconnection: true,
             reconnectionAttempts: 5,
@@ -74,6 +74,13 @@ class SocketManager {
                 } else {
                     this.socket?.emit('join_room', { tripId: room });
                 }
+            });
+
+            // Re-attach listeners
+            this.listeners.forEach((callbacks, event) => {
+                callbacks.forEach(callback => {
+                    this.socket?.on(event, callback as any);
+                });
             });
         });
 

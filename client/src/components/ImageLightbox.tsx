@@ -1,6 +1,6 @@
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ImageLightboxProps {
     images: { url: string; caption?: string }[];
@@ -19,6 +19,15 @@ export default function ImageLightbox({
 }: ImageLightboxProps) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
+    // Zoom & Pan State
+    const [scale, setScale] = useState(1);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [startDist, setStartDist] = useState(0);
+    const [startScale, setStartScale] = useState(1);
+    const [startPoint, setStartPoint] = useState({ x: 0, y: 0 }); // Midpoint for zoom origin
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
     useEffect(() => {
         setCurrentIndex(initialIndex);
     }, [initialIndex]);
@@ -35,6 +44,12 @@ export default function ImageLightbox({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Reset zoom on slide change
+    useEffect(() => {
+        setScale(1);
+        setPosition({ x: 0, y: 0 });
+    }, [currentIndex]);
+
     if (!isOpen) return null;
 
     const handlePrev = () => {
@@ -49,56 +64,131 @@ export default function ImageLightbox({
         onIndexChange?.(newIndex);
     };
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 2) {
+            // Pinch start
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            setStartDist(dist);
+            setStartScale(scale);
+        } else if (e.touches.length === 1 && scale > 1) {
+            // Pan start (only if zoomed in)
+            setIsDragging(true);
+            setDragStart({
+                x: e.touches[0].clientX - position.x,
+                y: e.touches[0].clientY - position.y
+            });
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 2) {
+            // Pinching
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            if (startDist > 0) {
+                const newScale = Math.min(Math.max(1, startScale * (dist / startDist)), 4);
+                setScale(newScale);
+            }
+        } else if (e.touches.length === 1 && isDragging && scale > 1) {
+            // Panning
+            e.preventDefault(); // Prevent scrolling while panning
+            setPosition({
+                x: e.touches[0].clientX - dragStart.x,
+                y: e.touches[0].clientY - dragStart.y
+            });
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+        if (scale < 1.1) {
+            setScale(1);
+            setPosition({ x: 0, y: 0 });
+        }
+    };
+
+
     return (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
-            {/* Close button */}
-            <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-50 p-2"
-            >
-                <X size={32} />
-            </button>
+            {/* Top Bar */}
+            <div className="absolute top-20 left-0 right-0 p-4 flex items-center justify-between z-[60] pointer-events-none">
+                <div className="max-w-7xl mx-auto w-full flex justify-between pointer-events-auto px-4">
+                    <button
+                        onClick={onClose}
+                        className="flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-black/40 border border-white/10 px-4 py-2 rounded-full hover:bg-black/60 backdrop-blur-md shadow-lg"
+                    >
+                        <ChevronLeft size={20} />
+                        <span className="font-medium text-sm">Back to Moments</span>
+                    </button>
+                </div>
+            </div>
 
             {/* Navigation Buttons */}
             {images.length > 1 && (
                 <>
                     <button
                         onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-50 p-2 bg-black/20 rounded-full hover:bg-black/40"
+                        className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-50 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 hidden md:flex"
                     >
-                        <ChevronLeft size={40} />
+                        <ChevronLeft size={32} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleNext(); }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-50 p-2 bg-black/20 rounded-full hover:bg-black/40"
+                        className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-50 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 hidden md:flex"
                     >
-                        <ChevronRight size={40} />
+                        <ChevronRight size={32} />
                     </button>
                 </>
             )}
 
-            {/* Main Image */}
-            <div className="relative w-full h-full max-w-7xl max-h-[90vh] flex flex-col items-center justify-center">
-                <div className="relative w-full h-full flex items-center justify-center">
+            {/* Main Image Container */}
+            <div
+                className="relative w-full h-full max-w-7xl max-h-[90vh] flex flex-col items-center justify-center overflow-hidden touch-none"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                <div
+                    className="relative w-full h-full flex items-center justify-center transition-transform duration-75 ease-out"
+                    style={{
+                        transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                        cursor: scale > 1 ? 'grab' : 'default'
+                    }}
+                >
                     <Image
                         src={images[currentIndex].url}
                         alt={images[currentIndex].caption || `Photo ${currentIndex + 1}`}
                         fill
-                        className="object-contain"
                         priority
+                        sizes="100vw"
+                        className="object-contain pointer-events-none"
                     />
                 </div>
 
-                {/* Caption / Counter */}
-                <div className="absolute bottom-[-40px] left-0 right-0 text-center text-white pb-4">
-                    {images[currentIndex].caption && (
-                        <p className="text-lg mb-1">{images[currentIndex].caption}</p>
-                    )}
-                    <p className="text-sm opacity-70">
-                        {currentIndex + 1} / {images.length}
-                    </p>
-                </div>
+                {/* Caption / Counter (Hide when zoomed) */}
+                {scale === 1 && (
+                    <div className="absolute bottom-4 md:bottom-8 left-0 right-0 text-center text-white z-40 px-4">
+                        {images[currentIndex].caption && (
+                            <p className="text-lg md:text-xl font-medium mb-2 drop-shadow-md">{images[currentIndex].caption}</p>
+                        )}
+                        <p className="text-xs md:text-sm text-white/60 bg-black/30 px-3 py-1 rounded-full inline-block backdrop-blur-sm">
+                            {currentIndex + 1} / {images.length}
+                        </p>
+                    </div>
+                )}
             </div>
+
+            {/* Hint for mobile users */}
+            {scale === 1 && (
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/40 text-[10px] pointer-events-none md:hidden animate-pulse">
+                    Pinch to zoom
+                </div>
+            )}
         </div>
     );
 }

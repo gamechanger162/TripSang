@@ -13,6 +13,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    transpilePackages: ['three', '@react-three/fiber', '@react-three/drei', '@react-three/postprocessing'],
     // Disable static generation for pages with authentication
     output: 'standalone',
     images: {

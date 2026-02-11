@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { auth, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
 import PhoneInput from '@/components/PhoneInput';
+import GlassCard from '@/components/app/ui/GlassCard';
+import { Camera, Save, X, Phone, CheckCircle2 } from 'lucide-react';
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -95,7 +97,6 @@ export default function EditProfilePage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validations
         if (file.size > 5 * 1024 * 1024) {
             toast.error('Image size should be less than 5MB');
             return;
@@ -132,7 +133,7 @@ export default function EditProfilePage() {
         try {
             const response = await userAPI.updateProfile(formData);
             if (response.success) {
-                await updateSession(); // Refresh session to update name/image in navbar
+                await updateSession();
                 toast.success('Profile updated successfully');
                 router.push(`/profile/${response.user._id}`);
             }
@@ -151,28 +152,22 @@ export default function EditProfilePage() {
         }
 
         try {
-            // Clean up existing reCAPTCHA first
             if (window.recaptchaVerifier) {
                 try {
                     window.recaptchaVerifier.clear();
-                } catch (e) {
-                    console.log('reCAPTCHA clear failed, continuing...');
-                }
+                } catch (e) { }
                 window.recaptchaVerifier = null;
             }
 
-            // Clear any existing reCAPTCHA from DOM
             const recaptchaContainer = document.getElementById('recaptcha-container');
             if (recaptchaContainer) {
                 recaptchaContainer.innerHTML = '';
             }
 
-            // Initialize new recaptcha
             window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                 'size': 'invisible',
             });
 
-            // Send OTP via Firebase
             const confirmationResult = await signInWithPhoneNumber(
                 auth,
                 formData.mobileNumber,
@@ -189,7 +184,6 @@ export default function EditProfilePage() {
             } else {
                 toast.error(error.message || 'Failed to send OTP');
             }
-            // Clear recaptcha on error
             if (window.recaptchaVerifier) {
                 try {
                     window.recaptchaVerifier.clear();
@@ -206,21 +200,16 @@ export default function EditProfilePage() {
         }
 
         try {
-            // Verify OTP with Firebase
             await confirmationResult.confirm(otp);
-
-            // Link phone to account via backend
             const response = await authAPI.linkPhone(formData.mobileNumber);
 
             if (response.success) {
                 toast.success('Phone verified successfully!');
                 setShowVerifyModal(false);
                 setOtp('');
-                setIsMobileVerified(true); // Update local state immediately
-
-                // Update session to reflect verification
+                setIsMobileVerified(true);
                 await updateSession();
-                await fetchProfile(); // Refresh profile data
+                await fetchProfile();
             }
         } catch (error: any) {
             console.error('OTP verification error:', error);
@@ -234,20 +223,20 @@ export default function EditProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
-                <div className="animate-spin rounded-full h-12 w-12" style={{ border: '3px solid rgba(0,255,255,0.2)', borderTopColor: '#00ffff' }}></div>
+            <div className="flex items-center justify-center min-h-screen bg-[#0B0E11]">
+                <div className="w-10 h-10 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(180deg, #001428 0%, #000a14 100%)' }}>
+        <div className="min-h-screen bg-gradient-to-b from-[#0B0E11] to-[#0f1216] pt-24 pb-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
-                <div className="shadow-xl rounded-2xl overflow-hidden" style={{ background: 'rgba(0,30,50,0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,255,255,0.15)' }}>
-                    <div className="px-6 py-8" style={{ background: 'linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(139,92,246,0.2) 100%)', borderBottom: '1px solid rgba(0,255,255,0.15)' }}>
-                        <h1 className="text-2xl font-bold text-white" style={{ textShadow: '0 0 20px rgba(0,255,255,0.4)' }}>Edit Profile</h1>
-                        <p className="mt-1" style={{ color: 'rgba(0,255,255,0.7)' }}>
-                            Customize how others see you on Tripसंग
+                <GlassCard className="overflow-hidden">
+                    <div className="px-6 py-8 border-b border-white/5 bg-white/[0.02]">
+                        <h1 className="text-2xl font-bold text-white">Edit Profile</h1>
+                        <p className="mt-1 text-zinc-400 text-sm">
+                            Customize how others see you on TripSang
                         </p>
                     </div>
 
@@ -255,7 +244,7 @@ export default function EditProfilePage() {
                         {/* Profile Picture Section */}
                         <div className="flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative group">
-                                <div className="w-32 h-32 rounded-full overflow-hidden shadow-lg" style={{ border: '4px solid rgba(0,255,255,0.4)', background: 'linear-gradient(135deg, #0891b2, #8b5cf6)', boxShadow: '0 0 25px rgba(0,255,255,0.3)' }}>
+                                <div className="w-32 h-32 rounded-full overflow-hidden shadow-lg border-4 border-zinc-800 bg-zinc-800 ring-2 ring-white/10">
                                     {formData.profilePicture ? (
                                         <Image
                                             src={formData.profilePicture}
@@ -264,7 +253,7 @@ export default function EditProfilePage() {
                                             className="object-cover"
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white">
+                                        <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-zinc-500 bg-zinc-900">
                                             {formData.name?.[0]?.toUpperCase() || '?'}
                                         </div>
                                     )}
@@ -272,14 +261,10 @@ export default function EditProfilePage() {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="absolute bottom-0 right-0 p-2 rounded-full shadow-lg transition-all"
-                                    style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)', color: 'white', boxShadow: '0 0 15px rgba(0,255,255,0.4)' }}
+                                    className="absolute bottom-0 right-0 p-2.5 rounded-full shadow-lg transition-all bg-cyan-600 text-white hover:bg-cyan-500 border border-white/20"
                                     title="Change photo"
                                 >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
+                                    <Camera size={18} />
                                 </button>
                                 <input
                                     type="file"
@@ -291,7 +276,7 @@ export default function EditProfilePage() {
                             </div>
                             <div className="text-center sm:text-left">
                                 <h3 className="text-lg font-medium text-white">Profile Photo</h3>
-                                <p className="text-sm mt-1" style={{ color: 'rgba(0,255,255,0.6)' }}>
+                                <p className="text-sm mt-1 text-zinc-500">
                                     Supports JPG, PNG or WEBP. Max 5MB.
                                 </p>
                             </div>
@@ -300,7 +285,7 @@ export default function EditProfilePage() {
                         <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                             {/* Name */}
                             <div className="sm:col-span-3">
-                                <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>
+                                <label className="block text-sm font-medium text-zinc-400 mb-1.5">
                                     Full Name
                                 </label>
                                 <input
@@ -308,23 +293,21 @@ export default function EditProfilePage() {
                                     name="name"
                                     value={formData.name}
                                     onChange={handleInputChange}
-                                    className="mt-1 block w-full rounded-lg text-white sm:text-sm p-2.5 transition-all focus:outline-none"
-                                    style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                    className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                                     required
                                 />
                             </div>
 
                             {/* Gender */}
                             <div className="sm:col-span-3">
-                                <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>
+                                <label className="block text-sm font-medium text-zinc-400 mb-1.5">
                                     Gender
                                 </label>
                                 <select
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleInputChange}
-                                    className="mt-1 block w-full rounded-lg text-white sm:text-sm p-2.5 transition-all focus:outline-none"
-                                    style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                    className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all appearance-none"
                                 >
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
@@ -335,7 +318,7 @@ export default function EditProfilePage() {
 
                             {/* Bio */}
                             <div className="sm:col-span-6">
-                                <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>
+                                <label className="block text-sm font-medium text-zinc-400 mb-1.5">
                                     Bio
                                 </label>
                                 <div className="mt-1">
@@ -344,92 +327,88 @@ export default function EditProfilePage() {
                                         rows={4}
                                         value={formData.bio}
                                         onChange={handleInputChange}
-                                        className="block w-full rounded-lg text-white sm:text-sm p-3 transition-all focus:outline-none placeholder:text-gray-500"
-                                        style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                        className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                                         placeholder="Tell us a bit about yourself..."
                                         maxLength={500}
                                     />
                                 </div>
-                                <p className="mt-2 text-sm" style={{ color: 'rgba(0,255,255,0.5)' }}>
+                                <p className="mt-2 text-xs text-zinc-500">
                                     Brief description for your profile. URLs are hyperlinked.
                                 </p>
                             </div>
 
                             {/* Mobile Number */}
                             <div className="sm:col-span-6">
-                                <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>
+                                <label className="block text-sm font-medium text-zinc-400 mb-1.5">
                                     Mobile Number
                                 </label>
-                                <div className="mt-1 flex gap-2">
-                                    <PhoneInput
-                                        value={formData.mobileNumber}
-                                        onChange={(value) => setFormData({ ...formData, mobileNumber: value })}
-                                        placeholder="Phone number"
-                                        disabled={!!(formData.mobileNumber && isMobileVerified)}
-                                        name="mobileNumber"
-                                    />
+                                <div className="mt-1 flex gap-3">
+                                    <div className="flex-1">
+                                        <PhoneInput
+                                            value={formData.mobileNumber}
+                                            onChange={(value) => setFormData({ ...formData, mobileNumber: value })}
+                                            placeholder="Phone number"
+                                            disabled={!!(formData.mobileNumber && isMobileVerified)}
+                                            name="mobileNumber"
+                                        />
+                                    </div>
                                     {formData.mobileNumber && (
                                         isMobileVerified ? (
-                                            <span className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg" style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.4)', color: '#10b981' }}>
-                                                <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                </svg>
+                                            <span className="inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
+                                                <CheckCircle2 className="w-4 h-4 mr-1.5" />
                                                 Verified
                                             </span>
                                         ) : (
                                             <button
                                                 type="button"
                                                 onClick={() => handleVerifyPhone()}
-                                                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all"
-                                                style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)', color: 'white', boxShadow: '0 0 15px rgba(0,255,255,0.3)' }}
+                                                className="inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-colors whitespace-nowrap"
                                             >
                                                 Verify Phone
                                             </button>
                                         )
                                     )}
                                 </div>
-                                <p className="mt-1 text-xs" style={{ color: 'rgba(0,255,255,0.5)' }}>
+                                <p className="mt-2 text-xs text-zinc-500">
                                     {isMobileVerified
                                         ? 'Your phone number is verified and can be used for login.'
                                         : 'Verify your phone to enable phone-based login and trip coordination.'}
                                 </p>
                             </div>
 
-                            <div className="sm:col-span-6 pt-6" style={{ borderTop: '1px solid rgba(0,255,255,0.15)' }}>
-                                <h3 className="text-lg font-medium text-white mb-4" style={{ textShadow: '0 0 10px rgba(0,255,255,0.3)' }}>Location</h3>
+                            <div className="sm:col-span-6 pt-6 border-t border-white/5">
+                                <h3 className="text-lg font-medium text-white mb-4">Location</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>City</label>
+                                        <label className="block text-sm font-medium text-zinc-400 mb-1.5">City</label>
                                         <input
                                             type="text"
                                             name="city"
                                             value={formData.location.city}
                                             onChange={handleInputChange}
-                                            className="mt-1 block w-full rounded-lg text-white p-2.5 transition-all focus:outline-none"
-                                            style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                            className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>Country</label>
+                                        <label className="block text-sm font-medium text-zinc-400 mb-1.5">Country</label>
                                         <input
                                             type="text"
                                             name="country"
                                             value={formData.location.country}
                                             onChange={handleInputChange}
-                                            className="mt-1 block w-full rounded-lg text-white p-2.5 transition-all focus:outline-none"
-                                            style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                            className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="sm:col-span-6 pt-6" style={{ borderTop: '1px solid rgba(0,255,255,0.15)' }}>
-                                <h3 className="text-lg font-medium text-white mb-4" style={{ textShadow: '0 0 10px rgba(0,255,255,0.3)' }}>Social Links</h3>
+                            <div className="sm:col-span-6 pt-6 border-t border-white/5">
+                                <h3 className="text-lg font-medium text-white mb-4">Social Links</h3>
                                 <div className="grid grid-cols-1 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>Instagram Username</label>
-                                        <div className="mt-1 flex rounded-lg shadow-sm">
-                                            <span className="inline-flex items-center rounded-l-lg px-3" style={{ background: 'rgba(0,40,60,0.7)', border: '1px solid rgba(0,255,255,0.2)', borderRight: 'none', color: 'rgba(0,255,255,0.6)' }}>
+                                        <label className="block text-sm font-medium text-zinc-400 mb-1.5">Instagram Username</label>
+                                        <div className="flex rounded-xl bg-zinc-900/50 border border-white/10 overflow-hidden focus-within:ring-1 focus-within:ring-cyan-500/50">
+                                            <span className="inline-flex items-center px-4 text-zinc-500 bg-white/5 border-r border-white/5">
                                                 @
                                             </span>
                                             <input
@@ -437,15 +416,14 @@ export default function EditProfilePage() {
                                                 name="social_instagram"
                                                 value={formData.socialLinks.instagram}
                                                 onChange={handleInputChange}
-                                                className="block w-full min-w-0 flex-1 rounded-none rounded-r-lg text-white sm:text-sm p-2.5 focus:outline-none"
-                                                style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                                className="block w-full min-w-0 flex-1 bg-transparent px-4 py-2.5 text-white focus:outline-none sm:text-sm"
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>Twitter Username</label>
-                                        <div className="mt-1 flex rounded-lg shadow-sm">
-                                            <span className="inline-flex items-center rounded-l-lg px-3" style={{ background: 'rgba(0,40,60,0.7)', border: '1px solid rgba(0,255,255,0.2)', borderRight: 'none', color: 'rgba(0,255,255,0.6)' }}>
+                                        <label className="block text-sm font-medium text-zinc-400 mb-1.5">Twitter Username</label>
+                                        <div className="flex rounded-xl bg-zinc-900/50 border border-white/10 overflow-hidden focus-within:ring-1 focus-within:ring-cyan-500/50">
+                                            <span className="inline-flex items-center px-4 text-zinc-500 bg-white/5 border-r border-white/5">
                                                 @
                                             </span>
                                             <input
@@ -453,20 +431,18 @@ export default function EditProfilePage() {
                                                 name="social_twitter"
                                                 value={formData.socialLinks.twitter}
                                                 onChange={handleInputChange}
-                                                className="block w-full min-w-0 flex-1 rounded-none rounded-r-lg text-white sm:text-sm p-2.5 focus:outline-none"
-                                                style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                                className="block w-full min-w-0 flex-1 bg-transparent px-4 py-2.5 text-white focus:outline-none sm:text-sm"
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium" style={{ color: 'rgba(0,255,255,0.8)' }}>Facebook Profile URL</label>
+                                        <label className="block text-sm font-medium text-zinc-400 mb-1.5">Facebook Profile URL</label>
                                         <input
                                             type="text"
                                             name="social_facebook"
                                             value={formData.socialLinks.facebook}
                                             onChange={handleInputChange}
-                                            className="mt-1 block w-full rounded-lg text-white sm:text-sm p-2.5 focus:outline-none placeholder:text-gray-500"
-                                            style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.2)' }}
+                                            className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
                                             placeholder="https://facebook.com/..."
                                         />
                                     </div>
@@ -474,69 +450,83 @@ export default function EditProfilePage() {
                             </div>
                         </div>
 
-                        <div className="pt-6 flex justify-end gap-3" style={{ borderTop: '1px solid rgba(0,255,255,0.15)' }}>
+                        <div className="pt-6 flex justify-end gap-3 border-t border-white/5">
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="px-6 py-2.5 rounded-lg text-sm font-medium transition-all"
-                                style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.3)', color: 'rgba(0,255,255,0.8)' }}
+                                className="px-6 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="px-6 py-2.5 rounded-lg shadow-sm text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                style={{ background: 'linear-gradient(135deg, #0891b2, #8b5cf6)', boxShadow: '0 0 20px rgba(0,255,255,0.3)' }}
+                                className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                             >
-                                {saving ? 'Saving...' : 'Save Changes'}
+                                {saving ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={16} />
+                                        Save Changes
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>
-                </div>
+                </GlassCard>
             </div>
 
             {/* OTP Verification Modal */}
             {showVerifyModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4" style={{ backdropFilter: 'blur(8px)' }}>
-                    <div className="rounded-xl p-6 max-w-md w-full" style={{ background: 'rgba(0,30,50,0.95)', border: '1px solid rgba(0,255,255,0.3)', boxShadow: '0 0 40px rgba(0,255,255,0.2)' }}>
-                        <h3 className="text-lg font-medium text-white mb-4" style={{ textShadow: '0 0 15px rgba(0,255,255,0.3)' }}>
-                            Verify Phone Number
-                        </h3>
-                        <p className="text-sm mb-4" style={{ color: 'rgba(0,255,255,0.6)' }}>
-                            Enter the 6-digit OTP sent to {formData.mobileNumber}
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <GlassCard className="max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Phone size={20} className="text-cyan-400" />
+                                Verify Phone Number
+                            </h3>
+                            <button onClick={() => setShowVerifyModal(false)} className="text-zinc-500 hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-zinc-400 mb-6">
+                            Enter the 6-digit OTP sent to <span className="text-white font-medium">{formData.mobileNumber}</span>
                         </p>
+
                         <input
                             type="text"
                             maxLength={6}
                             value={otp}
                             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                             placeholder="000000"
-                            className="w-full px-4 py-3 rounded-lg text-white text-center text-2xl tracking-widest focus:outline-none"
-                            style={{ background: 'rgba(0,40,60,0.6)', border: '1px solid rgba(0,255,255,0.3)' }}
+                            className="w-full px-4 py-4 rounded-xl text-white text-center text-3xl font-mono tracking-[0.5em] bg-zinc-900/50 border border-white/10 focus:outline-none focus:border-cyan-500/50 mb-8"
                             autoFocus
                         />
-                        <div className="mt-6 flex gap-3">
+
+                        <div className="flex gap-3">
                             <button
                                 onClick={() => {
                                     setShowVerifyModal(false);
                                     setOtp('');
                                 }}
-                                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                                style={{ background: 'rgba(0,40,60,0.5)', border: '1px solid rgba(0,255,255,0.3)', color: 'rgba(0,255,255,0.8)' }}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-400 bg-white/5 hover:bg-white/10 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleVerifyOTP}
                                 disabled={otp.length !== 6}
-                                className="flex-1 px-4 py-2 rounded-lg shadow-sm text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                style={{ background: 'linear-gradient(135deg, #0891b2, #06b6d4)', boxShadow: '0 0 15px rgba(0,255,255,0.3)' }}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                Verify
+                                Verify OTP
                             </button>
                         </div>
-                    </div>
+                    </GlassCard>
                 </div>
             )}
 

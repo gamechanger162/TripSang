@@ -24,6 +24,7 @@ export default function SiteBanner() {
     const fetchActiveAnnouncement = async () => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/announcements/active`);
+            if (!response.ok) return; // Silently fail on 429 or other errors
             const data = await response.json();
 
             if (data.success && data.announcement) {

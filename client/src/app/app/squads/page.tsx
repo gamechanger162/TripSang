@@ -3,11 +3,9 @@
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import GlassCard from '@/components/app/ui/GlassCard';
-import VerifiedBadge from '@/components/app/ui/VerifiedBadge';
 import { useSquads } from '@/contexts/SquadContext';
 import { motion } from 'framer-motion';
-import { Users, MapPin, Calendar, ChevronRight } from 'lucide-react';
+import { Users, MapPin, Calendar, ChevronRight, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -22,7 +20,6 @@ export default function SquadsPage() {
         }
     }, [status, router]);
 
-    // Don't render if not authenticated
     if (status === 'unauthenticated' || !session) return null;
 
     const formatDate = (date: string) => {
@@ -32,310 +29,137 @@ export default function SquadsPage() {
         });
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
     return (
-        <>
-            <div className="squads-content">
-                <div className="squads-header">
-                    <h1>Squad Chats</h1>
-                    <p>Your trip groups and squad conversations</p>
+        <div className="flex-1 w-full h-full overflow-y-auto bg-gradient-to-b from-[#0B0E11] to-[#0f1216] p-4 md:p-8 pb-32">
+            <div className="max-w-5xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                        <Users className="text-violet-400" size={32} />
+                        Squad Chats
+                    </h1>
+                    <p className="text-zinc-400">Your trip groups and squad conversations.</p>
                 </div>
 
                 {loading ? (
-                    <div className="squads-loading">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="skeleton-squad" />
+                            <div key={i} className="aspect-[4/3] rounded-3xl bg-white/5 animate-pulse" />
                         ))}
                     </div>
                 ) : squads.length === 0 ? (
-                    <div className="empty-squads">
-                        <div className="empty-icon">👥</div>
-                        <h3>No squad chats yet</h3>
-                        <p>Join or create a trip to start chatting with your squad</p>
-                        <Link href="/trips" className="explore-btn">
+                    <div className="flex flex-col items-center justify-center p-12 text-center bg-white/5 rounded-3xl border border-white/5">
+                        <div className="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                            <Users size={32} className="text-zinc-500" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">No squad chats yet</h3>
+                        <p className="text-zinc-400 mb-6 max-w-sm">Join a trip or create your own to start chatting with your squad.</p>
+                        <Link href="/trips" className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-semibold rounded-xl transition-colors">
                             Explore Trips
                         </Link>
                     </div>
                 ) : (
-                    <div className="squads-grid">
-                        {squads.map((squad, index) => (
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        {squads.map((squad) => (
                             <motion.div
                                 key={squad._id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
+                                variants={itemVariants}
+                                whileHover={{ y: -5 }}
+                                className="group relative bg-zinc-900/40 border border-white/5 rounded-3xl overflow-hidden cursor-pointer hover:border-white/20 transition-all hover:shadow-2xl hover:shadow-black/50"
                             >
-                                <Link href={`/app/squads/${squad._id}`}>
-                                    <GlassCard padding="none" hover className="squad-card">
-                                        {/* Cover Image */}
-                                        <div className="squad-cover">
-                                            {(squad.coverPhoto || squad.coverImage || (squad.photos && squad.photos[0])) ? (
-                                                <Image
-                                                    src={squad.coverPhoto || squad.coverImage || squad.photos?.[0] || ''}
-                                                    alt={squad.title}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="cover-placeholder">
-                                                    <MapPin size={32} />
-                                                </div>
-                                            )}
-                                            {squad.unreadCount && squad.unreadCount > 0 && (
-                                                <div className="unread-badge">{squad.unreadCount}</div>
-                                            )}
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="squad-info">
-                                            <h3>{squad.title}</h3>
-
-                                            <div className="squad-meta">
-                                                <span>
-                                                    <MapPin size={14} />
-                                                    {squad.destination}
-                                                </span>
-                                                <span>
-                                                    <Calendar size={14} />
-                                                    {formatDate(squad.startDate)}
-                                                </span>
+                                <Link href={`/app/squads/${squad._id}`} className="block h-full">
+                                    {/* Cover Image */}
+                                    <div className="h-40 relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent z-10" />
+                                        {(squad.coverPhoto || squad.coverImage || (squad.photos && squad.photos[0])) ? (
+                                            <Image
+                                                src={squad.coverPhoto || squad.coverImage || squad.photos?.[0] || ''}
+                                                alt={squad.title}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                                                <MapPin className="text-zinc-600" size={32} />
                                             </div>
+                                        )}
+                                        {squad.unreadCount && squad.unreadCount > 0 && (
+                                            <div className="absolute top-3 right-3 z-20 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                                                {squad.unreadCount} new
+                                            </div>
+                                        )}
+                                    </div>
 
-                                            {/* Squad Members */}
-                                            <div className="squad-members">
-                                                <div className="member-avatars">
-                                                    {(squad.squad || []).slice(0, 4).map((member: any, i: number) => (
-                                                        <div
-                                                            key={member._id}
-                                                            className="member-avatar"
-                                                            style={{ zIndex: 4 - i }}
-                                                        >
-                                                            {member.profilePicture ? (
-                                                                <Image
-                                                                    src={member.profilePicture}
-                                                                    alt={member.name}
-                                                                    width={28}
-                                                                    height={28}
-                                                                    className="object-cover w-full h-full"
-                                                                />
-                                                            ) : (
-                                                                <span>{member.name.charAt(0)}</span>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                    {(squad.squad || []).length > 4 && (
-                                                        <div className="member-avatar more">
-                                                            +{(squad.squad || []).length - 4}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <ChevronRight size={20} className="arrow" />
+                                    {/* Content */}
+                                    <div className="p-5">
+                                        <h3 className="text-lg font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors line-clamp-1">
+                                            {squad.title}
+                                        </h3>
+
+                                        <div className="flex flex-col gap-2 mb-4">
+                                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                                <MapPin size={14} className="text-zinc-500" />
+                                                <span className="truncate">{squad.destination}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                                <Calendar size={14} className="text-zinc-500" />
+                                                <span>{formatDate(squad.startDate)}</span>
                                             </div>
                                         </div>
-                                    </GlassCard>
+
+                                        {/* Members */}
+                                        <div className="flex items-center justify-between mt-auto">
+                                            <div className="flex -space-x-2">
+                                                {(squad.squad || []).slice(0, 4).map((member: any, i: number) => (
+                                                    <div
+                                                        key={member._id}
+                                                        className="w-8 h-8 rounded-full border-2 border-zinc-900 overflow-hidden bg-zinc-800"
+                                                        style={{ zIndex: 4 - i }}
+                                                    >
+                                                        {member.profilePicture ? (
+                                                            <img src={member.profilePicture} alt={member.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-xs text-zinc-400 font-bold">
+                                                                {member.name?.[0]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {(squad.squad || []).length > 4 && (
+                                                    <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[10px] text-zinc-400 font-bold z-0">
+                                                        {`+${(squad.squad || []).length - 4}`}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 group-hover:bg-cyan-500 group-hover:text-black transition-all">
+                                                <MessageCircle size={16} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </Link>
                             </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
             </div>
-
-            <style jsx>{`
-                .squads-content {
-                    flex: 1;
-                    padding: 24px;
-                    overflow-y: auto;
-                    padding-bottom: 80px;
-                }
-                
-                @media (min-width: 768px) {
-                    .squads-content {
-                        padding-bottom: 24px;
-                    }
-                }
-                
-                .squads-header {
-                    margin-bottom: 24px;
-                }
-                
-                .squads-header h1 {
-                    font-size: 24px;
-                    font-weight: 700;
-                    color: white;
-                    margin-bottom: 4px;
-                }
-                
-                .squads-header p {
-                    color: rgba(255, 255, 255, 0.6);
-                    font-size: 14px;
-                }
-                
-                .squads-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 16px;
-                }
-                
-                .squad-cover {
-                    height: 120px;
-                    position: relative;
-                    overflow: hidden;
-                    border-radius: 16px 16px 0 0;
-                }
-                
-                .squad-cover img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                
-                .cover-placeholder {
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: linear-gradient(135deg, rgba(20, 184, 166, 0.3), rgba(249, 115, 22, 0.3));
-                    color: rgba(255, 255, 255, 0.5);
-                }
-                
-                .unread-badge {
-                    position: absolute;
-                    top: 12px;
-                    right: 12px;
-                    min-width: 24px;
-                    height: 24px;
-                    padding: 0 8px;
-                    background: #ef4444;
-                    border-radius: 12px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                
-                .squad-info {
-                    padding: 16px;
-                }
-                
-                .squad-info h3 {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: white;
-                    margin-bottom: 8px;
-                }
-                
-                .squad-meta {
-                    display: flex;
-                    gap: 16px;
-                    margin-bottom: 12px;
-                }
-                
-                .squad-meta span {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    font-size: 13px;
-                    color: rgba(255, 255, 255, 0.6);
-                }
-                
-                .squad-members {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                }
-                
-                .member-avatars {
-                    display: flex;
-                }
-                
-                .member-avatar {
-                    width: 28px;
-                    height: 28px;
-                    border-radius: 50%;
-                    border: 2px solid #1a1a24;
-                    margin-left: -8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: linear-gradient(135deg, #14b8a6, #0d9488);
-                    color: white;
-                    font-size: 11px;
-                    font-weight: 600;
-                    overflow: hidden;
-                }
-                
-                .member-avatar:first-child {
-                    margin-left: 0;
-                }
-                
-                .member-avatar img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                
-                .member-avatar.more {
-                    background: rgba(255, 255, 255, 0.2);
-                }
-                
-                .arrow {
-                    color: rgba(255, 255, 255, 0.4);
-                }
-                
-                .empty-squads {
-                    text-align: center;
-                    padding: 60px 20px;
-                    color: rgba(255, 255, 255, 0.6);
-                }
-                
-                .empty-icon {
-                    font-size: 48px;
-                    margin-bottom: 16px;
-                }
-                
-                .empty-squads h3 {
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: white;
-                    margin-bottom: 8px;
-                }
-                
-                .explore-btn {
-                    display: inline-block;
-                    margin-top: 20px;
-                    padding: 12px 24px;
-                    background: linear-gradient(135deg, #14b8a6, #0d9488);
-                    border-radius: 12px;
-                    color: white;
-                    font-weight: 600;
-                    text-decoration: none;
-                    transition: transform 0.2s;
-                }
-                
-                .explore-btn:hover {
-                    transform: scale(1.05);
-                }
-                
-                .squads-loading {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 16px;
-                }
-                
-                .skeleton-squad {
-                    height: 200px;
-                    border-radius: 16px;
-                    background: rgba(255, 255, 255, 0.1);
-                    animation: pulse 1.5s infinite;
-                }
-                
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-            `}</style>
-        </>
+        </div>
     );
 }

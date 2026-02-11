@@ -76,8 +76,10 @@ export const metadata: Metadata = {
 }
 
 import Providers from '@/components/Providers';
+import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 import MobileNav from '@/components/MobileNav';
+import FloatingDock from '@/components/navigation/FloatingDock';
 import SiteBanner from '@/components/SiteBanner';
 import InstallPrompt from '@/components/InstallPrompt';
 import Footer from '@/components/Footer';
@@ -96,7 +98,7 @@ export default function RootLayout({
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="theme-color" content="#09090b" />
             </head>
-            <body className="pt-16 pb-16 md:pb-0 bg-dark-950 text-zinc-50 antialiased">
+            <body className="bg-dark-950 text-zinc-50 antialiased min-h-screen">
                 {/* JSON-LD Schema for Brand Identity */}
                 <script
                     type="application/ld+json"
@@ -132,11 +134,15 @@ export default function RootLayout({
                 />
                 <Providers>
                     <SmoothScrolling>
-                        <Navbar />
+                        {/* <Navbar /> */}
+                        {/* New Creative Header */}
+                        <Header />
+
                         <SiteBanner />
                         {children}
                         <InstallPrompt />
-                        <MobileNav />
+                        {/* <MobileNav /> */}
+                        <FloatingDock />
                         <ToasterProvider />
                         <Footer />
                     </SmoothScrolling>

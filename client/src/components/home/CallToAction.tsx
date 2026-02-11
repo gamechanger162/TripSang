@@ -6,55 +6,53 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 export default function CallToAction() {
     return (
-        <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-            <div className="max-w-4xl mx-auto relative z-10">
+        <section className="relative py-24 overflow-hidden">
+            {/* Background Effects - Lighter & Vibrant */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-teal-500/20 via-purple-500/10 to-transparent blur-3xl opacity-60" />
+                <div className="absolute inset-0 bg-grid opacity-[0.05]" />
+            </div>
+
+            <div className="container mx-auto px-4 relative z-10">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-100px" }}
-                    transition={{ duration: 0.7 }}
-                    className="glass-strong rounded-3xl p-10 md:p-16 text-center relative overflow-hidden"
+                    viewport={{ once: true }}
+                    className="max-w-4xl mx-auto"
                 >
-                    {/* Background mesh glows */}
-                    <div className="absolute top-0 left-0 w-60 h-60 bg-teal-500/10 blur-[80px] rounded-full" />
-                    <div className="absolute bottom-0 right-0 w-60 h-60 bg-orange-500/10 blur-[80px] rounded-full" />
+                    <div className="glass-card rounded-3xl p-8 md:p-12 text-center relative overflow-hidden group border-white/10 bg-white/5">
+                        {/* Glow effect */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-teal-500/20 via-purple-500/20 to-orange-500/20 blur opacity-75 group-hover:opacity-100 transition duration-1000" />
 
-                    <div className="relative z-10">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.2 }}
-                            className="inline-flex items-center gap-2 glass-pill text-sm mb-6 text-teal-400"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            Start your journey today
-                        </motion.div>
+                        <div className="relative space-y-8">
+                            <h2 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight">
+                                Ready to start your
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-300">
+                                    next adventure?
+                                </span>
+                            </h2>
 
-                        <h2 className="font-display text-3xl md:text-5xl font-bold mb-6 leading-tight">
-                            <span className="text-white">Ready to Find Your </span>
-                            <span className="text-gradient-teal">Travel Tribe?</span>
-                        </h2>
+                            <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto">
+                                Join thousands of travelers who are discovering the world together.
+                                Create your trip or join one today.
+                            </p>
 
-                        <p className="text-zinc-400 text-lg max-w-xl mx-auto mb-10">
-                            Join thousands of travelers who've found their perfect squad on TripSang.
-                            Your next adventure is one click away.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Link
-                                href="/auth/signup"
-                                className="btn-primary flex items-center gap-2 text-lg px-8 py-4 rounded-xl"
-                            >
-                                Get Started Free
-                                <ArrowRight className="w-5 h-5" />
-                            </Link>
-                            <Link
-                                href="/search"
-                                className="btn-glass flex items-center gap-2 text-lg px-8 py-4 rounded-xl"
-                            >
-                                Browse Trips
-                            </Link>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <Link
+                                    href="/create-trip"
+                                    className="w-full sm:w-auto px-8 py-4 bg-teal-500 hover:bg-teal-400 text-black font-bold rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group shadow-lg shadow-teal-500/20"
+                                >
+                                    Start a Trip
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                <Link
+                                    href="/search"
+                                    className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-xl border border-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
+                                >
+                                    <Sparkles className="w-5 h-5 text-teal-300" />
+                                    Browse Trips
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </motion.div>

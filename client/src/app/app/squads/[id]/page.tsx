@@ -56,26 +56,13 @@ export default function SquadChatPage() {
     };
 
     return (
-        <>
-            {/* Mobile Back Button */}
-            {isMobile && (
-                <button
-                    onClick={handleBack}
-                    className="fixed top-4 left-4 z-50 p-2 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 text-white"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-            )}
-
-            {/* Chat View - Full Width */}
-            <div className="flex-1 h-full">
-                <ChatView
-                    conversationId={id as string}
-                    conversationType="squad"
-                    onBack={handleBack}
-                    isMobile={isMobile}
-                />
-            </div>
-        </>
+        <div className="flex flex-col flex-1 h-full w-full overflow-hidden">
+            <ChatView
+                conversationId={id as string}
+                conversationType="squad"
+                onBack={handleBack}
+                isMobile={isMobile}
+            />
+        </div>
     );
 }
