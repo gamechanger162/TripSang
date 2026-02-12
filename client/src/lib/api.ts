@@ -1231,6 +1231,14 @@ export const communityAPI = {
      */
     deleteMessage: async (id: string, messageId: string) => {
         return fetchWithAuth(`/api/communities/${id}/messages/${messageId}`, { method: 'DELETE' });
+    },
+
+    /**
+     * Pin/unpin community message (admin only)
+     * PUT /api/communities/:id/messages/:messageId/pin
+     */
+    pinMessage: async (id: string, messageId: string) => {
+        return fetchWithAuth(`/api/communities/${id}/messages/${messageId}/pin`, { method: 'PUT' });
     }
 };
 

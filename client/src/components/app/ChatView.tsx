@@ -172,25 +172,23 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         avatar: data.trip?.coverPhoto,
                         type: 'squad',
                         creatorId: data.trip?.creator,
-                        // Map data for CollaborativeMap - Standardized with TripDetailsClient logic
+                        // Map data for CollaborativeMap - Normalize coordinates from Trip schema
                         startPoint: data.trip?.startPoint ? {
-                            ...data.trip.startPoint,
-                            lat: data.trip.startPoint.coordinates?.latitude || data.trip.startPoint.coordinates?.lat || data.trip.startPoint.lat || 20.5937, // Nagpur
-                            lng: data.trip.startPoint.coordinates?.longitude || data.trip.startPoint.coordinates?.lng || data.trip.startPoint.lng || 78.9629,
-                            name: data.trip.startPoint.name || 'Start (Nagpur)'
-                        } : { lat: 20.5937, lng: 78.9629, name: 'Start (Nagpur)' },
+                            name: data.trip.startPoint.name || 'Start',
+                            lat: data.trip.startPoint.coordinates?.latitude || data.trip.startPoint.lat || 0,
+                            lng: data.trip.startPoint.coordinates?.longitude || data.trip.startPoint.lng || 0
+                        } : undefined,
 
                         endPoint: data.trip?.endPoint ? {
-                            ...data.trip.endPoint,
-                            lat: data.trip.endPoint.coordinates?.latitude || data.trip.endPoint.coordinates?.lat || data.trip.endPoint.lat || 28.6139, // New Delhi
-                            lng: data.trip.endPoint.coordinates?.longitude || data.trip.endPoint.coordinates?.lng || data.trip.endPoint.lng || 77.2090,
-                            name: data.trip.endPoint.name || 'End (New Delhi)'
+                            name: data.trip.endPoint.name || 'End',
+                            lat: data.trip.endPoint.coordinates?.latitude || data.trip.endPoint.lat || 0,
+                            lng: data.trip.endPoint.coordinates?.longitude || data.trip.endPoint.lng || 0
                         } : undefined,
 
                         waypoints: (data.trip?.waypoints || []).map((wp: any) => ({
-                            ...wp,
-                            lat: wp.lat || wp.latitude || wp.coordinates?.latitude || wp.coordinates?.lat,
-                            lng: wp.lng || wp.longitude || wp.coordinates?.longitude || wp.coordinates?.lng
+                            lat: wp.lat || wp.coordinates?.latitude || 0,
+                            lng: wp.lng || wp.coordinates?.longitude || 0,
+                            name: wp.name
                         })),
                         members: data.trip?.squadMembers || [], // Members now includes creator from backend
                         isCreator: data.trip?.creator === session?.user?.id || data.trip?.creator?._id === session?.user?.id,
@@ -203,7 +201,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     setConversationInfo({
                         name: data.community?.name || 'Community Chat',
                         avatar: data.community?.coverImage,
-                        type: 'community'
+                        type: 'community',
+                        adminOnlyMessages: data.community?.adminOnlyMessages || false,
+                        isCreator: data.isCreator || false,
+                        creatorId: data.community?.creator?._id || data.community?.creator,
                     });
                 } else {
                     setConversationInfo(data.conversation);
@@ -682,6 +683,20 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                 tripId: conversationId,
                                 messageId: msg._id
                             });
+                        } else if (conversationType === 'community') {
+                            const token = session?.user?.accessToken || localStorage.getItem('token');
+                            fetch(`${apiUrl}/api/communities/${conversationId}/messages/${msg._id}/pin`, {
+                                method: 'PUT',
+                                headers: { Authorization: `Bearer ${token}` }
+                            }).then(res => res.json()).then(data => {
+                                if (data.success) {
+                                    toast.success(data.message);
+                                    setPinnedMessage(data.pinnedMessage);
+                                } else {
+                                    toast.error(data.message || 'Failed to pin');
+                                }
+                            }).catch(() => toast.error('Failed to pin message'));
+                            return;
                         }
                         setPinnedMessage(msg);
                     }}
@@ -961,7 +976,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                 {
                     showMiniMap && conversationType === 'squad' && (
                         <motion.div
-                            className="mini-map-container"
+                            className="mini-map-container relative"
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: '65vh', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -973,6 +988,14 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                 margin: '8px'
                             }}
                         >
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setShowMiniMap(false)}
+                                className="absolute top-3 right-3 z-[500] w-8 h-8 bg-black/60 hover:bg-black/80 backdrop-blur rounded-full flex items-center justify-center text-white transition-colors shadow-lg"
+                                title="Close map"
+                            >
+                                <X size={16} />
+                            </button>
                             {conversationInfo?.startPoint ? (
                                 <CollaborativeMap
                                     tripId={conversationId}
@@ -1020,86 +1043,98 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
             {/* Input Area */}
             <div className="bg-zinc-900/50 backdrop-blur-md border-t border-white/5 relative z-20 shrink-0">
-                {/* Reply Preview */}
-                <AnimatePresence>
-                    {replyTo && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                        >
-                            <div className="flex items-center gap-2 px-4 pt-2.5 pb-1">
-                                <div className="flex-1 border-l-2 border-cyan-500 pl-3 py-1">
-                                    <p className="text-[11px] font-semibold text-cyan-400">
-                                        Replying to {replyTo.senderName}
-                                    </p>
-                                    <p className="text-xs text-zinc-400 truncate">
-                                        {replyTo.message || (replyTo.type === 'image' ? '📷 Image' : '')}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => setReplyTo(null)}
-                                    className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                {/* Bottom: Message Input or Admin-Only Notice */}
+                {conversationType === 'community' && conversationInfo?.adminOnlyMessages && !conversationInfo?.isCreator ? (
+                    <div className="px-4 py-4 border-t border-white/5">
+                        <div className="flex items-center justify-center gap-2 text-zinc-500 text-sm bg-zinc-900/50 py-3 rounded-xl border border-white/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            Only admins can send messages
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Reply Preview */}
+                        <AnimatePresence>
+                            {replyTo && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
                                 >
-                                    <X size={14} />
+                                    <div className="flex items-center gap-2 px-4 pt-2.5 pb-1">
+                                        <div className="flex-1 border-l-2 border-cyan-500 pl-3 py-1">
+                                            <p className="text-[11px] font-semibold text-cyan-400">
+                                                Replying to {replyTo.senderName}
+                                            </p>
+                                            <p className="text-xs text-zinc-400 truncate">
+                                                {replyTo.message || (replyTo.type === 'image' ? '📷 Image' : '')}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => setReplyTo(null)}
+                                            className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Input Row */}
+                        <div
+                            className="px-3 py-2 sm:px-4 sm:py-3 cursor-text"
+                            onClick={() => document.querySelector<HTMLInputElement>('.message-input')?.focus()}
+                        >
+                            <div className="flex items-end gap-2 bg-zinc-950/50 p-2 rounded-2xl border border-white/5 ring-1 ring-white/5 focus-within:ring-cyan-500/30 transition-all">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                />
+                                <button
+                                    className="p-2 text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        fileInputRef.current?.click();
+                                    }}
+                                >
+                                    <ImageIcon size={20} />
+                                </button>
+
+                                <input
+                                    type="text"
+                                    placeholder="Type a message..."
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                    className="message-input flex-1 bg-transparent text-white placeholder-zinc-500 text-sm focus:outline-none py-2"
+                                />
+
+                                <button
+                                    className={`p-2 rounded-xl transition-all ${newMessage.trim() || sending
+                                        ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
+                                        : 'bg-zinc-800 text-zinc-600'
+                                        }`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        sendMessage();
+                                    }}
+                                    disabled={!newMessage.trim() || sending}
+                                >
+                                    {sending ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                                    ) : (
+                                        <Send size={18} />
+                                    )}
                                 </button>
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Input Row */}
-                <div
-                    className="px-3 py-2 sm:px-4 sm:py-3 cursor-text"
-                    onClick={() => document.querySelector<HTMLInputElement>('.message-input')?.focus()}
-                >
-                    <div className="flex items-end gap-2 bg-zinc-950/50 p-2 rounded-2xl border border-white/5 ring-1 ring-white/5 focus-within:ring-cyan-500/30 transition-all">
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                        />
-                        <button
-                            className="p-2 text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                fileInputRef.current?.click();
-                            }}
-                        >
-                            <ImageIcon size={20} />
-                        </button>
-
-                        <input
-                            type="text"
-                            placeholder="Type a message..."
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                            className="message-input flex-1 bg-transparent text-white placeholder-zinc-500 text-sm focus:outline-none py-2"
-                        />
-
-                        <button
-                            className={`p-2 rounded-xl transition-all ${newMessage.trim() || sending
-                                ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
-                                : 'bg-zinc-800 text-zinc-600'
-                                }`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                sendMessage();
-                            }}
-                            disabled={!newMessage.trim() || sending}
-                        >
-                            {sending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-                            ) : (
-                                <Send size={18} />
-                            )}
-                        </button>
-                    </div>
-                </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Image Modal/Lightbox */}

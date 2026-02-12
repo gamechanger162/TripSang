@@ -26,6 +26,10 @@ const communitySchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    adminOnlyMessages: {
+        type: Boolean,
+        default: false
+    },
     coverImage: {
         type: String,
         default: null

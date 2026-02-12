@@ -16,7 +16,8 @@ import {
     approveRequest,
     rejectRequest,
     deleteCommunity,
-    deleteMessage
+    deleteMessage,
+    pinCommunityMessage
 } from '../controllers/communityController.js';
 
 const router = express.Router();
@@ -71,5 +72,8 @@ router.delete('/:id', deleteCommunity);
 
 // Delete community message
 router.delete('/:id/messages/:messageId', deleteMessage);
+
+// Pin/unpin community message (admin only)
+router.put('/:id/messages/:messageId/pin', pinCommunityMessage);
 
 export default router;

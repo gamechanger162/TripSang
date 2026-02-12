@@ -71,7 +71,7 @@ export default function MomentsMarquee() {
             }
 
             // Fallback if API fails or not enough images
-            setImages([
+            const fallbackImages = [
                 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=600&q=80',
                 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&q=80',
                 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80',
@@ -80,7 +80,11 @@ export default function MomentsMarquee() {
                 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=600&q=80',
                 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80',
                 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=600&q=80',
-            ]);
+            ];
+
+            setImages(fallbackImages);
+            // CACHE FALLBACK TO PREVENT INFINITE RETRIES ON REMOUNT
+            sessionStorage.setItem('moments_feed', JSON.stringify(fallbackImages));
             setLoading(false);
         };
 

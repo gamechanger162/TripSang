@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { X, Users, Calendar, MapPin, User as UserIcon, LogOut, Check, ArrowLeft, Trash2 } from 'lucide-react';
+import { X, Users, Calendar, MapPin, User as UserIcon, LogOut, Check, ArrowLeft, Trash2, Share2, Lock, Shield, Pencil, Save } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { communityAPI } from '@/lib/api';
@@ -18,8 +18,37 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
     const { data: session } = useSession();
     const [isProcessing, setIsProcessing] = useState(false);
     const [confirmLeave, setConfirmLeave] = useState(false);
-    const [view, setView] = useState<'details' | 'members'>('details');
+    const [view, setView] = useState<'details' | 'members' | 'edit'>('details');
     const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+    const [adminOnlyLocal, setAdminOnlyLocal] = useState(community?.adminOnlyMessages || false);
+
+    // Edit form state
+    const [editName, setEditName] = useState(community?.name || '');
+    const [editDescription, setEditDescription] = useState(community?.description || '');
+    const [editCategory, setEditCategory] = useState(community?.category || 'Other');
+    const [editPrivate, setEditPrivate] = useState(community?.isPrivate ?? true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const CATEGORIES = ['Bikers', 'Photographers', 'Trekkers', 'Foodies', 'Adventurers', 'Backpackers', 'Luxury', 'Solo', 'Culture', 'Beach', 'Mountains', 'Other'];
+
+    const handleSaveEdit = async () => {
+        setIsSaving(true);
+        try {
+            await communityAPI.updateSettings(community._id, {
+                name: editName,
+                description: editDescription,
+                category: editCategory,
+                isPrivate: editPrivate,
+            });
+            toast.success('Community updated!');
+            window.location.reload();
+        } catch (error: any) {
+            console.error('Failed to update community:', error);
+            toast.error(error?.message || 'Failed to update community');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // safe check for user id
     const currentUserId = (session?.user as any)?.id || (session?.user as any)?._id;
@@ -142,7 +171,110 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
                     <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] pointer-events-none" />
 
-                    {view === 'members' ? (
+                    {view === 'edit' && isCreator ? (
+                        <div className="flex flex-col h-full bg-transparent relative z-10">
+                            <div className="p-4 border-b border-white/5 flex items-center gap-3 bg-black/20 backdrop-blur-md flex-none">
+                                <button
+                                    onClick={() => setView('details')}
+                                    className="p-2 hover:bg-white/10 rounded-full transition-colors text-cyan-400"
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+                                <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200">Edit Community</h3>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-5">
+                                {/* Name */}
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Name</label>
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        maxLength={50}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all placeholder-zinc-600"
+                                        placeholder="Community name"
+                                    />
+                                    <p className="text-[10px] text-zinc-600 mt-1 text-right">{editName.length}/50</p>
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Description</label>
+                                    <textarea
+                                        value={editDescription}
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        maxLength={500}
+                                        rows={4}
+                                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all placeholder-zinc-600 resize-none"
+                                        placeholder="Describe your community..."
+                                    />
+                                    <p className="text-[10px] text-zinc-600 mt-1 text-right">{editDescription.length}/500</p>
+                                </div>
+
+                                {/* Category */}
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Category</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {CATEGORIES.map((cat) => (
+                                            <button
+                                                key={cat}
+                                                type="button"
+                                                onClick={() => setEditCategory(cat)}
+                                                className={`px-3 py-2 rounded-xl text-xs font-medium transition-all border ${editCategory === cat
+                                                        ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white'
+                                                    }`}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Privacy */}
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">Privacy</label>
+                                    <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-1.5 rounded-lg bg-violet-500/10 text-violet-400">
+                                                <Lock size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-white">Private Community</p>
+                                                <p className="text-[11px] text-zinc-500">Members must request to join</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setEditPrivate(!editPrivate)}
+                                            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${editPrivate
+                                                ? 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]'
+                                                : 'bg-zinc-700'
+                                                }`}
+                                        >
+                                            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${editPrivate ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Save Button */}
+                            <div className="p-4 bg-[rgba(0,10,31,0.95)] backdrop-blur-xl border-t border-white/5 mt-auto relative z-20">
+                                <button
+                                    onClick={handleSaveEdit}
+                                    disabled={isSaving || !editName.trim()}
+                                    className="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] border border-cyan-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSaving ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <Save size={16} />
+                                    )}
+                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : view === 'members' ? (
                         <div className="flex flex-col h-full bg-transparent relative z-10">
                             <div className="p-4 border-b border-white/5 flex items-center gap-3 bg-black/20 backdrop-blur-md flex-none">
                                 <button
@@ -354,6 +486,92 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* Admin Settings (Creator Only) */}
+                                    {isCreator && (
+                                        <div>
+                                            <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-widest pl-1">Admin Settings</h3>
+                                            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+                                                {/* Edit Community Button */}
+                                                <button
+                                                    onClick={() => {
+                                                        setEditName(community.name || '');
+                                                        setEditDescription(community.description || '');
+                                                        setEditCategory(community.category || 'Other');
+                                                        setEditPrivate(community.isPrivate ?? true);
+                                                        setView('edit');
+                                                    }}
+                                                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group"
+                                                >
+                                                    <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500/20 transition-colors">
+                                                        <Pencil size={14} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="text-sm font-medium text-white">Edit Community</p>
+                                                        <p className="text-[11px] text-zinc-500">Name, description, category & privacy</p>
+                                                    </div>
+                                                </button>
+
+                                                <div className="h-px bg-white/5" />
+
+                                                {/* Admin Only Messages Toggle */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                                                            <Shield size={14} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-white">Admin Only Messages</p>
+                                                            <p className="text-[11px] text-zinc-500">Only you can send messages</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={async () => {
+                                                            const newValue = !adminOnlyLocal;
+                                                            try {
+                                                                await communityAPI.updateSettings(community._id, { adminOnlyMessages: newValue });
+                                                                setAdminOnlyLocal(newValue);
+                                                                toast.success(newValue ? 'Admin-only messaging enabled' : 'All members can now message');
+                                                            } catch (error) {
+                                                                console.error('Failed to update setting:', error);
+                                                                toast.error('Failed to update setting');
+                                                            }
+                                                        }}
+                                                        className={`relative w-11 h-6 rounded-full transition-all duration-300 ${adminOnlyLocal
+                                                            ? 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]'
+                                                            : 'bg-zinc-700'
+                                                            }`}
+                                                    >
+                                                        <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${adminOnlyLocal ? 'translate-x-[22px]' : 'translate-x-0.5'
+                                                            }`} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Share Community */}
+                                    <div>
+                                        <button
+                                            onClick={() => {
+                                                const shareUrl = `${window.location.origin}/app/communities?id=${community._id}`;
+                                                if (navigator.share) {
+                                                    navigator.share({
+                                                        title: community.name,
+                                                        text: `Join ${community.name} on TripSang!`,
+                                                        url: shareUrl,
+                                                    }).catch(() => { });
+                                                } else {
+                                                    navigator.clipboard.writeText(shareUrl);
+                                                    toast.success('Community link copied!');
+                                                }
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 text-cyan-400 rounded-2xl text-sm font-bold tracking-wide transition-all border border-cyan-500/20 hover:border-cyan-500/40 group"
+                                        >
+                                            <Share2 size={16} className="group-hover:scale-110 transition-transform" />
+                                            Share Community
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

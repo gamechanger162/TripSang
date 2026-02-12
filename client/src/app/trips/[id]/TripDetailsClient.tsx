@@ -9,7 +9,7 @@ import { tripAPI } from '@/lib/api';
 import GoogleAd from '@/components/GoogleAd';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
-import { Map as MapIcon, X, Shield, Smartphone, MessageCircle, ChevronRight, Share2, Heart, Edit3, Trash2, Calendar, MapPin, Users, DollarSign, ArrowRight } from 'lucide-react';
+import { Map as MapIcon, X, Shield, Smartphone, MessageCircle, ChevronRight, Share2, Heart, Edit3, Trash2, Calendar, MapPin, Users, DollarSign, ArrowRight, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const EditTripModal = dynamic(() => import('@/components/EditTripModal'), { ssr: false });
@@ -223,8 +223,8 @@ export function TripDetailsClient() {
     const normalizePoint = (point: TripDetails['startPoint']) => {
         return {
             name: point.name,
-            lat: point.lat || point.latitude || point.coordinates?.[1] || 0,
-            lng: point.lng || point.longitude || point.coordinates?.[0] || 0
+            lat: point.lat || point.latitude || point.coordinates?.latitude || 0,
+            lng: point.lng || point.longitude || point.coordinates?.longitude || 0
         };
     };
 
@@ -301,6 +301,21 @@ export function TripDetailsClient() {
                                     </div>
                                 )}
                             </div>
+                            {trip.tripCode && (
+                                <div className="mt-3">
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(trip.tripCode!);
+                                            toast.success('Trip code copied!');
+                                        }}
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 hover:bg-white/20 transition-all group"
+                                    >
+                                        <span className="text-xs text-zinc-400 font-medium">Trip Code</span>
+                                        <span className="text-base font-bold text-white tracking-widest font-mono">{trip.tripCode}</span>
+                                        <Copy className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-colors" />
+                                    </button>
+                                </div>
+                            )}
                         </motion.div>
                     </div>
                 </div>

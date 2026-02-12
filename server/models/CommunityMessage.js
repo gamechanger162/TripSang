@@ -30,6 +30,11 @@ const communityMessageSchema = new mongoose.Schema({
         ref: 'CommunityMessage',
         default: null
     },
+    pinnedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
     timestamp: {
         type: Date,
         default: Date.now

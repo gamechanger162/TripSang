@@ -162,41 +162,58 @@ export default function Header() {
                                         Explore
                                     </Link>
 
-                                    <Link
-                                        href="/friends"
-                                        onClick={() => setMenuOpen(false)}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-white/10 transition-all font-medium group"
-                                    >
-                                        <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500/20 transition-colors">
-                                            <Users size={14} />
-                                        </div>
-                                        Friends
-                                    </Link>
+                                    {status === 'authenticated' && !pathname?.startsWith('/auth') ? (
+                                        <>
+                                            <Link
+                                                href="/friends"
+                                                onClick={() => setMenuOpen(false)}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-white/10 transition-all font-medium group"
+                                            >
+                                                <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500/20 transition-colors">
+                                                    <Users size={14} />
+                                                </div>
+                                                Friends
+                                            </Link>
 
-                                    {session?.user?.role === 'admin' && (
-                                        <Link
-                                            href="/admin/dashboard"
-                                            onClick={() => setMenuOpen(false)}
-                                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-white/10 transition-all font-medium group"
-                                        >
-                                            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
-                                                <LayoutDashboard size={14} />
-                                            </div>
-                                            Admin Dashboard
-                                        </Link>
+                                            {session?.user?.role === 'admin' && (
+                                                <Link
+                                                    href="/admin/dashboard"
+                                                    onClick={() => setMenuOpen(false)}
+                                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-300 hover:text-white hover:bg-white/10 transition-all font-medium group"
+                                                >
+                                                    <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
+                                                        <LayoutDashboard size={14} />
+                                                    </div>
+                                                    Admin Dashboard
+                                                </Link>
+                                            )}
+
+                                            <div className="h-px bg-white/5 my-1" />
+                                            <button
+                                                onClick={() => signOut({ callbackUrl: '/' })}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all font-medium w-full text-left group"
+                                            >
+                                                <div className="p-1.5 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+                                                    <LogOut size={14} />
+                                                </div>
+                                                Sign Out
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="h-px bg-white/5 my-1" />
+                                            <Link
+                                                href="/auth/signin"
+                                                onClick={() => setMenuOpen(false)}
+                                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all font-medium group"
+                                            >
+                                                <div className="p-1.5 rounded-lg bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-colors">
+                                                    <LogOut size={14} className="rotate-180" />
+                                                </div>
+                                                Sign In
+                                            </Link>
+                                        </>
                                     )}
-
-                                    <div className="h-px bg-white/5 my-1" />
-
-                                    <button
-                                        onClick={() => signOut({ callbackUrl: '/' })}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all font-medium w-full text-left group"
-                                    >
-                                        <div className="p-1.5 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
-                                            <LogOut size={14} />
-                                        </div>
-                                        Sign Out
-                                    </button>
                                 </div>
                             </motion.div>
                         )}

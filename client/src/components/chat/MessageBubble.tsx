@@ -267,7 +267,7 @@ export default function MessageBubble({ message, isMe, isGroup, onReply, onDelet
                                 Copy
                             </button>
                             <button
-                                onClick={() => setShowMenu(false)}
+                                onClick={handlePin}
                                 className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-zinc-200 hover:bg-white/10 transition-colors"
                             >
                                 <Pin size={15} className="text-yellow-400" />

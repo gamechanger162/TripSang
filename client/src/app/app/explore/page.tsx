@@ -23,7 +23,7 @@ interface Trip {
     endDate?: string;
     tags?: string[];
     difficulty?: string;
-    coverImage?: string;
+    coverPhoto?: string;
     creator?: {
         _id: string;
         name: string;
@@ -422,8 +422,8 @@ export default function ExplorePage() {
                                                     className="group relative overflow-hidden rounded-2xl border border-white/5 hover:border-cyan-500/20 bg-zinc-900/50 hover:bg-zinc-900/80 transition-all duration-300 h-full flex flex-col"
                                                 >
                                                     <div className="relative h-40 overflow-hidden">
-                                                        {trip.coverImage ? (
-                                                            <Image src={trip.coverImage} alt={trip.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                        {trip.coverPhoto ? (
+                                                            <Image src={trip.coverPhoto} alt={trip.title} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                                                         ) : (
                                                             <div className="w-full h-full bg-gradient-to-br from-cyan-600/15 via-blue-600/10 to-violet-600/10 flex items-center justify-center">
                                                                 <Mountain size={40} className="text-cyan-500/20" />

@@ -248,6 +248,11 @@ export const sendCommunityMessage = async (req, res) => {
             return res.status(403).json({ success: false, message: 'You must be a member to send messages' });
         }
 
+        // Check admin-only messaging
+        if (community.adminOnlyMessages && community.creator.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: 'Only the admin can send messages in this community' });
+        }
+
         // Create message
         const newMessage = await CommunityMessage.create({
             communityId,
@@ -354,7 +359,15 @@ export const getCommunityMessages = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            messages: transformedMessages
+            messages: transformedMessages,
+            community: {
+                _id: community._id,
+                name: community.name,
+                coverImage: community.coverImage,
+                adminOnlyMessages: community.adminOnlyMessages || false,
+                creator: community.creator
+            },
+            isCreator: community.creator.toString() === req.user._id.toString()
         });
     } catch (error) {
         console.error('Get community messages error:', error);
@@ -509,6 +522,7 @@ export const updateCommunitySettings = async (req, res) => {
         if (isPrivate !== undefined) community.isPrivate = isPrivate;
         if (coverImage !== undefined) community.coverImage = coverImage;
         if (logo !== undefined) community.logo = logo;
+        if (req.body.adminOnlyMessages !== undefined) community.adminOnlyMessages = req.body.adminOnlyMessages;
 
         await community.save();
 
@@ -707,5 +721,71 @@ export const deleteMessage = async (req, res) => {
     } catch (error) {
         console.error('Delete community message error:', error);
         res.status(500).json({ success: false, message: 'Failed to delete message' });
+    }
+};
+
+/**
+ * Pin/Unpin a community message (admin only)
+ * PUT /api/communities/:id/messages/:messageId/pin
+ */
+export const pinCommunityMessage = async (req, res) => {
+    try {
+        const { id, messageId } = req.params;
+        const userId = req.user._id;
+
+        const community = await Community.findById(id);
+        if (!community) {
+            return res.status(404).json({ success: false, message: 'Community not found' });
+        }
+
+        // Only creator/admin can pin
+        if (community.creator.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: 'Only admin can pin messages' });
+        }
+
+        const message = await CommunityMessage.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ success: false, message: 'Message not found' });
+        }
+
+        // Toggle pin
+        const isPinned = !!message.pinnedBy;
+        if (isPinned) {
+            message.pinnedBy = null;
+        } else {
+            message.pinnedBy = userId;
+        }
+        await message.save();
+
+        // Populate for response
+        const populated = await CommunityMessage.findById(messageId)
+            .populate('sender', 'name profilePicture')
+            .lean();
+
+        const pinnedMsg = !isPinned ? {
+            _id: populated._id,
+            sender: populated.sender?._id,
+            senderName: populated.sender?.name,
+            message: populated.message,
+            type: populated.type,
+            imageUrl: populated.imageUrl,
+            timestamp: populated.timestamp,
+            pinnedBy: userId
+        } : null;
+
+        // Broadcast pin update
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`community_${id}`).emit('community_message_pinned', { pinnedMessage: pinnedMsg });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: isPinned ? 'Message unpinned' : 'Message pinned',
+            pinnedMessage: pinnedMsg
+        });
+    } catch (error) {
+        console.error('Pin community message error:', error);
+        res.status(500).json({ success: false, message: 'Failed to pin message' });
     }
 };
