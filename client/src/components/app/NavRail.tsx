@@ -48,7 +48,7 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0 }: NavRailProps) 
                     const data = await response.json();
                     setUnreadDMs(data.unreadCount || 0);
                 }
-            } catch (error) {
+            } catch {
                 // Silent fail
             }
         };

@@ -6,7 +6,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Users, Loader2, Send, Image as ImageIcon, X, MoreVertical, VolumeX, Plus, Minus } from 'lucide-react';
 import { communityAPI, uploadAPI } from '@/lib/api';
-import { io, Socket } from 'socket.io-client';
+import { socketManager } from '@/lib/socketManager';
 import { useEnv } from '@/hooks/useEnv';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
@@ -59,7 +59,6 @@ export default function CommunityChatPage() {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [replyTo, setReplyTo] = useState<Message | null>(null);
-    const socketRef = useRef<Socket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,40 +115,46 @@ export default function CommunityChatPage() {
         if (!socketUrl || !id || status !== 'authenticated') return;
 
         const token = (session?.user as any)?.accessToken || localStorage.getItem('token');
-        socketRef.current = io(socketUrl, {
-            auth: { token },
-            transports: ['polling', 'websocket'],
-            timeout: 10000,
-            reconnection: true,
-            reconnectionAttempts: 3,
-            reconnectionDelay: 1000
-        });
+        socketManager.connect(socketUrl, token);
 
-        socketRef.current.on('connect', () => {
-            socketRef.current?.emit('join_community', { communityId: id });
-        });
+        const handleConnect = () => {
+            socketManager.emit('join_community', { communityId: id });
+        };
 
-        socketRef.current.on('receive_community_message', (message: Message) => {
+        const handleReceiveMessage = (message: Message) => {
             setMessages(prev => {
                 if (prev.some(m => m._id === message._id)) return prev;
                 return [...prev, message];
             });
             scrollToBottom();
-        });
+        };
 
-        socketRef.current.on('message_deleted', (data: { messageId: string }) => {
+        const handleMessageDeleted = (data: { messageId: string }) => {
             if (data?.messageId) {
                 setMessages(prev => prev.filter(m => m._id !== data.messageId));
             }
-        });
+        };
 
-        socketRef.current.on('error', (err: any) => {
+        const handleError = (err: any) => {
             console.error('Socket error:', err);
-        });
+        };
+
+        // If already connected, join room immediately
+        if (socketManager.isSocketConnected()) {
+            socketManager.emit('join_community', { communityId: id });
+        }
+
+        socketManager.on('connect', handleConnect);
+        socketManager.on('receive_community_message', handleReceiveMessage);
+        socketManager.on('message_deleted', handleMessageDeleted);
+        socketManager.on('error', handleError);
 
         return () => {
-            socketRef.current?.emit('leave_community', { communityId: id });
-            socketRef.current?.disconnect();
+            socketManager.emit('leave_community', { communityId: id });
+            socketManager.off('connect', handleConnect);
+            socketManager.off('receive_community_message', handleReceiveMessage);
+            socketManager.off('message_deleted', handleMessageDeleted);
+            socketManager.off('error', handleError);
         };
     }, [socketUrl, id, status, session?.user?.id]);
 

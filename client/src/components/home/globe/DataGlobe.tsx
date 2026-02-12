@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Line, Text, Billboard } from '@react-three/drei';
+import { Line, Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { CITY_DATA, latLngToVector3 } from './cityData';
 
@@ -242,21 +242,9 @@ function GlobeGroup({ hovered }: { hovered: boolean }) {
     );
 }
 
-/* ─── Scene (no Bloom, no lights — pure MeshBasicMaterial) ──────── */
+/* ─── Scene (no controls — globe is non-interactive background) ──── */
 function Scene({ hovered }: { hovered: boolean }) {
-    return (
-        <>
-            <GlobeGroup hovered={hovered} />
-
-            <OrbitControls
-                enableZoom={false}
-                enablePan={false}
-                rotateSpeed={0.4}
-                minPolarAngle={Math.PI * 0.25}
-                maxPolarAngle={Math.PI * 0.75}
-            />
-        </>
-    );
+    return <GlobeGroup hovered={hovered} />;
 }
 
 /* ─── Public Export: Full Canvas Component ──────────────────────── */
@@ -274,7 +262,9 @@ export default function DataGlobe() {
                 width: '100%',
                 height: '100%',
                 zIndex: 0,
-                background: '#000000', // Ensure container is black
+                background: '#000000',
+                pointerEvents: 'none',
+                touchAction: 'none',
             }}
         >
             <Canvas
@@ -286,7 +276,7 @@ export default function DataGlobe() {
                     toneMapping: THREE.NoToneMapping,
                 }}
                 dpr={[1, 1.5]}
-                style={{ background: '#000000' }}
+                style={{ background: '#000000', pointerEvents: 'none', touchAction: 'none' }}
             >
                 <Scene hovered={hovered} />
             </Canvas>

@@ -32,7 +32,6 @@
         "react-leaflet": "^4.2.1",
         "react-virtuoso": "^4.18.1",
         "socket.io-client": "^4.6.1",
-        "tesseract.js": "^7.0.0",
         "three": "^0.170.0"
     },
     "devDependencies": {

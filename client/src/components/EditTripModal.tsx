@@ -168,7 +168,7 @@ export default function EditTripModal({ trip, onClose, onUpdate }: EditTripModal
         try {
             const result = await uploadAPI.uploadFile(file);
             return result.url;
-        } catch (error) {
+        } catch {
             // Fallback mock if backend not ready? Or use the mock from CreatePage
             console.log('Using mock upload as fallback');
             await new Promise((resolve) => setTimeout(resolve, 1000));

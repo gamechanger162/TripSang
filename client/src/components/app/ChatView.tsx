@@ -833,7 +833,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                                                     toast.success('User unblocked');
                                                                     setIsBlocked(false);
                                                                 }
-                                                            } catch (error) {
+                                                            } catch {
                                                                 toast.error('Failed to unblock user');
                                                             }
                                                         }}
@@ -862,7 +862,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                                                         setIsBlocked(true);
                                                                         onBack();
                                                                     }
-                                                                } catch (error) {
+                                                                } catch {
                                                                     toast.error('Failed to block user');
                                                                 }
                                                             }
@@ -892,7 +892,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                                                 });
                                                                 toast.success('Left squad');
                                                                 onBack();
-                                                            } catch (error) {
+                                                            } catch {
                                                                 toast.error('Failed to leave squad');
                                                             }
                                                         }

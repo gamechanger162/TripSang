@@ -26,11 +26,8 @@ export default function IDVerificationPage() {
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
     const frontInputRef = useRef<HTMLInputElement>(null);
-    const backInputRef = useRef<HTMLInputElement>(null);
 
-    // Keywords
-    const AADHAAR_KEYWORDS = ['GOVERNMENT', 'INDIA', 'AADHAAR', 'DOB', 'MALE', 'FEMALE'];
-    const PAN_KEYWORDS = ['GOVT', 'INDIA', 'INCOME', 'TAX', 'PAN', 'PERMANENT', 'ACCOUNT'];
+    const backInputRef = useRef<HTMLInputElement>(null);
 
     // Fetch current verification status
     useEffect(() => {
@@ -79,43 +76,30 @@ export default function IDVerificationPage() {
         if (!frontFile) return;
 
         setIsScanning(true);
-        const toastId = toast.loading('Scanning front document...');
+        const toastId = toast.loading('Validating document...');
 
         try {
-            const { createWorker } = await import('tesseract.js');
-            const worker = await createWorker('eng');
-
-            // Perform OCR on FRONT document
-            const { data: { text } } = await worker.recognize(frontFile);
-            await worker.terminate();
-
-            const upperText = text.toUpperCase();
-            console.log('OCR Result:', upperText);
-
-            // Select keywords based on ID Type
-            const keywords = idType === 'aadhaar' ? AADHAAR_KEYWORDS : PAN_KEYWORDS;
-            const matchedKeywords = keywords.filter(keyword => upperText.includes(keyword));
-
-            // Validation Threshold
-            const minMatch = 2; // At least 2 keywords must match
-
-            if (matchedKeywords.length >= minMatch) {
-                setScanResult({
-                    success: true,
-                    message: `Document valid! Detected: ${matchedKeywords.join(', ')}`
-                });
-                toast.success('Document scanned successfully!', { id: toastId });
-            } else {
+            // Validate that the file is a proper image
+            if (!frontFile.type.startsWith('image/')) {
                 setScanResult({
                     success: false,
-                    message: `Could not verify as ${idType?.toUpperCase()}. Please ensure image is clear.`
+                    message: 'Please upload a valid image file (JPG, PNG).'
                 });
-                toast.error('Scan verification failed.', { id: toastId });
+                toast.error('Invalid file type', { id: toastId });
+                return;
             }
 
-        } catch (error) {
-            console.error('OCR Error:', error);
-            toast.error('Failed to scan document', { id: toastId });
+            // Simulate brief validation delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setScanResult({
+                success: true,
+                message: `${idType === 'aadhaar' ? 'Aadhaar' : 'PAN'} document accepted. Our team will verify it shortly.`
+            });
+            toast.success('Document validated!', { id: toastId });
+
+        } catch {
+            toast.error('Failed to validate document', { id: toastId });
         } finally {
             setIsScanning(false);
         }

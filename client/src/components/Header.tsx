@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Search, Menu, X, Zap } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { io } from 'socket.io-client';
+import { socketManager } from '@/lib/socketManager';
 import { notificationAPI } from '@/lib/api';
 import NotificationDropdown from '@/components/navbar/NotificationDropdown';
 import { signOut } from 'next-auth/react';
@@ -26,7 +26,7 @@ export default function Header() {
     // Scroll effect
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -39,17 +39,18 @@ export default function Header() {
             }).catch(console.error);
 
             const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-            const newSocket = io(socketUrl, {
-                auth: { token: session.user.accessToken },
-                transports: ['websocket', 'polling']
-            });
+            socketManager.connect(socketUrl, session.user.accessToken);
 
-            newSocket.on('new_notification', (data: any) => {
+            const handleNewNotification = (data: any) => {
                 setUnreadNotifCount(prev => prev + 1);
                 setNotifications(prev => [data, ...prev]);
-            });
+            };
 
-            return () => { newSocket.disconnect(); };
+            socketManager.on('new_notification', handleNewNotification);
+
+            return () => {
+                socketManager.off('new_notification', handleNewNotification);
+            };
         }
     }, [status, session?.user?.accessToken]);
 

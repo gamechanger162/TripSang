@@ -43,8 +43,10 @@ export default function HeroSection() {
 
     return (
         <section className="relative h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center bg-black">
-            {/* 1. 3D Globe Background */}
-            <DataGlobe />
+            {/* 1. 3D Globe Background — pointer-events disabled to not block scrolling */}
+            <div className="pointer-events-none">
+                <DataGlobe />
+            </div>
 
             {/* Subtle gradient overlay for text readability */}
             <div className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-b from-black/30 via-transparent to-black/60" />

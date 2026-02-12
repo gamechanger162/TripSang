@@ -277,6 +277,91 @@ export const submitVerificationRequest = async (req, res) => {
 };
 
 /**
+ * @desc    Discover users (for Explore page)
+ * @route   GET /api/users/discover
+ * @access  Private
+ */
+export const discoverUsers = async (req, res) => {
+    try {
+        const currentUserId = req.user._id;
+        const { search, limit = 12, page = 1 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Build query: exclude current user (and any explicitly deactivated users)
+        const query = {
+            _id: { $ne: currentUserId },
+            isActive: { $ne: false },
+        };
+
+        // Add search filter
+        if (search && search.trim()) {
+            query.name = { $regex: search.trim(), $options: 'i' };
+        }
+
+        // Get total count for pagination
+        const total = await User.countDocuments(query);
+
+        // Fetch users - use aggregation with $sample for random results when no search
+        let users;
+        if (!search || !search.trim()) {
+            // Random sampling for discovery
+            const pipeline = [
+                { $match: query },
+                { $sample: { size: parseInt(limit) } },
+                {
+                    $project: {
+                        name: 1,
+                        profilePicture: 1,
+                        bio: 1,
+                        location: 1,
+                        badges: 1,
+                        verificationStatus: 1,
+                        createdAt: 1,
+                    }
+                }
+            ];
+            users = await User.aggregate(pipeline);
+        } else {
+            // Sorted by name relevance when searching
+            users = await User.find(query)
+                .select('name profilePicture bio location badges verificationStatus createdAt')
+                .sort({ name: 1 })
+                .skip(skip)
+                .limit(parseInt(limit))
+                .lean();
+        }
+
+        // Attach trip count for each user
+        const userIds = users.map(u => u._id);
+        const tripCounts = await Trip.aggregate([
+            { $match: { creator: { $in: userIds } } },
+            { $group: { _id: '$creator', count: { $sum: 1 } } }
+        ]);
+        const tripCountMap = {};
+        tripCounts.forEach(tc => { tripCountMap[tc._id.toString()] = tc.count; });
+
+        const usersWithStats = users.map(u => ({
+            ...u,
+            tripCount: tripCountMap[u._id.toString()] || 0,
+        }));
+
+        res.status(200).json({
+            success: true,
+            users: usersWithStats,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit)),
+        });
+    } catch (error) {
+        console.error('Discover users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+};
+
+/**
  * @desc    Delete own account permanently
  * @route   DELETE /api/users/me
  * @access  Private

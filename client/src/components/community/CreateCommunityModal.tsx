@@ -62,7 +62,7 @@ export default function CreateCommunityModal({ isOpen, onClose, onSuccess }: Cre
             } else {
                 throw new Error('Upload failed');
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to upload logo');
             setLogoPreview(null);
         } finally {

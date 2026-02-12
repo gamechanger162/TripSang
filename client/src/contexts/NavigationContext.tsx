@@ -31,18 +31,19 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 
     // Handle scroll to switch between idle and scrolled states
     useEffect(() => {
+        let ticking = false;
         const handleScroll = () => {
-            // If search is active, don't change state based on scroll
-            if (isSearchActive) return;
-
-            if (window.scrollY > 50) {
-                setNavState('scrolled');
-            } else {
-                setNavState('idle');
-            }
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                if (!isSearchActive) {
+                    setNavState(window.scrollY > 50 ? 'scrolled' : 'idle');
+                }
+                ticking = false;
+            });
         };
 
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, [isSearchActive]);
 

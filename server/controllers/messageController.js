@@ -515,6 +515,30 @@ export const deleteMessage = async (req, res) => {
 
         await DirectMessage.findByIdAndDelete(messageId);
 
+        // Update conversation's lastMessage to the next most recent message
+        const latestMessage = await DirectMessage.findOne({ conversationId: message.conversationId })
+            .sort({ timestamp: -1 })
+            .lean();
+
+        if (latestMessage) {
+            await Conversation.findByIdAndUpdate(message.conversationId, {
+                lastMessage: {
+                    text: latestMessage.message || '',
+                    sender: latestMessage.sender,
+                    timestamp: latestMessage.timestamp
+                }
+            });
+        } else {
+            // No messages left — clear lastMessage
+            await Conversation.findByIdAndUpdate(message.conversationId, {
+                lastMessage: {
+                    text: 'Started a conversation',
+                    sender: userId,
+                    timestamp: new Date()
+                }
+            });
+        }
+
         // Notify socket
         const io = req.app.get('io');
         if (io) {

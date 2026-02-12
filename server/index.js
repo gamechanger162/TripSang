@@ -416,6 +416,8 @@ io.on('connection', (socket) => {
                 return socket.emit('error', { message: 'Missing required fields' });
             }
 
+            console.log(`[DEBUG] Processing send_dm: conv=${conversationId}, receiver=${receiverId}, msg=${message}`);
+
             const { Conversation, DirectMessage, User } = await import('./models/index.js');
 
             // Check if either user has blocked the other
@@ -454,6 +456,8 @@ io.on('connection', (socket) => {
                 return socket.emit('error', { message: 'Unauthorized' });
             }
 
+            console.log(`[DEBUG] Conversation found: ${conversationId}. Participants valid.`);
+
             // Save message to database
             // Extract replyTo messageId - handle both object format and string format
             let replyToId = null;
@@ -476,233 +480,236 @@ io.on('connection', (socket) => {
                 replyTo: replyToId || undefined,
                 timestamp: new Date()
             });
-            console.log('Message saved:', savedMessage._id);
+        });
+    console.log('Message saved:', savedMessage._id);
+    console.log(`[DEBUG] Message persisted to DB: ${savedMessage._id}`);
 
-            // Populate replyTo if it exists
-            const populatedMessage = await DirectMessage.findById(savedMessage._id)
-                .populate({
-                    path: 'replyTo',
-                    select: 'sender message type imageUrl',
-                    populate: { path: 'sender', select: 'name' }
-                });
+    // Populate replyTo if it exists
+    const populatedMessage = await DirectMessage.findById(savedMessage._id)
+        .populate({
+            path: 'replyTo',
+            select: 'sender message type imageUrl',
+            populate: { path: 'sender', select: 'name' }
+        });
 
-            // Update conversation lastMessage and increment unread for receiver
-            conversation.lastMessage = {
-                text: type === 'image' ? '📷 Sent an image' : message,
-                sender: socket.user._id.toString(), // Ensure sender is string
-                timestamp: new Date()
-            };
-            conversation.incrementUnread(receiverId);
-            await conversation.save();
-            console.log('Conversation updated');
+    // Update conversation lastMessage and increment unread for receiver
+    conversation.lastMessage = {
+        text: type === 'image' ? '📷 Sent an image' : message,
+        sender: socket.user._id.toString(), // Ensure sender is string
+        timestamp: new Date()
+    };
+    conversation.incrementUnread(receiverId);
+    await conversation.save();
+    console.log('Conversation updated');
 
-            // Format replyTo for frontend (flatten sender.name to senderName)
-            let formattedReplyTo = null;
-            if (populatedMessage.replyTo) {
-                formattedReplyTo = {
-                    _id: populatedMessage.replyTo._id,
-                    message: populatedMessage.replyTo.message,
-                    type: populatedMessage.replyTo.type,
-                    imageUrl: populatedMessage.replyTo.imageUrl,
-                    senderName: populatedMessage.replyTo.sender ? populatedMessage.replyTo.sender.name : 'Unknown'
-                };
-            }
+    // Format replyTo for frontend (flatten sender.name to senderName)
+    let formattedReplyTo = null;
+    if (populatedMessage.replyTo) {
+        formattedReplyTo = {
+            _id: populatedMessage.replyTo._id,
+            message: populatedMessage.replyTo.message,
+            type: populatedMessage.replyTo.type,
+            imageUrl: populatedMessage.replyTo.imageUrl,
+            senderName: populatedMessage.replyTo.sender ? populatedMessage.replyTo.sender.name : 'Unknown'
+        };
+    }
 
-            // Prepare message object for emit
-            const messageData = {
-                _id: savedMessage._id,
-                conversationId,
-                sender: socket.user._id.toString(),
-                senderName: socket.user.name,
-                senderProfilePicture: socket.user.profilePicture, // Include profile picture
-                receiver: receiverId,
-                message: savedMessage.message,
-                type: savedMessage.type,
-                imageUrl: savedMessage.imageUrl,
-                replyTo: formattedReplyTo,
-                timestamp: savedMessage.timestamp,
-                read: false
-            };
+    // Prepare message object for emit
+    const messageData = {
+        _id: savedMessage._id,
+        conversationId,
+        sender: socket.user._id.toString(),
+        senderName: socket.user.name,
+        senderProfilePicture: socket.user.profilePicture, // Include profile picture
+        receiver: receiverId,
+        message: savedMessage.message,
+        type: savedMessage.type,
+        imageUrl: savedMessage.imageUrl,
+        replyTo: formattedReplyTo,
+        timestamp: savedMessage.timestamp,
+        read: false
+    };
 
-            // Broadcast to conversation room (both sender and receiver if online)
-            io.to(`dm_${conversationId}`).emit('receive_dm', messageData);
+    // Broadcast to conversation room (both sender and receiver if online)
+    io.to(`dm_${conversationId}`).emit('receive_dm', messageData);
 
-            io.to(`user_${receiverId}`).emit('new_dm_notification', {
-                conversationId,
-                senderName: socket.user.name,
-                senderId: socket.user._id,
-                preview: type === 'image' ? '📷 Sent an image' : message.substring(0, 50),
-                timestamp: new Date()
-            });
-
-            // Send Push Notification
-            const pushPayload = {
-                title: `New message from ${socket.user.name}`,
-                body: type === 'image' ? '📷 Sent an image' : message,
-                url: `/messages/${socket.user._id}`
-            };
-            sendPushNotification(receiverId, pushPayload).catch(err => console.error('Push failed:', err));
-
-            console.log(`📨 DM sent from ${socket.user.name} in conversation ${conversationId}`);
-        } catch (error) {
-            console.error('Send DM error:', error);
-            socket.emit('error', { message: 'Failed to send message' });
-        }
+    io.to(`user_${receiverId}`).emit('new_dm_notification', {
+        conversationId,
+        senderName: socket.user.name,
+        senderId: socket.user._id,
+        preview: type === 'image' ? '📷 Sent an image' : message.substring(0, 50),
+        timestamp: new Date()
     });
 
-    // Leave DM Conversation Event
-    socket.on('leave_dm_conversation', ({ conversationId }) => {
-        if (conversationId) {
-            socket.leave(`dm_${conversationId}`);
-            console.log(`💬 ${socket.user.name} left DM conversation: ${conversationId}`);
-        }
+    // Send Push Notification
+    const pushPayload = {
+        title: `New message from ${socket.user.name}`,
+        body: type === 'image' ? '📷 Sent an image' : message,
+        url: `/messages/${socket.user._id}`
+    };
+    sendPushNotification(receiverId, pushPayload).catch(err => console.error('Push failed:', err));
+
+    console.log(`📨 DM sent from ${socket.user.name} in conversation ${conversationId}`);
+} catch (error) {
+    console.error('Send DM error:', error);
+    console.error('[DEBUG] Send DM EXCEPTION:', error);
+    socket.emit('error', { message: 'Failed to send message' });
+}
     });
 
-    // Typing Indicator for DM (optional)
-    socket.on('typing_dm', ({ conversationId, isTyping }) => {
-        if (conversationId) {
-            socket.to(`dm_${conversationId}`).emit('user_typing_dm', {
-                userId: socket.user._id,
-                userName: socket.user.name,
-                isTyping
-            });
+// Leave DM Conversation Event
+socket.on('leave_dm_conversation', ({ conversationId }) => {
+    if (conversationId) {
+        socket.leave(`dm_${conversationId}`);
+        console.log(`💬 ${socket.user.name} left DM conversation: ${conversationId}`);
+    }
+});
+
+// Typing Indicator for DM (optional)
+socket.on('typing_dm', ({ conversationId, isTyping }) => {
+    if (conversationId) {
+        socket.to(`dm_${conversationId}`).emit('user_typing_dm', {
+            userId: socket.user._id,
+            userName: socket.user.name,
+            isTyping
+        });
+    }
+});
+
+// ========== END DM SOCKET EVENTS ==========
+
+// ========== COMMUNITY SOCKET EVENTS ==========
+
+// Join Community Room
+socket.on('join_community', async ({ communityId }) => {
+    console.log(`🔌 Request to join community: ${communityId} by ${socket.user.name} (${socket.user._id})`);
+    try {
+        if (!communityId) {
+            console.error('❌ No communityId provided');
+            return socket.emit('error', { message: 'Community ID required' });
         }
-    });
 
-    // ========== END DM SOCKET EVENTS ==========
+        const Community = (await import('./models/Community.js')).default;
+        const community = await Community.findById(communityId);
 
-    // ========== COMMUNITY SOCKET EVENTS ==========
-
-    // Join Community Room
-    socket.on('join_community', async ({ communityId }) => {
-        console.log(`🔌 Request to join community: ${communityId} by ${socket.user.name} (${socket.user._id})`);
-        try {
-            if (!communityId) {
-                console.error('❌ No communityId provided');
-                return socket.emit('error', { message: 'Community ID required' });
-            }
-
-            const Community = (await import('./models/Community.js')).default;
-            const community = await Community.findById(communityId);
-
-            if (!community) {
-                console.error(`❌ Community not found: ${communityId}`);
-                return socket.emit('error', { message: 'Community not found' });
-            }
-
-            console.log(`✅ Found community: ${community.name}. Checking membership...`);
-            const isMember = community.members.some(m => m.toString() === socket.user._id.toString());
-
-            if (!isMember) {
-                console.error(`❌ User ${socket.user._id} is NOT a member of ${communityId}`);
-                return socket.emit('error', { message: 'Not a member of this community' });
-            }
-
-            socket.join(`community_${communityId}`);
-            console.log(`🏘️ ${socket.user.name} successfully joined community room: community_${communityId}`);
-            socket.emit('joined_community', { communityId, name: community.name });
-        } catch (error) {
-            console.error('❌ Join community CRITICAL error:', error);
-            socket.emit('error', { message: 'Server error joining community: ' + error.message });
+        if (!community) {
+            console.error(`❌ Community not found: ${communityId}`);
+            return socket.emit('error', { message: 'Community not found' });
         }
-    });
 
-    // Leave Community Room
-    socket.on('leave_community', ({ communityId }) => {
-        if (communityId) {
-            socket.leave(`community_${communityId}`);
-            console.log(`🏘️ ${socket.user.name} left community room: ${communityId}`);
+        console.log(`✅ Found community: ${community.name}. Checking membership...`);
+        const isMember = community.members.some(m => m.toString() === socket.user._id.toString());
+
+        if (!isMember) {
+            console.error(`❌ User ${socket.user._id} is NOT a member of ${communityId}`);
+            return socket.emit('error', { message: 'Not a member of this community' });
         }
-    });
 
-    // Send Community Message
-    socket.on('send_community_message', async ({ communityId, message, type, imageUrl, replyTo }) => {
-        try {
-            const Community = (await import('./models/Community.js')).default;
-            const CommunityMessage = (await import('./models/CommunityMessage.js')).default;
+        socket.join(`community_${communityId}`);
+        console.log(`🏘️ ${socket.user.name} successfully joined community room: community_${communityId}`);
+        socket.emit('joined_community', { communityId, name: community.name });
+    } catch (error) {
+        console.error('❌ Join community CRITICAL error:', error);
+        socket.emit('error', { message: 'Server error joining community: ' + error.message });
+    }
+});
 
-            const community = await Community.findById(communityId);
-            if (!community || !community.members.some(m => m.toString() === socket.user._id.toString())) {
-                return socket.emit('error', { message: 'Not a member' });
-            }
+// Leave Community Room
+socket.on('leave_community', ({ communityId }) => {
+    if (communityId) {
+        socket.leave(`community_${communityId}`);
+        console.log(`🏘️ ${socket.user.name} left community room: ${communityId}`);
+    }
+});
 
-            // Only allow text and image (no audio/video per requirements)
-            if (type !== 'text' && type !== 'image') {
-                return socket.emit('error', { message: 'Community chat only supports text and images' });
-            }
+// Send Community Message
+socket.on('send_community_message', async ({ communityId, message, type, imageUrl, replyTo }) => {
+    try {
+        const Community = (await import('./models/Community.js')).default;
+        const CommunityMessage = (await import('./models/CommunityMessage.js')).default;
 
-            let savedMessage = await CommunityMessage.create({
-                communityId,
-                sender: socket.user._id,
-                message: message || '',
-                type: type || 'text',
-                imageUrl: type === 'image' ? imageUrl : null,
-                replyTo: replyTo || null,
-                timestamp: new Date()
-            });
-
-            // Populate replyTo if exists
-            if (savedMessage.replyTo) {
-                savedMessage = await savedMessage.populate({
-                    path: 'replyTo',
-                    select: 'sender message type imageUrl',
-                    populate: { path: 'sender', select: 'name' }
-                });
-            }
-
-            // Update community lastMessage
-            community.lastMessage = {
-                message: type === 'image' ? '📷 Sent an image' : message,
-                senderName: socket.user.name,
-                timestamp: new Date(),
-                type
-            };
-            await community.save();
-
-            const messageData = {
-                _id: savedMessage._id,
-                communityId,
-                sender: socket.user._id,
-                senderName: socket.user.name,
-                senderProfilePicture: socket.user.profilePicture || null,
-                message: savedMessage.message,
-                type: savedMessage.type,
-                imageUrl: savedMessage.imageUrl,
-                timestamp: savedMessage.timestamp,
-                replyTo: savedMessage.replyTo ? {
-                    _id: savedMessage.replyTo._id,
-                    senderName: savedMessage.replyTo.sender?.name || 'Unknown',
-                    message: savedMessage.replyTo.message,
-                    type: savedMessage.replyTo.type,
-                    imageUrl: savedMessage.replyTo.imageUrl
-                } : null
-            };
-
-            // Broadcast to all community members in the room
-            io.to(`community_${communityId}`).emit('receive_community_message', messageData);
-            console.log(`📢 Community message from ${socket.user.name} in ${community.name}`);
-        } catch (error) {
-            console.error('Send community message error:', error);
-            socket.emit('error', { message: 'Failed to send message' });
+        const community = await Community.findById(communityId);
+        if (!community || !community.members.some(m => m.toString() === socket.user._id.toString())) {
+            return socket.emit('error', { message: 'Not a member' });
         }
-    });
 
-    // Community Typing Indicator
-    socket.on('typing_community', ({ communityId, isTyping }) => {
-        if (communityId) {
-            socket.to(`community_${communityId}`).emit('user_typing_community', {
-                userId: socket.user._id,
-                userName: socket.user.name,
-                isTyping
+        // Only allow text and image (no audio/video per requirements)
+        if (type !== 'text' && type !== 'image') {
+            return socket.emit('error', { message: 'Community chat only supports text and images' });
+        }
+
+        let savedMessage = await CommunityMessage.create({
+            communityId,
+            sender: socket.user._id,
+            message: message || '',
+            type: type || 'text',
+            imageUrl: type === 'image' ? imageUrl : null,
+            replyTo: replyTo || null,
+            timestamp: new Date()
+        });
+
+        // Populate replyTo if exists
+        if (savedMessage.replyTo) {
+            savedMessage = await savedMessage.populate({
+                path: 'replyTo',
+                select: 'sender message type imageUrl',
+                populate: { path: 'sender', select: 'name' }
             });
         }
-    });
 
-    // ========== END COMMUNITY SOCKET EVENTS ==========
+        // Update community lastMessage
+        community.lastMessage = {
+            message: type === 'image' ? '📷 Sent an image' : message,
+            senderName: socket.user.name,
+            timestamp: new Date(),
+            type
+        };
+        await community.save();
 
-    socket.on('disconnect', () => {
-        console.log(`🔌 Client disconnected: ${socket.user.name} (${socket.id})`);
-    });
+        const messageData = {
+            _id: savedMessage._id,
+            communityId,
+            sender: socket.user._id,
+            senderName: socket.user.name,
+            senderProfilePicture: socket.user.profilePicture || null,
+            message: savedMessage.message,
+            type: savedMessage.type,
+            imageUrl: savedMessage.imageUrl,
+            timestamp: savedMessage.timestamp,
+            replyTo: savedMessage.replyTo ? {
+                _id: savedMessage.replyTo._id,
+                senderName: savedMessage.replyTo.sender?.name || 'Unknown',
+                message: savedMessage.replyTo.message,
+                type: savedMessage.replyTo.type,
+                imageUrl: savedMessage.replyTo.imageUrl
+            } : null
+        };
+
+        // Broadcast to all community members in the room
+        io.to(`community_${communityId}`).emit('receive_community_message', messageData);
+        console.log(`📢 Community message from ${socket.user.name} in ${community.name}`);
+    } catch (error) {
+        console.error('Send community message error:', error);
+        socket.emit('error', { message: 'Failed to send message' });
+    }
+});
+
+// Community Typing Indicator
+socket.on('typing_community', ({ communityId, isTyping }) => {
+    if (communityId) {
+        socket.to(`community_${communityId}`).emit('user_typing_community', {
+            userId: socket.user._id,
+            userName: socket.user.name,
+            isTyping
+        });
+    }
+});
+
+// ========== END COMMUNITY SOCKET EVENTS ==========
+
+socket.on('disconnect', () => {
+    console.log(`🔌 Client disconnected: ${socket.user.name} (${socket.id})`);
+});
 });
 
 // Make io accessible to routes

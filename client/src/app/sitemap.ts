@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 priority: 0.8,
             }))
         }
-    } catch (error) {
+    } catch {
         console.warn('⚠️ Failed to fetch trips for sitemap, using static routes only.');
     }
 

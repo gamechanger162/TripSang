@@ -5,7 +5,8 @@ import {
     updateUserProfile,
     getUserTrips,
     submitVerificationRequest,
-    deleteMyAccount
+    deleteMyAccount,
+    discoverUsers
 } from '../controllers/userController.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -38,6 +39,13 @@ router.put('/profile', authenticate, updateUserProfile);
  * @access  Private
  */
 router.post('/verify-request', authenticate, submitVerificationRequest);
+
+/**
+ * @route   GET /api/users/discover
+ * @desc    Discover users for Explore page
+ * @access  Private
+ */
+router.get('/discover', authenticate, discoverUsers);
 
 /**
  * @route   GET /api/users/trips

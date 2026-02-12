@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import ToasterProvider from '@/components/ToasterProvider'
 import { Inter, Outfit } from 'next/font/google'
+import dynamic from 'next/dynamic'
 
 const siteUrl = 'https://tripsang.com';
 
@@ -77,13 +78,13 @@ export const metadata: Metadata = {
 
 import Providers from '@/components/Providers';
 import Header from '@/components/Header';
-import Navbar from '@/components/Navbar';
-import MobileNav from '@/components/MobileNav';
-import FloatingDock from '@/components/navigation/FloatingDock';
-import SiteBanner from '@/components/SiteBanner';
-import InstallPrompt from '@/components/InstallPrompt';
-import Footer from '@/components/Footer';
 import SmoothScrolling from '@/components/SmoothScrolling';
+
+/* ── Lazy-load non-critical layout chrome ── */
+const FloatingDock = dynamic(() => import('@/components/navigation/FloatingDock'), { ssr: false });
+const SiteBanner = dynamic(() => import('@/components/SiteBanner'), { ssr: false });
+const InstallPrompt = dynamic(() => import('@/components/InstallPrompt'), { ssr: false });
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: false });
 
 export default function RootLayout({
     children,
@@ -97,6 +98,12 @@ export default function RootLayout({
                 <link rel="apple-touch-icon" href="/icon-192.png" />
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="theme-color" content="#09090b" />
+                {/* ── Preconnect: shave 100-300ms off first requests ── */}
+                <link rel="preconnect" href="https://tripsang.onrender.com" />
+                <link rel="dns-prefetch" href="https://tripsang.onrender.com" />
+                <link rel="preconnect" href="https://res.cloudinary.com" />
+                <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+                <link rel="dns-prefetch" href="https://unpkg.com" />
             </head>
             <body className="bg-dark-950 text-zinc-50 antialiased min-h-screen">
                 {/* JSON-LD Schema for Brand Identity */}
@@ -151,3 +158,4 @@ export default function RootLayout({
         </html>
     )
 }
+

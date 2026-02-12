@@ -584,7 +584,7 @@ export default function GalleryPage() {
                 setMemories(prev => prev.filter(m => m._id !== memoryId));
                 toast.success('Moment deleted');
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete');
         }
     };

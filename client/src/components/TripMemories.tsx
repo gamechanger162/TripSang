@@ -140,7 +140,7 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                         : m
                 ));
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to like memory');
         }
     };
@@ -159,7 +159,7 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                 ));
                 setCommentText({ ...commentText, [memoryId]: '' });
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to add comment');
         }
     };
@@ -173,7 +173,7 @@ export default function TripMemories({ tripId, isSquadMember, tripEnded }: TripM
                 toast.success('Memory deleted');
                 setMemories(prev => prev.filter(m => m._id !== memoryId));
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete memory');
         }
     };

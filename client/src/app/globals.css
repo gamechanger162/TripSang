@@ -569,6 +569,20 @@ body > * {
     100% { background-position: 200% 0; }
 }
 
+/* ── Reusable glass cards ── */
+.glass-card {
+    background: linear-gradient(145deg, rgba(22,18,30,0.75), rgba(12,10,18,0.85));
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.glass-subtle {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
 /* Fix for leaflet maps to be above z-index */
 .leaflet-container {
     z-index: 10;

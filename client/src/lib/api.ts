@@ -32,6 +32,27 @@ const removeToken = () => {
 // Global rate-limit circuit breaker
 let rateLimitedUntil: number = 0;
 
+// ── Session cache: avoid hitting /api/auth/session on every fetch ──
+let cachedSession: any = null;
+let sessionCacheTime: number = 0;
+const SESSION_CACHE_TTL = 60_000; // 60 seconds
+
+async function getCachedSession() {
+    const now = Date.now();
+    if (cachedSession && now - sessionCacheTime < SESSION_CACHE_TTL) {
+        return cachedSession;
+    }
+    cachedSession = await getSession();
+    sessionCacheTime = now;
+    return cachedSession;
+}
+
+// Force-clear the session cache (useful before retrying auth-critical requests)
+export function clearSessionCache() {
+    cachedSession = null;
+    sessionCacheTime = 0;
+}
+
 // Helper to make authenticated requests
 const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
     // If we're rate-limited, silently reject without making a network request
@@ -40,11 +61,11 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
         throw new Error(`Rate limited. Try again in ${secsLeft}s`);
     }
 
-    // Try to get token from NextAuth session first
+    // Try to get token from NextAuth session first (cached)
     let token = null;
 
     if (typeof window !== 'undefined') {
-        const session = await getSession();
+        const session = await getCachedSession();
         if (session?.user?.accessToken) {
             token = session.user.accessToken;
         } else {
@@ -76,6 +97,12 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
         console.warn(`[API] Rate limited. Suppressing all requests for ${cooldownMs / 1000}s`);
         const data = await response.json().catch(() => ({}));
         throw new Error(data.message || 'Too many requests, please try again later');
+    }
+
+    // Invalidate session cache on 401 (token expired)
+    if (response.status === 401) {
+        cachedSession = null;
+        sessionCacheTime = 0;
     }
 
     const data = await response.json();

@@ -245,7 +245,7 @@ export default function AdminDashboardPage() {
                 toast.success('Memory deleted');
                 fetchMemories();
             }
-        } catch (error: any) {
+        } catch {
             toast.error('Failed to delete memory');
         }
     };

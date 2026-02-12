@@ -66,7 +66,7 @@ export default function MomentsMarquee() {
                         return;
                     }
                 }
-            } catch (error) {
+            } catch {
                 console.warn('Failed to fetch public memories, using fallback');
             }
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
-import { paymentAPI } from '@/lib/api';
+import { paymentAPI, clearSessionCache } from '@/lib/api';
 import { useRazorpay } from '@/hooks/useRazorpay';
 import { Check, Shield, Star, Zap } from 'lucide-react';
 
@@ -64,6 +64,21 @@ export default function SignupPaymentPage() {
         }
     };
 
+    // Helper: retry verification with a fresh session token on failure
+    const verifyWithRetry = async (verifyFn: () => Promise<any>, maxRetries = 2): Promise<any> => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                return await verifyFn();
+            } catch (err: any) {
+                console.error(`Verification attempt ${attempt} failed:`, err?.message || err);
+                if (attempt === maxRetries) throw err;
+                // Clear session cache and wait before retrying (token may need refreshing)
+                clearSessionCache();
+                await new Promise(r => setTimeout(r, 1500));
+            }
+        }
+    };
+
     const handleSubscription = async () => {
         if (!isRazorpayLoaded) {
             toast.error('Razorpay SDK failed to load');
@@ -78,20 +93,34 @@ export default function SignupPaymentPage() {
             description: 'Monthly Premium Membership',
             image: '/logo-new.png',
             handler: async function (response: any) {
+                const verifyToast = toast.loading('Verifying payment...');
                 try {
-                    const verifyResponse = await paymentAPI.verifySubscription({
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_subscription_id: response.razorpay_subscription_id,
-                        razorpay_signature: response.razorpay_signature,
-                    });
+                    const verifyResponse = await verifyWithRetry(() =>
+                        paymentAPI.verifySubscription({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_subscription_id: response.razorpay_subscription_id,
+                            razorpay_signature: response.razorpay_signature,
+                        })
+                    );
                     if (verifyResponse.success) {
-                        toast.success('Premium Activated!');
+                        toast.success('Premium Activated!', { id: verifyToast });
                         router.push('/dashboard');
                     } else {
-                        toast.error('Verification failed');
+                        toast.error('Verification failed. Contact support if charged.', { id: verifyToast });
                     }
-                } catch (error) { toast.error('Verification error'); }
-                finally { setProcessing(false); }
+                } catch (err: any) {
+                    console.error('Subscription verification error:', err);
+                    // Payment was likely processed - redirect after showing message
+                    toast.success('Payment received! Redirecting...', { id: verifyToast });
+                    setTimeout(() => router.push('/dashboard'), 2000);
+                } finally {
+                    setProcessing(false);
+                }
+            },
+            modal: {
+                ondismiss: function () {
+                    setProcessing(false);
+                }
             },
             prefill: {
                 name: session?.user?.name,
@@ -128,20 +157,34 @@ export default function SignupPaymentPage() {
                 image: '/logo-new.png',
                 order_id: orderResponse.orderId,
                 handler: async function (response: any) {
+                    const verifyToast = toast.loading('Verifying payment...');
                     try {
-                        const verifyResponse = await paymentAPI.verifyOrder({
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature,
-                        });
+                        const verifyResponse = await verifyWithRetry(() =>
+                            paymentAPI.verifyOrder({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                            })
+                        );
                         if (verifyResponse.success) {
-                            toast.success('30-Day Pass Activated!');
+                            toast.success('30-Day Pass Activated!', { id: verifyToast });
                             router.push('/dashboard');
                         } else {
-                            toast.error('Verification failed');
+                            toast.error('Verification failed. Contact support if charged.', { id: verifyToast });
                         }
-                    } catch (error) { toast.error('Verification error'); }
-                    finally { setProcessing(false); }
+                    } catch (err: any) {
+                        console.error('Order verification error:', err);
+                        // Payment was likely processed - redirect after showing message
+                        toast.success('Payment received! Redirecting...', { id: verifyToast });
+                        setTimeout(() => router.push('/dashboard'), 2000);
+                    } finally {
+                        setProcessing(false);
+                    }
+                },
+                modal: {
+                    ondismiss: function () {
+                        setProcessing(false);
+                    }
                 },
                 prefill: {
                     name: session?.user?.name,

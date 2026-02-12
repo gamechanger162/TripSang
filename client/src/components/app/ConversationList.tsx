@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Virtuoso } from 'react-virtuoso';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
+import { Search, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
 import VerifiedBadge from './ui/VerifiedBadge';
 import { messageAPI, tripAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -217,8 +217,8 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
                         <div className={`w-12 h-12 rounded-full overflow-hidden transition-all duration-300 ${isSelected
-                                ? 'ring-2 ring-orange-400/30 shadow-[0_0_12px_rgba(255,154,118,0.15)]'
-                                : 'ring-1 ring-white/[0.06] group-hover:ring-white/[0.12]'
+                            ? 'ring-2 ring-orange-400/30 shadow-[0_0_12px_rgba(255,154,118,0.15)]'
+                            : 'ring-1 ring-white/[0.06] group-hover:ring-white/[0.12]'
                             }`}>
                             {conv.avatar && !failedImages.has(conv._id) ? (
                                 <Image
@@ -262,7 +262,7 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                         {/* Row 2: Last Message + Unread Badge */}
                         <div className="flex items-center justify-between gap-2 mt-0.5">
                             <p className={`text-sm truncate transition-colors ${isSelected ? 'text-white/40' :
-                                    conv.unreadCount > 0 ? 'text-white/60 font-medium' : 'text-white/25 group-hover:text-white/35'
+                                conv.unreadCount > 0 ? 'text-white/60 font-medium' : 'text-white/25 group-hover:text-white/35'
                                 }`}>
                                 {conv.lastMessage?.text || 'No messages yet'}
                             </p>
@@ -308,14 +308,6 @@ export default function ConversationList({ onSelectConversation, selectedId, ref
                             {conversations.length}
                         </span>
                     </h2>
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-8 h-8 flex items-center justify-center rounded-xl text-white/30 hover:text-white/60 transition-colors"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
-                    >
-                        <Plus size={16} strokeWidth={2.5} />
-                    </motion.button>
                 </div>
 
                 {/* Search */}
