@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Users, Loader2, Send, Image as ImageIcon, X, MoreVertical, VolumeX, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Users, Loader2, Send, Image as ImageIcon, X, MoreVertical, VolumeX, Plus, Minus, Shield } from 'lucide-react';
 import { communityAPI, uploadAPI } from '@/lib/api';
 import { socketManager } from '@/lib/socketManager';
 import { useEnv } from '@/hooks/useEnv';
@@ -37,10 +37,14 @@ interface Community {
     description?: string;
     coverImage?: string;
     category?: string;
+    isPrivate?: boolean;
+    adminOnlyMessages?: boolean;
     creator?: {
+        _id?: string;
         name: string;
         profilePicture?: string;
     };
+    members?: any[];
 }
 
 export default function CommunityChatPage() {
@@ -51,6 +55,9 @@ export default function CommunityChatPage() {
     const [isMobile, setIsMobile] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+    const [isMember, setIsMember] = useState(true); // assume member until loaded
+    const [isCreator, setIsCreator] = useState(false);
+    const [adminOnlyMessages, setAdminOnlyMessages] = useState(false);
     const [community, setCommunity] = useState<Community | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
@@ -83,6 +90,13 @@ export default function CommunityChatPage() {
             const response = await communityAPI.getById(id as string);
             if (response.success) {
                 setCommunity(response.community);
+                setIsMember(response.isMember ?? false);
+                setIsCreator(response.isCreator ?? false);
+                setAdminOnlyMessages(response.community?.adminOnlyMessages ?? false);
+                // Auto-show details modal for non-members
+                if (!response.isMember) {
+                    setShowDetailsModal(true);
+                }
             }
         } catch (error) {
             console.error('Failed to load community:', error);
@@ -372,6 +386,13 @@ export default function CommunityChatPage() {
                 isOpen={showDetailsModal}
                 onClose={() => setShowDetailsModal(false)}
                 community={community}
+                preventClose={!isMember}
+                onJoinSuccess={() => {
+                    setShowDetailsModal(false);
+                    setIsMember(true);
+                    loadCommunity();
+                    loadMessages();
+                }}
             />
 
             {/* Messages — matching Squad Chat */}
@@ -394,88 +415,98 @@ export default function CommunityChatPage() {
             </div>
 
             {/* Input Area — matching Squad Chat */}
-            <div className="bg-zinc-900/50 backdrop-blur-md border-t border-white/5 relative z-20 shrink-0">
-                {/* Reply Preview */}
-                <AnimatePresence>
-                    {replyTo && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                        >
-                            <div className="flex items-center gap-2 px-4 pt-2.5 pb-1">
-                                <div className="flex-1 border-l-2 border-cyan-500 pl-3 py-1">
-                                    <p className="text-[11px] font-semibold text-cyan-400">
-                                        Replying to {replyTo.senderName}
-                                    </p>
-                                    <p className="text-xs text-zinc-400 truncate">
-                                        {replyTo.message || (replyTo.type === 'image' ? '📷 Image' : '')}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => setReplyTo(null)}
-                                    className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Input Row */}
-                <div
-                    className="px-3 py-2 sm:px-4 sm:py-3 cursor-text"
-                    onClick={() => document.querySelector<HTMLInputElement>('.community-message-input')?.focus()}
-                >
-                    <div className="flex items-end gap-2 bg-zinc-950/50 p-2 rounded-2xl border border-white/5 ring-1 ring-white/5 focus-within:ring-cyan-500/30 transition-all">
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                        />
-                        <button
-                            className="p-2 text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                fileInputRef.current?.click();
-                            }}
-                        >
-                            <ImageIcon size={20} />
-                        </button>
-
-                        <input
-                            type="text"
-                            placeholder="Type a message..."
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                            className="community-message-input flex-1 bg-transparent text-white placeholder-zinc-500 text-sm focus:outline-none py-2"
-                        />
-
-                        <button
-                            className={`p-2 rounded-xl transition-all ${newMessage.trim() || sending
-                                ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
-                                : 'bg-zinc-800 text-zinc-600'
-                                }`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleSendMessage();
-                            }}
-                            disabled={!newMessage.trim() || sending}
-                        >
-                            {sending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-                            ) : (
-                                <Send size={18} />
-                            )}
-                        </button>
+            {adminOnlyMessages && !isCreator ? (
+                /* Admin-only banner */
+                <div className="bg-zinc-900/50 backdrop-blur-md border-t border-white/5 relative z-20 shrink-0">
+                    <div className="px-4 py-3 flex items-center justify-center gap-2 text-zinc-500 text-sm">
+                        <Shield size={16} className="text-amber-500/60" />
+                        <span>Only admins can send messages in this community</span>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="bg-zinc-900/50 backdrop-blur-md border-t border-white/5 relative z-20 shrink-0">
+                    {/* Reply Preview */}
+                    <AnimatePresence>
+                        {replyTo && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="flex items-center gap-2 px-4 pt-2.5 pb-1">
+                                    <div className="flex-1 border-l-2 border-cyan-500 pl-3 py-1">
+                                        <p className="text-[11px] font-semibold text-cyan-400">
+                                            Replying to {replyTo.senderName}
+                                        </p>
+                                        <p className="text-xs text-zinc-400 truncate">
+                                            {replyTo.message || (replyTo.type === 'image' ? '📷 Image' : '')}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setReplyTo(null)}
+                                        className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Input Row */}
+                    <div
+                        className="px-3 py-2 sm:px-4 sm:py-3 cursor-text"
+                        onClick={() => document.querySelector<HTMLInputElement>('.community-message-input')?.focus()}
+                    >
+                        <div className="flex items-end gap-2 bg-zinc-950/50 p-2 rounded-2xl border border-white/5 ring-1 ring-white/5 focus-within:ring-cyan-500/30 transition-all">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                            />
+                            <button
+                                className="p-2 text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current?.click();
+                                }}
+                            >
+                                <ImageIcon size={20} />
+                            </button>
+
+                            <input
+                                type="text"
+                                placeholder="Type a message..."
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                                className="community-message-input flex-1 bg-transparent text-white placeholder-zinc-500 text-sm focus:outline-none py-2"
+                            />
+
+                            <button
+                                className={`p-2 rounded-xl transition-all ${newMessage.trim() || sending
+                                    ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
+                                    : 'bg-zinc-800 text-zinc-600'
+                                    }`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSendMessage();
+                                }}
+                                disabled={!newMessage.trim() || sending}
+                            >
+                                {sending ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                                ) : (
+                                    <Send size={18} />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Image Preview Modal — matching Squad Chat */}
             <AnimatePresence>

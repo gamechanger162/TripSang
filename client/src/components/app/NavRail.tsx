@@ -233,17 +233,18 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0 }: NavRailProps) 
                                 {/* Icon with transition */}
                                 <motion.div
                                     className="relative z-10"
+                                    initial={false}
                                     animate={{
                                         y: active ? -2 : 0,
-                                        scale: active ? 1.1 : 1,
+                                        scale: active ? 1.08 : 1,
                                     }}
-                                    transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.6 }}
                                 >
-                                    <motion.div
+                                    <div
                                         className={`transition-colors duration-200 ${active ? 'text-cyan-400' : 'text-white/30'}`}
                                     >
                                         {item.icon}
-                                    </motion.div>
+                                    </div>
                                     {typeof item.badge === 'number' && item.badge > 0 && (
                                         <motion.span
                                             initial={{ scale: 0 }}
@@ -254,14 +255,11 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0 }: NavRailProps) 
                                 </motion.div>
 
                                 {/* Label with transition */}
-                                <motion.span
-                                    className={`relative z-10 text-[9px] font-medium transition-colors duration-200 ${active ? 'text-cyan-400' : 'text-white/30'}`}
-                                    animate={{
-                                        fontWeight: active ? 600 : 500,
-                                    }}
+                                <span
+                                    className={`relative z-10 text-[9px] transition-colors duration-200 ${active ? 'text-cyan-400 font-semibold' : 'text-white/30 font-medium'}`}
                                 >
                                     {item.label}
-                                </motion.span>
+                                </span>
 
                                 {/* Active dot indicator */}
                                 <AnimatePresence>

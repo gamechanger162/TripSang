@@ -227,61 +227,63 @@ function MemoryCard({
                     className="relative w-full cursor-pointer"
                     onClick={handleDoubleTap}
                 >
-                    {/* Single Photo */}
-                    {memory.photos.length === 1 && (
+                    {/* Carousel View */}
+                    <div className="relative group/carousel">
                         <div
-                            className="relative aspect-[4/3] w-full overflow-hidden"
-                            onClick={(e) => { e.stopPropagation(); handleDoubleTap(); }}
+                            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            onScroll={(e) => {
+                                const slideWidth = e.currentTarget.offsetWidth;
+                                const index = Math.round(e.currentTarget.scrollLeft / slideWidth);
+                                setActivePhotoIndex(index);
+                            }}
                         >
-                            <Image
-                                src={memory.photos[0].url}
-                                alt="Trip Memory"
-                                fill
-                                sizes="(max-width: 672px) 100vw, 672px"
-                                priority={index === 0}
-                                className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                                onClick={() => onOpenLightbox(memory.photos, 0)}
-                            />
-                        </div>
-                    )}
-
-                    {/* Two Photos — Side by Side */}
-                    {memory.photos.length === 2 && (
-                        <div className="grid grid-cols-2 gap-0.5">
-                            {memory.photos.slice(0, 2).map((photo, i) => (
-                                <div key={i} className="relative aspect-square overflow-hidden cursor-pointer" onClick={() => onOpenLightbox(memory.photos, i)}>
-                                    <Image src={photo.url} alt="" fill sizes="(max-width: 672px) 50vw, 336px" className="object-cover hover:scale-105 transition-transform duration-500" />
+                            {memory.photos.map((photo, i) => (
+                                <div
+                                    key={i}
+                                    className="relative flex-shrink-0 w-full aspect-[4/3] snap-center bg-zinc-900 cursor-pointer"
+                                    onClick={(e) => {
+                                        // Allow double-tap if tapped quickly, otherwise open lightbox
+                                        // For simplicity, we trigger both; lightbox usually handles its own opening
+                                        onOpenLightbox(memory.photos, i);
+                                    }}
+                                >
+                                    <Image
+                                        src={photo.url}
+                                        alt={photo.caption || 'Trip Memory'}
+                                        fill
+                                        sizes="(max-width: 672px) 100vw, 672px"
+                                        priority={index === 0 && i === 0}
+                                        className="object-cover"
+                                    />
+                                    {/* Gradient overlay for better text visibility at bottom */}
+                                    {memory.photos.length > 1 && (
+                                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                                    )}
                                 </div>
                             ))}
                         </div>
-                    )}
 
-                    {/* Three+ Photos — Grid Layout */}
-                    {memory.photos.length >= 3 && (
-                        <div className="grid grid-cols-2 gap-0.5 h-full">
-                            <div className="relative row-span-2 h-full overflow-hidden cursor-pointer" onClick={() => onOpenLightbox(memory.photos, 0)}>
-                                <Image
-                                    src={memory.photos[0].url}
-                                    alt=""
-                                    fill
-                                    sizes="(max-width: 672px) 100vw, 672px"
-                                    priority={index === 0}
-                                    className="object-cover hover:scale-105 transition-transform duration-500"
-                                />
+                        {/* Navigation Dots */}
+                        {memory.photos.length > 1 && (
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 pointer-events-none">
+                                {memory.photos.map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${i === activePhotoIndex ? 'bg-white w-4' : 'bg-white/50 w-1.5'
+                                            }`}
+                                    />
+                                ))}
                             </div>
-                            <div className="relative aspect-square overflow-hidden cursor-pointer" onClick={() => onOpenLightbox(memory.photos, 1)}>
-                                <Image src={memory.photos[1].url} alt="" fill sizes="(max-width: 672px) 50vw, 336px" className="object-cover hover:scale-105 transition-transform duration-500" />
+                        )}
+
+                        {/* Photo Count Badge */}
+                        {memory.photos.length > 1 && (
+                            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-medium text-white/90 z-20 pointer-events-none border border-white/10">
+                                {activePhotoIndex + 1}/{memory.photos.length}
                             </div>
-                            <div className="relative aspect-square overflow-hidden cursor-pointer" onClick={() => onOpenLightbox(memory.photos, 2)}>
-                                <Image src={memory.photos[2].url} alt="" fill sizes="(max-width: 672px) 50vw, 336px" className="object-cover hover:scale-105 transition-transform duration-500" />
-                                {memory.photos.length > 3 && (
-                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[2px]">
-                                        <span className="text-white text-xl font-bold">+{memory.photos.length - 3}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Double-Tap Heart Animation */}
                     <AnimatePresence>

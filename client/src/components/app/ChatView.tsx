@@ -988,14 +988,6 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                 margin: '8px'
                             }}
                         >
-                            {/* Close Button */}
-                            <button
-                                onClick={() => setShowMiniMap(false)}
-                                className="absolute top-3 right-3 z-[500] w-8 h-8 bg-black/60 hover:bg-black/80 backdrop-blur rounded-full flex items-center justify-center text-white transition-colors shadow-lg"
-                                title="Close map"
-                            >
-                                <X size={16} />
-                            </button>
                             {conversationInfo?.startPoint ? (
                                 <CollaborativeMap
                                     tripId={conversationId}
@@ -1003,6 +995,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                                     endPoint={conversationInfo.endPoint}
                                     initialWaypoints={conversationInfo.waypoints || []}
                                     isReadOnly={false}
+                                    onClose={() => setShowMiniMap(false)}
                                 />
                             ) : (
                                 <div style={{

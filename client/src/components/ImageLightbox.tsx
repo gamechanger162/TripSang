@@ -133,15 +133,15 @@ export default function ImageLightbox({
                 <>
                     <button
                         onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-                        className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-50 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 hidden md:flex"
+                        className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-50 p-2 md:p-3 bg-black/20 md:bg-white/10 backdrop-blur-md rounded-full hover:bg-black/40 md:hover:bg-white/20 flex items-center justify-center"
                     >
-                        <ChevronLeft size={32} />
+                        <ChevronLeft size={24} className="md:w-8 md:h-8" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleNext(); }}
-                        className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-50 p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 hidden md:flex"
+                        className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors z-50 p-2 md:p-3 bg-black/20 md:bg-white/10 backdrop-blur-md rounded-full hover:bg-black/40 md:hover:bg-white/20 flex items-center justify-center"
                     >
-                        <ChevronRight size={32} />
+                        <ChevronRight size={24} className="md:w-8 md:h-8" />
                     </button>
                 </>
             )}

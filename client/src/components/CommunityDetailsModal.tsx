@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { X, Users, Calendar, MapPin, User as UserIcon, LogOut, Check, ArrowLeft, Trash2, Share2, Lock, Shield, Pencil, Save } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { communityAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
@@ -11,10 +12,13 @@ interface CommunityDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     community: any; // Using any for simplicity, but ideally should match Community interface
+    onJoinSuccess?: () => void;
+    preventClose?: boolean;
 }
 
-export default function CommunityDetailsModal({ isOpen, onClose, community }: CommunityDetailsModalProps) {
+export default function CommunityDetailsModal({ isOpen, onClose, community, onJoinSuccess, preventClose }: CommunityDetailsModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
     const { data: session } = useSession();
     const [isProcessing, setIsProcessing] = useState(false);
     const [confirmLeave, setConfirmLeave] = useState(false);
@@ -61,11 +65,19 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
     // check if creator
     const isCreator = (community?.creator?._id || community?.creator) === currentUserId;
 
+    const handleClose = () => {
+        if (preventClose) {
+            router.push('/app/communities');
+        } else {
+            onClose();
+        }
+    };
+
     // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
+                handleClose();
             }
         };
 
@@ -222,8 +234,8 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
                                                 type="button"
                                                 onClick={() => setEditCategory(cat)}
                                                 className={`px-3 py-2 rounded-xl text-xs font-medium transition-all border ${editCategory === cat
-                                                        ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
-                                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white'
+                                                    ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                                                    : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white'
                                                     }`}
                                             >
                                                 {cat}
@@ -354,7 +366,7 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
                                     <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150 mix-blend-overlay"></div>
 
                                     <button
-                                        onClick={onClose}
+                                        onClick={handleClose}
                                         className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white/80 hover:text-white transition-all border border-white/10 hover:border-cyan-500/50 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] group"
                                     >
                                         <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -627,8 +639,11 @@ export default function CommunityDetailsModal({ isOpen, onClose, community }: Co
                                             try {
                                                 await communityAPI.join(community._id);
                                                 toast.success('Joined community');
-                                                // Refresh page to update state
-                                                window.location.reload();
+                                                if (onJoinSuccess) {
+                                                    onJoinSuccess();
+                                                } else {
+                                                    window.location.reload();
+                                                }
                                             } catch (error) {
                                                 console.error('Failed to join:', error);
                                                 toast.error('Failed to join');
