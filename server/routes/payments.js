@@ -55,6 +55,33 @@ router.get('/status', authenticate, getSubscriptionStatus);
 router.post('/webhook', razorpayWebhook);
 
 /**
+ * @route   GET /api/payments/plans
+ * @desc    Get active payment plans (Public)
+ * @access  Public
+ */
+router.get('/plans', async (req, res) => {
+    try {
+        const { GlobalConfig } = await import('../models/index.js');
+        const config = await GlobalConfig.getInstance();
+        const activePlans = (config.paymentPlans || []).filter(p => p.isActive);
+        res.json({
+            success: true,
+            plans: activePlans.map(p => ({
+                _id: p._id,
+                name: p.name,
+                type: p.type,
+                price: p.price / 100, // Convert paise to rupees for display
+                currency: p.currency,
+                durationDays: p.durationDays,
+                features: p.features
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch plans' });
+    }
+});
+
+/**
  * @route   GET /api/payments/admin/all
  * @desc    Get all payments (Admin only)
  * @access  Private (Admin)

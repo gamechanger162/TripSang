@@ -606,23 +606,31 @@ export const createOrder = async (req, res) => {
 
         const user = await User.findById(userId);
 
-        // Allow purchasing even if user has active subscription - days will be added
+        // Determine amount from plan or default config
+        const { planId } = req.body;
+        let amount = config.oneMonthPremiumPrice || 3000; // fallback ₹30
+        let durationDays = 30;
+        let planName = 'Premium (1 Month)';
 
-        const amount = 3000; // ₹30.00
+        if (planId && config.paymentPlans && config.paymentPlans.length > 0) {
+            const plan = config.paymentPlans.id(planId);
+            if (plan && plan.isActive) {
+                amount = plan.price;
+                durationDays = plan.durationDays;
+                planName = plan.name;
+            }
+        }
+
         const currency = 'INR';
-
-        // Shorten receipt ID (Max 40 chars)
-        // UserID (24) + "_" + ts (~13) = 38 chars. It fits.
-        // But let's be safe: `rcpt_${userId.toString().slice(-8)}_${Date.now()}`
-        const receiptId = `rcpt_${userId.toString().slice(-8)}_${Date.now()}`;
 
         const options = {
             amount: amount,
             currency: currency,
-            // receipt: receiptId, // Commenting out to rule out validation errors
             notes: {
                 userId: userId.toString(),
-                type: 'one_time_premium'
+                type: 'one_time_premium',
+                planName,
+                durationDays: durationDays.toString()
             }
         };
 
@@ -633,7 +641,9 @@ export const createOrder = async (req, res) => {
             orderId: order.id,
             amount: amount / 100,
             currency: currency,
-            razorpayKeyId: process.env.RAZORPAY_KEY_ID
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+            planName,
+            durationDays
         });
 
     } catch (error) {
@@ -678,27 +688,40 @@ export const verifyOrder = async (req, res) => {
         // Signature valid, update user
         const user = await User.findById(userId);
 
-        // Calculate new end date - ADD 30 days to existing plan if active
+        // Get duration from the Razorpay order notes (set by createOrder)
+        let durationDays = 30; // default fallback
+        let planName = 'Premium Pass';
+        try {
+            const orderDetails = await getRazorpay().orders.fetch(razorpay_order_id);
+            if (orderDetails?.notes?.durationDays) {
+                durationDays = parseInt(orderDetails.notes.durationDays) || 30;
+            }
+            if (orderDetails?.notes?.planName) {
+                planName = orderDetails.notes.planName;
+            }
+        } catch (err) {
+            console.error('Failed to fetch order details for duration:', err);
+        }
+
+        // Calculate new end date - ADD duration to existing plan if active
         const now = new Date();
         let startDate = now;
         let endDate = new Date();
 
-        // If user already has an active plan with time remaining, add 30 days to it
+        // If user already has an active plan with time remaining, add days to it
         if (user.subscription.status === 'active' && user.subscription.currentEnd && new Date(user.subscription.currentEnd) > now) {
-            // Add 30 days to existing end date
             endDate = new Date(user.subscription.currentEnd);
-            endDate.setDate(endDate.getDate() + 30);
+            endDate.setDate(endDate.getDate() + durationDays);
         } else {
-            // Fresh start - 30 days from today
-            endDate.setDate(endDate.getDate() + 30);
+            // Fresh start
+            endDate.setDate(endDate.getDate() + durationDays);
         }
 
         user.subscription = {
             status: 'active',
-            // No planId or subscriptionId for one-time
             currentStart: startDate,
             currentEnd: endDate,
-            trialEnds: user.subscription.trialEnds // Keep trial history if exists
+            trialEnds: user.subscription.trialEnds
         };
 
         if (!user.badges.includes('Premium')) {
@@ -708,17 +731,14 @@ export const verifyOrder = async (req, res) => {
         await user.save();
 
         // Fetch Payment Details from Razorpay to get the actual amount captured
-        // This ensures our revenue stats are accurate
         let capturedAmount = 30; // Default fallback amount (₹30)
         try {
             const paymentDetails = await getRazorpay().payments.fetch(razorpay_payment_id);
-            // Handle both 'captured' and 'authorized' statuses
             if (paymentDetails && (paymentDetails.status === 'captured' || paymentDetails.status === 'authorized')) {
-                capturedAmount = paymentDetails.amount / 100; // Convert paise to rupees
+                capturedAmount = paymentDetails.amount / 100;
             }
         } catch (err) {
             console.error('Failed to fetch payment details during verification:', err);
-            // Use default fallback amount (30)
         }
 
         await Payment.create({
@@ -728,7 +748,7 @@ export const verifyOrder = async (req, res) => {
             amount: capturedAmount,
             status: 'success',
             type: 'one_time_premium',
-            notes: 'One Time 30 Days Pass'
+            notes: `${planName} (${durationDays} days)`
         });
 
         res.status(200).json({

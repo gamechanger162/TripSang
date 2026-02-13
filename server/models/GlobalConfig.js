@@ -50,13 +50,57 @@ const globalConfigSchema = new mongoose.Schema({
         enum: ['INR', 'USD', 'EUR', 'GBP']
     },
 
-    // One Month Premium Price (Dynamic Pricing)
+    // One Month Premium Price (Dynamic Pricing) - legacy, kept for backward compat
     oneMonthPremiumPrice: {
         type: Number,
         default: 3000, // 30.00 INR
         min: [100, 'Price cannot be less than 1.00'],
         max: [100000, 'Price cannot exceed 1000.00']
     },
+
+    // Dynamic Payment Plans
+    paymentPlans: [{
+        name: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        type: {
+            type: String,
+            enum: ['one_time', 'subscription'],
+            default: 'one_time'
+        },
+        price: {
+            type: Number,
+            required: true,
+            min: 100 // in paise (₹1 minimum)
+        },
+        currency: {
+            type: String,
+            default: 'INR',
+            enum: ['INR', 'USD', 'EUR', 'GBP']
+        },
+        durationDays: {
+            type: Number,
+            required: true,
+            min: 1
+        },
+        features: [{
+            type: String
+        }],
+        isActive: {
+            type: Boolean,
+            default: true
+        },
+        razorpayPlanId: {
+            type: String,
+            default: ''
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
 
     // Payment Gateway Configuration
     razorpayEnabled: {

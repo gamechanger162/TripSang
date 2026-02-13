@@ -32,6 +32,10 @@ const removeToken = () => {
 // Global rate-limit circuit breaker
 let rateLimitedUntil: number = 0;
 
+// Review Cache
+let pendingReviewsCache: any = null;
+let pendingReviewsCacheTime: number = 0;
+
 // ── Session cache: avoid hitting /api/auth/session on every fetch ──
 let cachedSession: any = null;
 let sessionCacheTime: number = 0;
@@ -686,8 +690,25 @@ export const reviewAPI = {
      * Get pending reviews (travelers to review)
      * GET /api/reviews/pending
      */
+    /**
+     * Get pending reviews (travelers to review)
+     * GET /api/reviews/pending
+     * Cached for 60 seconds to prevent 429 errors
+     */
     getPending: async () => {
-        return fetchWithAuth('/api/reviews/pending');
+        const now = Date.now();
+        if (pendingReviewsCache && now - pendingReviewsCacheTime < 60000) {
+            return pendingReviewsCache;
+        }
+
+        const response = await fetchWithAuth('/api/reviews/pending');
+
+        if (response.success) {
+            pendingReviewsCache = response;
+            pendingReviewsCacheTime = now;
+        }
+
+        return response;
     },
 
     /**

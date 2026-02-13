@@ -342,7 +342,7 @@ export default function EditProfilePage() {
                                 <label className="block text-sm font-medium text-zinc-400 mb-1.5">
                                     Mobile Number
                                 </label>
-                                <div className="mt-1 flex gap-3">
+                                <div className="mt-1 flex flex-col sm:flex-row gap-3">
                                     <div className="flex-1">
                                         <PhoneInput
                                             value={formData.mobileNumber}
@@ -354,7 +354,7 @@ export default function EditProfilePage() {
                                     </div>
                                     {formData.mobileNumber && (
                                         isMobileVerified ? (
-                                            <span className="inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
+                                            <span className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 text-sm font-medium rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap">
                                                 <CheckCircle2 className="w-4 h-4 mr-1.5" />
                                                 Verified
                                             </span>
@@ -362,7 +362,7 @@ export default function EditProfilePage() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleVerifyPhone()}
-                                                className="inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-colors whitespace-nowrap"
+                                                className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 text-sm font-medium rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-colors whitespace-nowrap"
                                             >
                                                 Verify Phone
                                             </button>

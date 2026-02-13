@@ -52,7 +52,7 @@ const paymentSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Payment type is required'],
         enum: {
-            values: ['signup_fee', 'guide_commission', 'trip_booking', 'premium_subscription', 'other'],
+            values: ['signup_fee', 'guide_commission', 'trip_booking', 'premium_subscription', 'one_time_premium', 'other'],
             message: 'Invalid payment type'
         },
         index: true

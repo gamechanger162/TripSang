@@ -99,6 +99,15 @@ const nextConfig = {
         }
         return config;
     },
+    async redirects() {
+        return [
+            {
+                source: '/create-trip',
+                destination: '/trips/create',
+                permanent: true,
+            },
+        ];
+    },
 }
 
 module.exports = withPWA(nextConfig);
