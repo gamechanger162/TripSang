@@ -13,7 +13,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Payment {
     _id: string;
-    user?: { _id: string; name: string; email: string };
+    userId?: { _id: string; name: string; email: string };
     amount: number;
     currency: string;
     type: string;
@@ -61,8 +61,8 @@ export default function AdminPaymentsPage() {
             const res = await fetchWithAuth(`/api/payments/admin/all?${params.toString()}`);
             if (res.success) {
                 setPayments(res.payments || []);
-                setTotalRevenue(res.totalRevenue || 0);
-                setTotalCount(res.totalCount || 0);
+                setTotalRevenue(res.revenue?.total || 0);
+                setTotalCount(res.pagination?.totalPayments || 0);
             }
         } catch (err) {
             toast.error('Failed to load payments');
@@ -180,8 +180,8 @@ export default function AdminPaymentsPage() {
                                 payments.map((payment) => (
                                     <tr key={payment._id} className="hover:bg-white/[0.02] transition-colors">
                                         <td className="px-5 py-3.5">
-                                            <p className="text-sm text-white">{payment.user?.name || 'Unknown'}</p>
-                                            <p className="text-xs text-gray-600">{payment.user?.email || 'N/A'}</p>
+                                            <p className="text-sm text-white">{payment.userId?.name || 'Unknown'}</p>
+                                            <p className="text-xs text-gray-600">{payment.userId?.email || 'N/A'}</p>
                                         </td>
                                         <td className="px-5 py-3.5 text-sm font-medium text-white">
                                             ₹{payment.amount}

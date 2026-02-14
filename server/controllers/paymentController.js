@@ -72,6 +72,11 @@ export const activateFreeTrial = async (req, res) => {
             trialEnds: trialEndDate
         });
 
+        // Send trial activation email (async, don't wait)
+        import('../utils/email.js').then(({ sendTrialActivatedEmail }) => {
+            sendTrialActivatedEmail(user.email, user.name, trialEndDate);
+        }).catch(err => console.error('Failed to send trial email:', err));
+
     } catch (error) {
         console.error('Activate trial error:', error);
         res.status(500).json({
@@ -250,6 +255,11 @@ export const verifySubscription = async (req, res) => {
             message: 'Subscription activated successfully'
         });
 
+        // Send payment confirmation email (async, don't wait)
+        import('../utils/email.js').then(({ sendPaymentConfirmationEmail }) => {
+            sendPaymentConfirmationEmail(user.email, user.name, 'Monthly Subscription', subAmount);
+        }).catch(err => console.error('Failed to send payment email:', err));
+
     } catch (error) {
         console.error('Verify subscription error:', error);
         res.status(500).json({
@@ -352,10 +362,23 @@ export const razorpayWebhook = async (req, res) => {
                         console.log(`Subscription charged for user: ${user._id}`);
 
                         user.subscription.status = 'active';
-                        // Update dates from the subscription entity
-                        // Razorpay gives unix timestamps
-                        user.subscription.currentStart = new Date(subEntity.current_start * 1000);
-                        user.subscription.currentEnd = new Date(subEntity.current_end * 1000);
+
+                        // Calculate period days from Razorpay entity
+                        const chargedPeriodDays = Math.round(
+                            ((subEntity.current_end || 0) - (subEntity.current_start || 0)) / (24 * 60 * 60)
+                        ) || 30;
+
+                        // Stack days: if user has remaining time, add to existing end date
+                        const chargedNow = new Date();
+                        if (user.subscription.currentEnd && new Date(user.subscription.currentEnd) > chargedNow) {
+                            const existingEnd = new Date(user.subscription.currentEnd);
+                            existingEnd.setDate(existingEnd.getDate() + chargedPeriodDays);
+                            user.subscription.currentEnd = existingEnd;
+                        } else {
+                            // Fresh activation — use Razorpay dates
+                            user.subscription.currentStart = new Date(subEntity.current_start * 1000);
+                            user.subscription.currentEnd = new Date(subEntity.current_end * 1000);
+                        }
 
                         // Ensure they have the badge
                         if (!user.badges.includes('Premium')) {
@@ -755,6 +778,11 @@ export const verifyOrder = async (req, res) => {
             success: true,
             message: 'One-time pass activated successfully'
         });
+
+        // Send payment confirmation email (async, don't wait)
+        import('../utils/email.js').then(({ sendPaymentConfirmationEmail }) => {
+            sendPaymentConfirmationEmail(user.email, user.name, planName, capturedAmount);
+        }).catch(err => console.error('Failed to send payment email:', err));
 
     } catch (error) {
         console.error('Verify order error:', error);

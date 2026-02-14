@@ -144,6 +144,11 @@ export const createTrip = async (req, res) => {
             trip,
             friendsAdded
         });
+
+        // Send trip created email (async, don't wait)
+        import('../utils/email.js').then(({ sendTripCreatedEmail }) => {
+            sendTripCreatedEmail(user.email, user.name, title, trip.tripCode);
+        }).catch(err => console.error('Failed to send trip created email:', err));
     } catch (error) {
         console.error('Create trip error:', error);
 
@@ -551,7 +556,7 @@ export const joinTrip = async (req, res) => {
 
         await trip.addSquadMember(userId);
 
-        await trip.populate('creator', 'name profilePicture');
+        await trip.populate('creator', 'name email profilePicture');
         await trip.populate('squadMembers', 'name profilePicture');
 
         res.status(200).json({
@@ -559,6 +564,12 @@ export const joinTrip = async (req, res) => {
             message: 'Successfully joined the trip.',
             trip
         });
+
+        // Notify trip creator by email (async, don't wait)
+        import('../utils/email.js').then(({ sendTripJoinedEmail }) => {
+            const joinerName = req.user.name || 'A traveler';
+            sendTripJoinedEmail(trip.creator.email, trip.creator.name, trip.title, joinerName);
+        }).catch(err => console.error('Failed to send trip joined email:', err));
     } catch (error) {
         console.error('Join trip error:', error);
         res.status(400).json({

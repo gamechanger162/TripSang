@@ -124,53 +124,48 @@ export default function CommunityChatPage() {
         }
     }, [status, id, loadCommunity, loadMessages]);
 
-    // Socket connection
+    // Socket event handlers (stable references via useCallback)
+    const handleReceiveMessage = useCallback((message: Message) => {
+        setMessages(prev => {
+            if (prev.some(m => m._id === message._id)) return prev;
+            return [...prev, message];
+        });
+    }, []);
+
+    const handleMessageDeleted = useCallback((data: { messageId: string }) => {
+        if (data?.messageId) {
+            setMessages(prev => prev.filter(m => m._id !== data.messageId));
+        }
+    }, []);
+
+    const handleSocketError = useCallback((err: any) => {
+        console.error('Community socket error:', err);
+    }, []);
+
+    // Socket connection — uses socketManager.joinRoom for proper reconnect support
     useEffect(() => {
         if (!socketUrl || !id || status !== 'authenticated') return;
 
         const token = (session?.user as any)?.accessToken || localStorage.getItem('token');
-        socketManager.connect(socketUrl, token);
+        const socket = socketManager.connect(socketUrl, token || undefined);
+        if (!socket) return;
 
-        const handleConnect = () => {
-            socketManager.emit('join_community', { communityId: id });
-        };
+        // Use joinRoom for automatic reconnect room-rejoin
+        socketManager.joinRoom(id as string, 'community');
 
-        const handleReceiveMessage = (message: Message) => {
-            setMessages(prev => {
-                if (prev.some(m => m._id === message._id)) return prev;
-                return [...prev, message];
-            });
-            scrollToBottom();
-        };
-
-        const handleMessageDeleted = (data: { messageId: string }) => {
-            if (data?.messageId) {
-                setMessages(prev => prev.filter(m => m._id !== data.messageId));
-            }
-        };
-
-        const handleError = (err: any) => {
-            console.error('Socket error:', err);
-        };
-
-        // If already connected, join room immediately
-        if (socketManager.isSocketConnected()) {
-            socketManager.emit('join_community', { communityId: id });
-        }
-
-        socketManager.on('connect', handleConnect);
         socketManager.on('receive_community_message', handleReceiveMessage);
+        socketManager.on('community_message_deleted', handleMessageDeleted);
         socketManager.on('message_deleted', handleMessageDeleted);
-        socketManager.on('error', handleError);
+        socketManager.on('error', handleSocketError);
 
         return () => {
-            socketManager.emit('leave_community', { communityId: id });
-            socketManager.off('connect', handleConnect);
+            socketManager.leaveRoom(id as string, 'community');
             socketManager.off('receive_community_message', handleReceiveMessage);
+            socketManager.off('community_message_deleted', handleMessageDeleted);
             socketManager.off('message_deleted', handleMessageDeleted);
-            socketManager.off('error', handleError);
+            socketManager.off('error', handleSocketError);
         };
-    }, [socketUrl, id, status, session?.user?.id]);
+    }, [socketUrl, id, status, session?.user?.id, handleReceiveMessage, handleMessageDeleted, handleSocketError]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -37,10 +37,10 @@ export const updateConfig = async (req, res) => {
             enablePaidSignup: req.body.enablePaidSignup,
             signupFee: req.body.signupFee,
             signupFeeCurrency: req.body.signupFeeCurrency,
-            razorpayPlanId: req.body.razorpayPlanId, // Added support for updating plan ID
-            oneMonthPremiumPrice: req.body.oneMonthPremiumPrice, // Dynamic Pricing
-            'features.enableChat': req.body['features.enableChat'], // Support nested toggles if needed
-            // Add other feature toggles if they are sent in bulk, but dashboard sends specific structure
+            razorpayPlanId: req.body.razorpayPlanId,
+            oneMonthPremiumPrice: req.body.oneMonthPremiumPrice,
+            paymentPlans: req.body.paymentPlans, // Payment plan management from settings page
+            'features.enableChat': req.body['features.enableChat'],
         };
 
         // Remove undefined keys
@@ -497,13 +497,24 @@ export const grantPremium = async (req, res) => {
             });
         }
 
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(startDate.getDate() + parseInt(durationDays));
+        const now = new Date();
+        const days = parseInt(durationDays);
+        let endDate;
+
+        // Stack days: if user already has active premium with remaining time, add to it
+        if (user.subscription.status === 'active' && user.subscription.currentEnd && new Date(user.subscription.currentEnd) > now) {
+            endDate = new Date(user.subscription.currentEnd);
+            endDate.setDate(endDate.getDate() + days);
+            console.log(`Stacking ${days} days onto existing plan ending ${user.subscription.currentEnd}`);
+        } else {
+            // Fresh grant — start from now
+            endDate = new Date();
+            endDate.setDate(now.getDate() + days);
+        }
 
         user.subscription = {
             status: 'active',
-            currentStart: startDate,
+            currentStart: user.subscription.currentStart || now, // Keep original start if extending
             currentEnd: endDate,
             trialEnds: user.subscription.trialEnds // Preserve trial history
         };

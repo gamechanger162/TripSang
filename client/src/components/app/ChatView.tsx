@@ -277,6 +277,23 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
     }, [session?.user?.id]);
 
+    // Handler for community messages received via socket
+    const handleReceiveCommunityMessage = useCallback((message: any) => {
+        // Normalize senderId from community format (uses 'sender' instead of 'senderId')
+        const normalizedMessage = {
+            ...message,
+            senderId: message.sender || message.senderId,
+            senderName: message.senderName || 'Unknown',
+            senderProfilePicture: message.senderProfilePicture || undefined,
+        };
+        setMessages(prev => {
+            if (prev.some(m => m._id === normalizedMessage._id)) return prev;
+            return [...prev, normalizedMessage];
+        });
+        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+    }, []);
+
+    // Generic typing handler — works for squad, DM, and community
     const handleTyping = useCallback(({ userId, userName }: { userId: string; userName: string }) => {
         setTypingUsers(prev => prev.includes(userName) ? prev : [...prev, userName]);
         setTimeout(() => {
@@ -325,7 +342,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
 
         socketManager.on('receive_dm', handleReceiveDM);
         socketManager.on('receive_message', handleReceiveMessage);
+        socketManager.on('receive_community_message', handleReceiveCommunityMessage);
         socketManager.on('typing_squad', handleTyping);
+        socketManager.on('user_typing_dm', handleTyping);
+        socketManager.on('user_typing_community', handleTyping);
         socketManager.on('message_pinned', handlePinnedMessage);
         socketManager.on('message_unpinned', handleMessageUnpinned);
         socketManager.on('message_deleted', handleMessageDeleted);
@@ -335,7 +355,10 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
             socketManager.leaveRoom(conversationId, roomType);
             socketManager.off('receive_dm', handleReceiveDM);
             socketManager.off('receive_message', handleReceiveMessage);
+            socketManager.off('receive_community_message', handleReceiveCommunityMessage);
             socketManager.off('typing_squad', handleTyping);
+            socketManager.off('user_typing_dm', handleTyping);
+            socketManager.off('user_typing_community', handleTyping);
             socketManager.off('message_pinned', handlePinnedMessage);
             socketManager.off('message_unpinned', handleMessageUnpinned);
             socketManager.off('message_deleted', handleMessageDeleted);
@@ -343,7 +366,7 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
         };
     }, [
         socketUrl, conversationId, conversationType, session?.user?.id,
-        handleReceiveDM, handleReceiveMessage, handleTyping,
+        handleReceiveDM, handleReceiveMessage, handleReceiveCommunityMessage, handleTyping,
         handlePinnedMessage, handleMessageUnpinned, handleMessageDeleted, handleSocketError
     ]);
 
@@ -437,36 +460,13 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                     replyTo: replyTo?._id
                 });
             } else if (conversationType === 'community') {
-                // Community messages use REST API
-                const token = session?.user?.accessToken || localStorage.getItem('token');
-                const response = await fetch(`${apiUrl}/api/communities/${conversationId}/messages`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        message: trimmedMessage,
-                        type: 'text',
-                        replyTo: replyTo?._id
-                    })
+                // Community messages use Socket.IO for real-time delivery
+                socketRef.current?.emit('send_community_message', {
+                    communityId: conversationId,
+                    message: trimmedMessage,
+                    type: 'text',
+                    replyTo: replyTo?._id
                 });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    // Add message from API response (normalize senderId)
-                    const normalizedMessage = {
-                        ...data.message,
-                        senderId: data.message.sender || data.message.senderId
-                    };
-                    setMessages(prev => [...prev, normalizedMessage]);
-                    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-                } else {
-                    // Show error from API
-                    toast.error(data.message || 'Failed to send message');
-                    setNewMessage(trimmedMessage); // Restore message
-                }
             } else {
                 // Squad messages use Socket.IO
                 socketRef.current?.emit('send_message', {
@@ -531,25 +531,11 @@ export default function ChatView({ conversationId, conversationType, onBack, isM
                         ...messageData
                     });
                 } else if (conversationType === 'community') {
-                    // Community images use REST API
-                    const token = session?.user?.accessToken || localStorage.getItem('token');
-                    const apiResponse = await fetch(`${apiUrl}/api/communities/${conversationId}/messages`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: JSON.stringify(messageData)
+                    // Community images use Socket.IO for real-time delivery
+                    socketRef.current?.emit('send_community_message', {
+                        communityId: conversationId,
+                        ...messageData
                     });
-
-                    if (apiResponse.ok) {
-                        const data = await apiResponse.json();
-                        // Replace optimistic message with real one to avoid duplicates if needed, 
-                        // but usually we just let the socket/state update handle it. 
-                        // For community (REST), we might get double if we don't handled it, but let's stick to pattern.
-                    } else {
-                        throw new Error('Failed to send community image');
-                    }
                 } else {
                     // Squad images use Socket.IO
                     socketRef.current?.emit('send_message', {

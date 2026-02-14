@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { socketManager } from '@/lib/socketManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquareDashed } from 'lucide-react';
@@ -15,6 +15,7 @@ import { messageAPI } from '@/lib/api';
 export default function ChatPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const searchParams = useSearchParams();
     // Removed local socket state in favor of socketManager
 
     // State
@@ -147,6 +148,44 @@ export default function ChatPage() {
             };
         }
     }, [session?.user?.accessToken, status, router]);
+
+    // Handle ?userId= query param — auto-open DM with that user
+    useEffect(() => {
+        const targetUserId = searchParams.get('userId');
+        if (!targetUserId || status !== 'authenticated' || isLoadingChats) return;
+
+        const openDMWithUser = async () => {
+            try {
+                // Check if we already have a conversation with this user in the loaded list
+                const existing = conversations.find(
+                    (c: any) => c.otherUser?._id === targetUserId
+                );
+
+                if (existing) {
+                    handleSelectChat(existing);
+                } else {
+                    // Create or find conversation via API
+                    const res = await messageAPI.getOrCreateConversation(targetUserId);
+                    if (res.success && res.conversation) {
+                        // Refresh list first, then select
+                        await refreshConversations();
+                        handleSelectChat(res.conversation);
+                    } else {
+                        toast.error('Could not start conversation');
+                    }
+                }
+
+                // Clear the query param to avoid re-triggering
+                router.replace('/app', { scroll: false });
+            } catch (err) {
+                console.error('Failed to open DM:', err);
+                toast.error('Failed to start conversation');
+            }
+        };
+
+        openDMWithUser();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams, status, isLoadingChats]);
 
     // 2. Fetch Conversations
     const refreshConversations = async () => {

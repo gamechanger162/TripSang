@@ -188,6 +188,9 @@ io.on('connection', (socket) => {
             if (trip && trip.squadMembers) {
                 console.log(`📢 Broadcasting squad update to ${trip.squadMembers.length} members for trip ${tripId}`);
                 trip.squadMembers.forEach(memberId => {
+                    // Skip the sender — they don't need a notification for their own message
+                    if (memberId.toString() === socket.user._id.toString()) return;
+
                     // Send list update to user's personal room
                     io.to(`user_${memberId}`).emit('squad_list_update', {
                         tripId,
@@ -196,6 +199,15 @@ io.on('connection', (socket) => {
                         senderName: socket.user.name,
                         unreadCount: 1 // Hint for frontend to increment
                     });
+
+                    // Send push notification for squad messages
+                    const pushPayload = {
+                        title: `${socket.user.name} in ${trip.title || 'Squad'}`,
+                        body: type === 'image' ? '📷 Sent an image' : message,
+                        url: `/app/messages?type=squad&id=${tripId}`
+                    };
+                    sendPushNotification(memberId, pushPayload).catch(err => console.error('Squad push failed:', err));
+
                     console.log(`   -> Sent to user_${memberId}`);
                 });
             } else {

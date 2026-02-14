@@ -26,6 +26,8 @@
 html {
     scroll-behavior: smooth;
     overflow-x: hidden;
+    scroll-padding-top: 2rem;
+    overscroll-behavior-y: none;
 }
 
 body {
