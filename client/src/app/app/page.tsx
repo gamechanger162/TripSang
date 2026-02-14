@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { socketManager } from '@/lib/socketManager';
@@ -13,6 +13,14 @@ import ChatView from '@/components/chat/ChatView';
 import { messageAPI } from '@/lib/api';
 
 export default function ChatPage() {
+    return (
+        <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-zinc-950"><div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>}>
+            <ChatPageInner />
+        </Suspense>
+    );
+}
+
+function ChatPageInner() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
