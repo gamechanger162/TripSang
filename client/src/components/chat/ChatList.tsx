@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, User, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { Search, Plus, User, Users, Headphones, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ChatListProps {
     conversations: any[];
@@ -10,6 +10,7 @@ interface ChatListProps {
     onSelectChat: (chat: any) => void;
     isLoading?: boolean;
     onlineUsers?: string[];
+    onSupportChat?: () => void;
 }
 
 export default function ChatList({
@@ -17,9 +18,23 @@ export default function ChatList({
     activeChatId,
     onSelectChat,
     isLoading,
-    onlineUsers = []
+    onlineUsers = [],
+    onSupportChat
 }: ChatListProps) {
     const [searchTerm, setSearchTerm] = useState('');
+    const [showNewMenu, setShowNewMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Close menu on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setShowNewMenu(false);
+            }
+        };
+        if (showNewMenu) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showNewMenu]);
 
     const filteredChats = conversations.filter(chat => {
         const name = chat.otherUser?.name || chat.name || 'Unknown';
@@ -31,9 +46,44 @@ export default function ChatList({
             {/* Header */}
             <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-zinc-900/50 backdrop-blur-xl z-20">
                 <h2 className="font-bold text-lg text-white">Messages</h2>
-                <button className="p-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-full transition-colors">
-                    <Plus size={18} />
-                </button>
+                <div className="relative" ref={menuRef}>
+                    <button
+                        onClick={() => setShowNewMenu(!showNewMenu)}
+                        className={`p-2 rounded-full transition-colors ${showNewMenu ? 'bg-cyan-500/20 text-cyan-300' : 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400'}`}
+                    >
+                        {showNewMenu ? <X size={18} /> : <Plus size={18} />}
+                    </button>
+
+                    <AnimatePresence>
+                        {showNewMenu && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute right-0 top-full mt-2 w-56 bg-zinc-800/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-50"
+                            >
+                                <div className="py-1">
+                                    <button
+                                        onClick={() => {
+                                            setShowNewMenu(false);
+                                            onSupportChat?.();
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-200 hover:bg-white/5 transition-colors"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                                            <Headphones size={16} className="text-emerald-400" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-medium">Chat with Support</p>
+                                            <p className="text-[11px] text-zinc-500">Get help from our team</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* Search */}
@@ -132,3 +182,4 @@ export default function ChatList({
         </div>
     );
 }
+

@@ -15,6 +15,7 @@ import DirectMessage from './DirectMessage.js';
 import Notification from './Notification.js';
 import Friendship from './Friendship.js';
 import Memory from './Memory.js';
+import SupportChat from './SupportChat.js';
 
 export {
     User,
@@ -28,7 +29,8 @@ export {
     DirectMessage,
     Notification,
     Friendship,
-    Memory
+    Memory,
+    SupportChat
 };
 
 export default {
@@ -37,5 +39,6 @@ export default {
     Review,
     Notification,
     Friendship,
-    Memory
+    Memory,
+    SupportChat
 };

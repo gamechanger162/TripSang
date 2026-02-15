@@ -42,6 +42,8 @@ const corsOptions = {
 };
 
 // Middleware
+// IMPORTANT: Trust proxy so express-rate-limit sees real client IPs (not Render proxy IP)
+app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -103,6 +105,15 @@ io.use(async (socket, next) => {
 // Socket.io Connection Handler
 io.on('connection', (socket) => {
     console.log(`🔌 Client connected: ${socket.user.name} (${socket.id})`);
+
+    // Auto-join user to their personal room for targeted events
+    socket.join(`user_${socket.user._id}`);
+
+    // Auto-join admins to admin_support room for real-time support notifications
+    if (socket.user.role === 'admin') {
+        socket.join('admin_support');
+        console.log(`🛡️ Admin ${socket.user.name} joined admin_support room`);
+    }
 
     // Join Room Event
     socket.on('join_room', async ({ tripId }) => {
@@ -718,6 +729,119 @@ io.on('connection', (socket) => {
 
     // ========== END COMMUNITY SOCKET EVENTS ==========
 
+    // ========== SUPPORT CHAT SOCKET EVENTS ==========
+
+    // Join support chat room
+    socket.on('join_support_chat', async ({ chatId }) => {
+        try {
+            if (!chatId) return;
+
+            const SupportChat = mongoose.model('SupportChat');
+            const chat = await SupportChat.findById(chatId);
+            if (!chat) return socket.emit('error', { message: 'Support chat not found' });
+
+            // Verify user is the chat owner or an admin
+            const isOwner = chat.userId.toString() === socket.user._id.toString();
+            const isAdmin = socket.user.role === 'admin';
+            if (!isOwner && !isAdmin) {
+                return socket.emit('error', { message: 'Access denied' });
+            }
+
+            socket.join(`support_${chatId}`);
+            console.log(`🎧 ${socket.user.name} joined support chat: ${chatId}`);
+
+            // Send message history
+            socket.emit('support_chat_history', {
+                chatId,
+                messages: chat.messages,
+                status: chat.status
+            });
+        } catch (error) {
+            console.error('Join support chat error:', error);
+        }
+    });
+
+    // Send support message
+    socket.on('send_support_message', async (data) => {
+        try {
+            const { chatId, message, type = 'text', imageUrl } = data;
+            if (!chatId || (!message && type === 'text')) return;
+
+            const SupportChat = mongoose.model('SupportChat');
+            const chat = await SupportChat.findById(chatId);
+            if (!chat) return socket.emit('error', { message: 'Support chat not found' });
+
+            // Verify access
+            const isOwner = chat.userId.toString() === socket.user._id.toString();
+            const isAdmin = socket.user.role === 'admin';
+            if (!isOwner && !isAdmin) {
+                return socket.emit('error', { message: 'Access denied' });
+            }
+
+            // Don't allow messages on closed chats
+            if (chat.status === 'closed') {
+                return socket.emit('error', { message: 'This support ticket is closed' });
+            }
+
+            const newMessage = {
+                sender: socket.user._id,
+                senderRole: isAdmin ? 'admin' : 'user',
+                senderName: socket.user.name,
+                senderProfilePicture: socket.user.profilePicture || null,
+                message: message || '',
+                type,
+                imageUrl,
+                timestamp: new Date()
+            };
+
+            chat.messages.push(newMessage);
+            chat.lastMessage = {
+                text: type === 'image' ? '📷 Image' : message,
+                sender: socket.user._id,
+                senderRole: isAdmin ? 'admin' : 'user',
+                timestamp: newMessage.timestamp
+            };
+            await chat.save();
+
+            // Get the saved message (with _id from MongoDB)
+            const savedMsg = chat.messages[chat.messages.length - 1];
+
+            // Broadcast to everyone in the support room
+            io.to(`support_${chatId}`).emit('receive_support_message', {
+                chatId,
+                message: savedMsg
+            });
+
+            // Notify admins about new user messages
+            if (!isAdmin) {
+                io.to('admin_support').emit('support_chat_updated', {
+                    chatId,
+                    userId: chat.userId,
+                    lastMessage: chat.lastMessage
+                });
+            }
+
+            console.log(`🎧 Support message from ${socket.user.name} (${isAdmin ? 'admin' : 'user'})`);
+        } catch (error) {
+            console.error('Send support message error:', error);
+            socket.emit('error', { message: 'Failed to send support message' });
+        }
+    });
+
+    // Support typing indicator
+    socket.on('typing_support', ({ chatId, isTyping }) => {
+        if (chatId) {
+            socket.to(`support_${chatId}`).emit('user_typing_support', {
+                userId: socket.user._id,
+                userName: socket.user.name,
+                isTyping,
+                isAdmin: socket.user.role === 'admin'
+            });
+        }
+    });
+
+    // ========== END SUPPORT CHAT SOCKET EVENTS ==========
+
     socket.on('disconnect', () => {
         console.log(`🔌 Client disconnected: ${socket.user.name} (${socket.id})`);
     });
@@ -752,6 +876,7 @@ import memoryRoutes from './routes/memories.js';
 import reportRoutes from './routes/reports.js';
 import supportRoutes from './routes/support.js';
 import communityRoutes from './routes/community.js';
+import supportChatRoutes from './routes/supportChat.js';
 
 // API Routes with Rate Limiting
 app.use('/api/auth', authLimiter, authRoutes);  // Strict limit for auth
@@ -769,6 +894,7 @@ app.use('/api/memories', createLimiter, memoryRoutes);  // Rate limit memory cre
 app.use('/api/reports', createLimiter, reportRoutes);  // Rate limit reports
 app.use('/api/support', apiLimiter, supportRoutes);
 app.use('/api/communities', apiLimiter, communityRoutes);
+app.use('/api/support-chat', apiLimiter, supportChatRoutes);  // Support chat
 
 // Keep-Alive Mechanism for Render Free Tier
 const PING_INTERVAL = 14 * 60 * 1000; // 14 minutes (render sleeps after 15)

@@ -55,7 +55,11 @@ export default function NavRail({ unreadDMs: propUnreadDMs = 0 }: NavRailProps) 
 
         if (session?.user) {
             fetchUnreadCounts();
-            const interval = setInterval(fetchUnreadCounts, 30000);
+            const interval = setInterval(() => {
+                // Skip polling if tab is not visible
+                if (typeof document !== 'undefined' && document.hidden) return;
+                fetchUnreadCounts();
+            }, 60000); // 60 seconds instead of 30
             return () => clearInterval(interval);
         }
     }, [session, apiUrl]);

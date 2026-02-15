@@ -5,11 +5,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { socketManager } from '@/lib/socketManager';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquareDashed } from 'lucide-react';
+import { MessageSquareDashed, Headphones } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import ChatList from '@/components/chat/ChatList';
 import ChatView from '@/components/chat/ChatView';
+import SupportChatView from '@/components/chat/SupportChatView';
 import { messageAPI } from '@/lib/api';
 
 export default function ChatPage() {
@@ -34,6 +35,12 @@ function ChatPageInner() {
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
     const [blockStatus, setBlockStatus] = useState<{ isBlocked: boolean; blockedByMe: boolean } | null>(null);
+
+    // Support chat state
+    const [supportChat, setSupportChat] = useState<any>(null);
+    const [supportMessages, setSupportMessages] = useState<any[]>([]);
+    const [isSupportMode, setIsSupportMode] = useState(false);
+    const [isSupportLoading, setIsSupportLoading] = useState(false);
 
     // Mobile: track whether we're showing the chat view
     const [mobileShowChat, setMobileShowChat] = useState(false);
@@ -380,6 +387,100 @@ function ChatPageInner() {
         toast.success('Message pinned');
     };
 
+    // ========== SUPPORT CHAT HANDLERS ==========
+
+    const handleOpenSupportChat = async () => {
+        try {
+            setIsSupportLoading(true);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${apiUrl}/api/support-chat`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session?.user?.accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+
+            if (data.success && data.chat) {
+                setSupportChat(data.chat);
+                setSupportMessages(data.chat.messages || []);
+                setIsSupportMode(true);
+                setActiveChat(null); // Deselect any DM chat
+                setMobileShowChat(true);
+
+                // Join support socket room
+                if (socketManager.isSocketConnected()) {
+                    socketManager.emit('join_support_chat', { chatId: data.chat._id });
+                }
+            } else {
+                toast.error(data.message || 'Failed to open support chat');
+            }
+        } catch (err) {
+            console.error('Open support chat error:', err);
+            toast.error('Failed to connect to support');
+        } finally {
+            setIsSupportLoading(false);
+        }
+    };
+
+    const handleSendSupportMessage = async (text: string) => {
+        if (!supportChat || !text.trim()) return;
+
+        // Optimistic UI
+        const tempMsg = {
+            _id: 'temp-' + Date.now(),
+            sender: session?.user?.id,
+            senderRole: 'user',
+            senderName: session?.user?.name,
+            message: text,
+            type: 'text',
+            timestamp: new Date().toISOString()
+        };
+        setSupportMessages(prev => [...prev, tempMsg]);
+
+        if (socketManager.isSocketConnected()) {
+            socketManager.emit('send_support_message', {
+                chatId: supportChat._id,
+                message: text,
+                type: 'text'
+            });
+        }
+    };
+
+    const handleSupportBack = () => {
+        setIsSupportMode(false);
+        setSupportChat(null);
+        setSupportMessages([]);
+        setMobileShowChat(false);
+    };
+
+    // Support chat socket listener
+    useEffect(() => {
+        if (!isSupportMode || !supportChat) return;
+
+        const handleReceiveSupportMessage = (data: any) => {
+            if (data.chatId === supportChat._id) {
+                setSupportMessages(prev => {
+                    // Replace optimistic message or add new one
+                    const exists = prev.some(m => m._id === data.message._id);
+                    if (exists) return prev;
+                    // Remove matching temp messages
+                    const filtered = prev.filter(m => {
+                        if (!m._id.startsWith('temp-')) return true;
+                        return m.message !== data.message.message;
+                    });
+                    return [...filtered, data.message];
+                });
+            }
+        };
+
+        socketManager.on('receive_support_message', handleReceiveSupportMessage);
+        return () => {
+            socketManager.off('receive_support_message', handleReceiveSupportMessage);
+        };
+    }, [isSupportMode, supportChat]);
+
     if (status === 'loading') return null;
 
     return (
@@ -397,9 +498,15 @@ function ChatPageInner() {
                 <ChatList
                     conversations={conversations}
                     activeChatId={activeChat?._id}
-                    onSelectChat={handleSelectChat}
+                    onSelectChat={(chat) => {
+                        setIsSupportMode(false);
+                        setSupportChat(null);
+                        setSupportMessages([]);
+                        handleSelectChat(chat);
+                    }}
                     isLoading={isLoadingChats}
                     onlineUsers={onlineUsers}
+                    onSupportChat={handleOpenSupportChat}
                 />
             </div>
 
@@ -409,7 +516,16 @@ function ChatPageInner() {
                 md:flex
                 flex-1 h-full min-w-0 bg-[#0B0E11] relative flex-col
             `}>
-                {activeChat ? (
+                {isSupportMode && supportChat ? (
+                    <SupportChatView
+                        chat={supportChat}
+                        messages={supportMessages}
+                        currentUser={session?.user}
+                        onSendMessage={handleSendSupportMessage}
+                        onBack={handleSupportBack}
+                        isLoading={isSupportLoading}
+                    />
+                ) : activeChat ? (
                     <ChatView
                         messages={messages}
                         currentUser={session?.user}

@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
     LayoutDashboard, Users, Map, FileText, CreditCard,
     Megaphone, ShieldCheck, Settings, Menu, X, ChevronLeft,
-    LogOut
+    LogOut, Headphones
 } from 'lucide-react';
 
 const navItems = [
@@ -19,6 +19,7 @@ const navItems = [
     { href: '/admin/payments', label: 'Payments', icon: CreditCard },
     { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
     { href: '/admin/verify', label: 'Verification', icon: ShieldCheck },
+    { href: '/admin/support', label: 'Support', icon: Headphones },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
