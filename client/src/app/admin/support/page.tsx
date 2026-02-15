@@ -434,20 +434,28 @@ export default function AdminSupportPage() {
                                                 key={msg._id || idx}
                                                 initial={{ opacity: 0, y: 6 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}
+                                                className="flex justify-start"
                                             >
                                                 <div className={`max-w-[75%] ${msg._id?.startsWith('temp-') ? 'opacity-70' : ''}`}>
-                                                    {!isAdmin && (
-                                                        <p className="text-[10px] text-gray-500 mb-1 ml-1">{msg.senderName}</p>
-                                                    )}
+                                                    <div className="flex items-center gap-1.5 mb-1 ml-1">
+                                                        <span className={`text-[10px] font-medium ${isAdmin ? 'text-indigo-400' : 'text-gray-500'}`}>
+                                                            {isAdmin ? (msg.senderName || 'You') : msg.senderName}
+                                                        </span>
+                                                        {isAdmin && (
+                                                            <span className="text-[9px] px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20">
+                                                                Staff
+                                                            </span>
+                                                        )}
+                                                    </div>
+
                                                     <div className={`px-3.5 py-2.5 rounded-2xl text-sm ${isAdmin
-                                                        ? 'bg-indigo-500/80 text-white rounded-br-md'
-                                                        : 'bg-gray-800 text-gray-200 rounded-bl-md border border-white/5'
+                                                        ? 'bg-indigo-500/20 text-indigo-100 border border-indigo-500/20'
+                                                        : 'bg-gray-800 text-gray-200 border border-white/5'
                                                         }`}
                                                     >
                                                         <p className="whitespace-pre-wrap break-words">{msg.message}</p>
                                                     </div>
-                                                    <p className={`text-[10px] mt-1 text-gray-600 ${isAdmin ? 'text-right mr-1' : 'ml-1'}`}>
+                                                    <p className="text-[10px] mt-1 text-gray-600 ml-1">
                                                         {formatTime(msg.timestamp)}
                                                     </p>
                                                 </div>

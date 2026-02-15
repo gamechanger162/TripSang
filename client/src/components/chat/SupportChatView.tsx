@@ -127,33 +127,31 @@ export default function SupportChatView({
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.2 }}
-                            className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                            className="flex justify-start"
                         >
-                            <div className={`max-w-[80%] ${isMe ? 'order-2' : 'order-1'}`}>
-                                {/* Sender name for admin messages */}
-                                {!isMe && (
-                                    <div className="flex items-center gap-1.5 mb-1 ml-1">
-                                        <span className="text-[10px] font-medium text-emerald-400">
-                                            {msg.senderName || 'Support'}
+                            <div className="max-w-[80%]">
+                                {/* Sender name */}
+                                <div className="flex items-center gap-1.5 mb-1 ml-1">
+                                    <span className={`text-[10px] font-medium ${isMe ? 'text-cyan-400' : 'text-emerald-400'}`}>
+                                        {isMe ? 'You' : (msg.senderName || 'Support')}
+                                    </span>
+                                    {msg.senderRole === 'admin' && !isMe && (
+                                        <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
+                                            Staff
                                         </span>
-                                        {msg.senderRole === 'admin' && (
-                                            <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
-                                                Staff
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                                 <div
                                     className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe
-                                        ? 'bg-cyan-600/80 text-white rounded-br-md'
-                                        : 'bg-zinc-800/80 text-zinc-200 rounded-bl-md border border-white/5'
+                                        ? 'bg-cyan-600/20 text-cyan-100 border border-cyan-500/20'
+                                        : 'bg-zinc-800/80 text-zinc-200 border border-white/5'
                                         } ${msg._id?.startsWith('temp-') ? 'opacity-70' : ''}`}
                                 >
                                     <p className="whitespace-pre-wrap break-words">{msg.message}</p>
                                 </div>
 
-                                <p className={`text-[10px] mt-1 ${isMe ? 'text-right mr-1' : 'ml-1'} text-zinc-600`}>
+                                <p className="text-[10px] mt-1 ml-1 text-zinc-600">
                                     {msg.timestamp ? formatTime(msg.timestamp) : ''}
                                     {msg._id?.startsWith('temp-') && (
                                         <span className="ml-1 text-zinc-600">Sending...</span>
